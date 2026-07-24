@@ -15,17 +15,24 @@ s.makeGui(w);
 //s.freqscope;
 //s.scope;
 );
-/*~controlBus_1 = Bus.control(s, 1);
+~controlBus_1 = Bus.control(s, 1);
 ~controlBus_2 = Bus.control(s, 1);
 ~controlBus_3 = Bus.control(s, 1);
 ~controlBus_4 = Bus.control(s, 1);
 ~controlBus_5 = Bus.control(s, 1);
-~controlBus_6 = Bus.control(s, 1);*/
+~controlBus_6 = Bus.control(s, 1);
 ~timbr_dur=(1/16);
+~controlBus_x = Bus.control(s, 1);
+~controlBus_y = Bus.control(s, 1);
+~controlBus_z = Bus.control(s, 1);
 s.waitForBoot{
 Tdef(\drone, {
-//~controlBus = Bus.control(s, 1);
 
+(
+{Out.kr(~controlBus_x.index,SinOsc.kr(0.001,Spherical(2pi,0.3,0.01).x,pi))}.play;
+{Out.kr(~controlBus_y.index,SinOsc.kr(0.001,Spherical(2pi,0.3,0.01).y,pi))}.play;
+{Out.kr(~controlBus_z.index,SinOsc.kr(0.001,Spherical(2pi,0.3,0.01).z,pi))}.play;
+);
 ////////////////////////////////////////////////////////////////////////////////////////// wavetable, scales, space,timbre///////////////////////////////////////
 (
 {
@@ -59,10 +66,9 @@ var silver_r=(1+2.sqrt), g=((1+5.sqrt)/2), azimuth, elevation;
 );
 
 ~vertices = 32*32;
-~count=[1,1,2,3,6,9];
+~count=[1,1,2,4,4,4];
 ~set=(~count.[0]*~count.[1]*~count.[2]*~count.[3]*~count.[4]*~count.[5]);
 ~fuse1=1;~fuse2=1;~harm=1;~mod=0;~fuse=1000;
-~angx=0;~angy=0;~angz=0;
 ({
 var pla=0,az=0,el=0;
 var sph,mag,r,run = true;
@@ -91,9 +97,9 @@ scale=~fuse;
 scale1=~fuse1;
 scale2=~fuse2;
 harm=~harm;
-anglex=~angx;
-angley=~angy;
-anglez=~angz;
+anglex=~controlBus_x.getSynchronous;
+angley=~controlBus_y.getSynchronous;
+anglez=~controlBus_z.getSynchronous;
 m_x=m_y=m_z=harm;
 mq=harm+1;
 axis=~count.[0];cloud=~count.[1];axis1=~count.[2];
@@ -381,7 +387,7 @@ var x, y, z,rot,mag=1;
 
 az = ~azr.[n];
 el = ~elr.[n];
-mag=(Cartesian(~magx.[n],~magy.[n],~magz.[n]).rho)/2.sqrt;
+mag=Cartesian(~magx.[n],~magy.[n],~magz.[n]).rho;
 rot=Spherical(mag,az,el).rotateYZ(~rx).rotateXZ(~ry).rotateXY(~rz);
 //x = cos(el) * cos(az);
 //y = cos(el) * sin(az);
@@ -405,18 +411,18 @@ n = n + 1;
 {var sph,rot;
 Routine({loop{
 
-sph=Cartesian(~rotationx,~rotationy,~rotationz);
-rot=Spherical(pi/64,sph.theta,sph.phi);
+//sph=Cartesian(~rotationx,~rotationy,~rotationz);
+//rot=Spherical(0.01,sph.theta,sph.phi);
+/*(
+~rx=(~rx +rot.x).wrap(0,2pi);
+~ry=(~ry +rot.y).wrap(0,2pi);
+~rz=(~rz +rot.z).wrap(0,2pi);
+)*/
 (
 ~rx=(~rx +~rotationx).wrap(0,2pi);
 ~ry=(~ry +~rotationy).wrap(0,2pi);
 ~rz=(~rz +~rotationz).wrap(0,2pi);
 );
-(
-~angx=(~angx +rot.x.abs).wrap(0,2pi);
-~angy=(~angy +rot.y.abs).wrap(0,2pi);
-~angz=(~angz +rot.z.abs).wrap(0,2pi);
-)	;
 (~timbr_dur).wait; // frame duration
 };
 }).play;
@@ -477,7 +483,7 @@ SynthDef.new(\synth,{
 arg gain=1,lowend=20,s_size=1,room=1,drive=0,au=0,sb=0,mag1=1,elosc=1,
 c=0,timbr=1,az=0,el=0,dicay=2,attack=2,sc=20,ssc=1,mix=0,rect=16,s1,s2,s3,s4,
 busArray = #[0,1,2,3],dist=1;
-var fund,fu=32,n=0,mod_x,mod_y,mod_z,phasex,phasey,phasez,low=0,tremolo=64;
+var fund,fu=32,n=0,mod_x,mod_y,mod_z,phasex,phasey,phasez,low=0,tremolo=32;
 var freq1,freq2,freq3,amp1,amp2,amp3,sig1,sig2,sig3,heavy;
 var b_x,b_y,b_z,polytope,env,expansion,sph1,sph2,envf,pan;
 var g_ch1,g_ch2,g_ch3,g_ch4,mp,mps,mpf;
@@ -544,7 +550,7 @@ amp1=b_x.reciprocal*expansion.reciprocal*s_x.reciprocal;
 amp2=b_y.reciprocal*expansion.reciprocal*s_y.reciprocal;
 amp3=b_z.reciprocal*expansion.reciprocal*s_z.reciprocal;
 
-perspective = (~octaves*dist) / ((~octaves*dist) + b_z.reciprocal + ((~octaves*dist)/vanish));
+perspective = ((~octaves*2)*dist) / (((~octaves*2)*dist) + b_z.reciprocal + (((~octaves*2)*dist)/vanish));
 revm=perspective.linlin(0,1,1,0);
 //mod_x=mpf_x;
 //mod_y=mpf_y;
@@ -660,9 +666,9 @@ Out.ar(busArray.[1],LeakDC.ar(sig2*env*(g_ch2)));
 //Out.ar(busArray.[3],LeakDC.ar(sig2*env*(g_ch4)));
 //Out.ar(busArray.[2],LeakDC.ar(sig3*env));
 
-//Out.kr(~controlBus_1.index,(sig1*env));
-//Out.kr(~controlBus_2.index,(sig2*env));
-//Out.kr(~controlBus_3.index,(sig3*env));
+Out.kr(~controlBus_1.index,(sig1*env));
+Out.kr(~controlBus_2.index,(sig2*env));
+Out.kr(~controlBus_3.index,(sig3*env));
 
 ///comment out the above parentheses and uncomment the below to use the synth on
 ///threefold speaker wavefield quad spat (12ch)/// to puput stereo sets (x,y) not use z channel as ouput (2,5,etc), sig3.
@@ -689,7 +695,7 @@ SynthDef.new(\synthb,{
 arg gain=1,lowend=20,s_size=1,room=1,drive=0,au=0,sb=0,mag1=1,elosc=1,
 c=0,timbr=1,az=0,el=0,dicay=2,attack=2,sc=20,ssc=1,mix=0,rect=16,s1,s2,s3,s4,
 busArray = #[0,1,2,3],dist=1;
-var fund,fu=32,n=0,mod_x,mod_y,mod_z,phasex,phasey,phasez,low=0,tremolo=64;
+var fund,fu=32,n=0,mod_x,mod_y,mod_z,phasex,phasey,phasez,low=0,tremolo=32;
 var freq1,freq2,freq3,amp1,amp2,amp3,sig1,sig2,sig3,heavy;
 var b_x,b_y,b_z,polytope,env,expansion,sph1,sph2,envf,pan;
 var g_ch1,g_ch2,g_ch3,g_ch4,mp,mps,mpf;
@@ -755,7 +761,7 @@ amp1=b_x.reciprocal*expansion.reciprocal*s_x.reciprocal;
 amp2=b_y.reciprocal*expansion.reciprocal*s_y.reciprocal;
 amp3=b_z.reciprocal*expansion.reciprocal*s_z.reciprocal;
 
-perspective = (~octaves*dist) / ((~octaves*dist) + b_z.reciprocal + ((~octaves*dist)/vanish));
+perspective = ((~octaves*2)*dist) / (((~octaves*2)*dist) + b_z.reciprocal + (((~octaves*2)*dist)/vanish));
 revm=perspective.linlin(0,1,1,0);
 //mod_x=mpf_x;
 //mod_y=mpf_y;
@@ -870,9 +876,9 @@ Out.ar(busArray.[1],LeakDC.ar(sig2*env*(g_ch4)));
 //Out.ar(busArray.[2],LeakDC.ar(sig3*env));
 );
 
-//Out.kr(~controlBus_4.index,(sig1*env));
-//Out.kr(~controlBus_5.index,(sig2*env));
-//Out.kr(~controlBus_6.index,(sig3*env));
+Out.kr(~controlBus_4.index,(sig1*env));
+Out.kr(~controlBus_5.index,(sig2*env));
+Out.kr(~controlBus_6.index,(sig3*env));
 
 ///comment out the above parentheses and uncomment the below to use the synth on
 ///threefold speaker wavefield quad spat (12ch)/// to puput stereo sets (x,y) not use z channel as ouput (2,5,etc), sig3.
@@ -1334,7 +1340,7 @@ Pen.fillStroke;
 ~sl1=Knob.new(~vw1, Rect.new(50,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,1/32,16).round(1/16).postln;
+value=obj.value.linlin(0,1,1/32,32).round(1/16).postln;
 ~clock.tempo_(value);
 ~log1.(value.asString);
 });
@@ -1345,7 +1351,7 @@ value=obj.value.linlin(0,1,1/32,16).round(1/16).postln;
 ~sl2=Knob.new(~vw1, Rect.new(150,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,0,2pi-(2pi/~gold)).round(1/1024).postln;
+value=obj.value.linlin(0,1,0,(2pi-(2pi/((1+5.sqrt)/2)))).postln;
 //~rotation=value;
 ~rotationz=value;
 ~log1.(value.asString);
@@ -1436,7 +1442,7 @@ value1=obj.value.linexp(0,1,0.01,16).postln;
 ~sl10=Knob.new(~vw1, Rect.new(450,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value1,value2;
-value1=obj.value.linlin(0,1,0,2pi-(2pi/~gold)).round(1/1024).postln;
+value1=obj.value.linlin(0,1,0,(2pi-(2pi/((1+5.sqrt)/2)))).postln;
 ~incr1=value1;
 ~rotationx=value1;
 ~log1.(value1.asString);
@@ -1448,7 +1454,7 @@ value1=obj.value.linlin(0,1,0,2pi-(2pi/~gold)).round(1/1024).postln;
 ~sl11=Knob.new(~vw1, Rect.new(50,(50+sk+50+sk+25+25+50),sk, sk)).background_(Color.black).action_({
 arg obj;
 var value1,value2;
-value2=obj.value.linlin(0,1,0,2pi-(2pi/~gold)).round(1/1024).postln;
+value2=obj.value.linlin(0,1,0,(2pi-(2pi/((1+5.sqrt)/2)))).postln;
 ~incr2=value2;
 ~rotationy=value2;
 ~log1.(value2.asString);
@@ -1528,8 +1534,8 @@ arg obj;
 var value;
 value=obj.value.linexp(0,1,16256,1);
 ~fuse=value;
-~log1.(value.asString);
 ~pan1=obj.value.linexp(0,1,0.00001,20).postln;
+~log1.(~pan1.asString);
 });
 ~s118=StaticText(~vw1,Rect(250,(50+sk+50+sk+25+25+sk+50+sk+50+sk),sk+20,sk)).string_("fuse")
 .stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
@@ -1686,7 +1692,7 @@ Pen.fillStroke;
 ~sl1b=Knob.new(~vw, Rect.new(50,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,1/32,16).round(1/16).postln;
+value=obj.value.linlin(0,1,1/32,32).round(1/16).postln;
 ~clock.tempo_(value);
 ~log2.(value.asString);
 });
@@ -1697,7 +1703,7 @@ value=obj.value.linlin(0,1,1/32,16).round(1/16).postln;
 ~sl2b=Knob.new(~vw, Rect.new(150,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,0,2pi-(2pi/~gold)).round(1/1024).postln;
+value=obj.value.linlin(0,1,0,(2pi-(2pi/((1+5.sqrt)/2)))).postln;
 //~rotation=value;
 ~rotationz=value;
 ~log2.(value.asString);
@@ -1788,7 +1794,7 @@ value1=obj.value.linexp(0,1,0.01,16).postln;
 ~sl10b=Knob.new(~vw, Rect.new(450,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value1,value2;
-value1=obj.value.linlin(0,1,0,2pi-(2pi/~gold)).round(1/1024).postln;
+value1=obj.value.linlin(0,1,0,(2pi-(2pi/((1+5.sqrt)/2)))).postln;
 ~incr1=value1;
 ~rotationx=value1;
 ~log2.(value1.asString);
@@ -1800,7 +1806,7 @@ value1=obj.value.linlin(0,1,0,2pi-(2pi/~gold)).round(1/1024).postln;
 ~sl11b=Knob.new(~vw, Rect.new(50,(50+sk+50+sk+25+25+50),sk, sk)).background_(Color.black).action_({
 arg obj;
 var value1,value2;
-value2=obj.value.linlin(0,1,0,2pi-(2pi/~gold)).round(1/1024).postln;
+value2=obj.value.linlin(0,1,0,(2pi-(2pi/((1+5.sqrt)/2)))).postln;
 ~incr2=value2;
 ~rotationy=value2;
 ~log2.(value2.asString);
@@ -1849,7 +1855,7 @@ value=obj.value.linexp(0,1,0.01,1).postln;
 ~mixb=value;
 ~log2.(value.asString);
 });
-~st15b=StaticText(~vw,Rect(450,(50+sk+50+sk+25+25+sk+50),sk+20,sk)).string_("revmix")
+~st15b=StaticText(~vw,Rect(450,(50+sk+50+sk+25+25+sk+50),sk+20,sk)).string_("revclip")
 .stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
 );
 (
@@ -1880,8 +1886,8 @@ arg obj;
 var value;
 value=obj.value.linexp(0,1,16256,1);
 ~fuse=value;
-~log2.(value.asString);
 ~pan2=obj.value.linexp(0,1,0.00001,20).postln;
+~log2.(~pan2.asString);
 });
 ~s118b=StaticText(~vw,Rect(250,(50+sk+50+sk+25+25+sk+50+sk+50+sk),sk+20,sk)).string_("fuse")
 .stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
