@@ -29,9 +29,10 @@ s.waitForBoot{
 Tdef(\drone, {
 
 (
-{Out.kr(~controlBus_x.index,SinOsc.kr(0.001,Spherical(2pi,0.3,0.01).x,pi))}.play;
-{Out.kr(~controlBus_y.index,SinOsc.kr(0.001,Spherical(2pi,0.3,0.01).y,pi))}.play;
-{Out.kr(~controlBus_z.index,SinOsc.kr(0.001,Spherical(2pi,0.3,0.01).z,pi))}.play;
+~sph=Spherical(pi,pi.rand2,0.5pi.rand2);
+{Out.kr(~controlBus_x.index,SinOsc.kr(0.01,~sph.x,pi))}.play;
+{Out.kr(~controlBus_y.index,SinOsc.kr(0.01,~sph.y,pi))}.play;
+{Out.kr(~controlBus_z.index,SinOsc.kr(0.01,~sph.z,pi))}.play;
 );
 ////////////////////////////////////////////////////////////////////////////////////////// wavetable, scales, space,timbre///////////////////////////////////////
 (
@@ -387,17 +388,14 @@ var x, y, z,rot,mag=1;
 
 az = ~azr.[n];
 el = ~elr.[n];
-mag=Cartesian(~magx.[n],~magy.[n],~magz.[n]).rho;
+mag=1;
+//mag=Cartesian(~magx.[n],~magy.[n],~magz.[n]).rho;
 rot=Spherical(mag,az,el).rotateYZ(~rx).rotateXZ(~ry).rotateXY(~rz);
 //x = cos(el) * cos(az);
 //y = cos(el) * sin(az);
 //z = sin(el);
 x=rot.x; y=rot.y; z=rot.z;
-(
-x = x.clip2(mag/2.sqrt);
-y = y.clip2(mag/2.sqrt);
-z = z.clip2(mag/2.sqrt);
-);
+
 ~cx = ~cx ++ x; ~cy = ~cy ++ y; ~cz = ~cz ++ z;
 n = n + 1;
 };
@@ -666,9 +664,9 @@ Out.ar(busArray.[1],LeakDC.ar(sig2*env*(g_ch2)));
 //Out.ar(busArray.[3],LeakDC.ar(sig2*env*(g_ch4)));
 //Out.ar(busArray.[2],LeakDC.ar(sig3*env));
 
-Out.kr(~controlBus_1.index,(sig1*env));
-Out.kr(~controlBus_2.index,(sig2*env));
-Out.kr(~controlBus_3.index,(sig3*env));
+Out.kr(~controlBus_1.index,Amplitude.kr((sig1*env)));
+Out.kr(~controlBus_2.index,Amplitude.kr((sig2*env)));
+Out.kr(~controlBus_3.index,Amplitude.kr((sig3*env)));
 
 ///comment out the above parentheses and uncomment the below to use the synth on
 ///threefold speaker wavefield quad spat (12ch)/// to puput stereo sets (x,y) not use z channel as ouput (2,5,etc), sig3.
@@ -876,9 +874,9 @@ Out.ar(busArray.[1],LeakDC.ar(sig2*env*(g_ch4)));
 //Out.ar(busArray.[2],LeakDC.ar(sig3*env));
 );
 
-Out.kr(~controlBus_4.index,(sig1*env));
-Out.kr(~controlBus_5.index,(sig2*env));
-Out.kr(~controlBus_6.index,(sig3*env));
+Out.kr(~controlBus_4.index,Amplitude.kr((sig1*env)));
+Out.kr(~controlBus_5.index,Amplitude.kr((sig2*env)));
+Out.kr(~controlBus_6.index,Amplitude.kr((sig3*env)));
 
 ///comment out the above parentheses and uncomment the below to use the synth on
 ///threefold speaker wavefield quad spat (12ch)/// to puput stereo sets (x,y) not use z channel as ouput (2,5,etc), sig3.
