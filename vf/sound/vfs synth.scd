@@ -519,10 +519,10 @@ rrr=Spherical(pi,Select.kr(select.x.abs.round(1),~azth),Select.kr(select.x.abs.r
 
 r1 = SinOsc.kr(rx.lag(0.1),rrr.x,mul:pi);
 r2 = SinOsc.kr(ry.lag(0.1),rrr.y,mul:pi);
-r3 = SinOsc.kr(rz.lag(0.1),rrr.z,mul:0.5pi);
+r3 = SinOsc.kr(rz.lag(0.1),rrr.z,mul:1);
 
 //pan=LFNoise1.ar(elosc,pi);
-pan=(r1+r2+r3)/mix.reciprocal/2pi;
+pan=((r1+r2)*r3)/mix.reciprocal/2pi;
 pan=pan.abs;
 pan1=SinOsc.ar(pan,~az.[0]).range(pi.neg,pi).lag(0.01);
 pan2=SinOsc.ar(pan,~az.[1]).range(pi.neg,pi).lag(0.01);
@@ -536,8 +536,8 @@ pan44=SinOsc.ar(pan,~el.[3]).range(0.5pi.neg,0.5pi).lag(0.01);
 //aaz = (r1+r2).wrap(pi.neg,pi);
 //eel = r3.lag(0.1);
 
-th=(az+r3.lag(0.01)).wrap(pi.neg,pi);
-ph=(el+r3.lag(0.01)).wrap(0.5pi.neg,0.5pi);
+th=(az*r3.lag(0.01)).wrap(pi.neg,pi);
+ph=(el*r3.lag(0.01)).wrap(0.5pi.neg,0.5pi);
 
 //th=az.lag(0.01);
 //ph=el.lag(0.01);
@@ -545,7 +545,6 @@ ph=(el+r3.lag(0.01)).wrap(0.5pi.neg,0.5pi);
 x = (harm*cos(ph)*cos(th))+(cos(harm*ph)*cos(harm*th));
 y = (harm*cos(ph)*sin(th))+(cos(harm*ph)*sin(harm*th));
 z = (harm*sin(ph))+(sin(harm*ph));
-
 
 ///osc
 mp_x = (sc)  * x;
@@ -580,9 +579,9 @@ amp1=b_x.reciprocal*expansion.reciprocal*s_x.reciprocal;
 amp2=b_y.reciprocal*expansion.reciprocal*s_y.reciprocal;
 amp3=b_z.reciprocal*expansion.reciprocal*s_z.reciprocal;
 
-view=1/dist;
+view=harm/dist;
 perspective = view / (view + z + (view/vanish));
-revm=perspective.linlin(0,1,1,0);
+revm=perspective.linlin(0,0.5,0,1);
 
 //phasex=(Complex(1,mod_x).theta*2)+envf;
 //phasey=(Complex(1,mod_y).theta*2)+envf;
@@ -590,8 +589,8 @@ revm=perspective.linlin(0,1,1,0);
 //phasex=atan2(mod_x,mod_y);
 //phasey=atan2(mod_y,mod_z);
 //phasez=atan2(mod_z,mod_x);
-phasex=mpf_x*perspective;
-phasey=mpf_y*perspective;
+phasex=mpf_x;
+phasey=mpf_y;
 phasez=mpf_z;
 
 c1=FreeVerb.ar(BPF.ar((Osc.ar(~wt.bufnum,freq1,phase:phasex,mul:1200).abs*
@@ -603,17 +602,17 @@ SinOsc.ar(freq3,phase:phasez)),freq3,heavy,amp3),revm,room);
 
 ////rectifier
 sig1=((((SinOsc.ar(freq1*(rect*2),phase:phasex,mul:amp1)).abs+(amp1))*
-(SinOsc.ar(freq1*(rect),phase:phasex,mul:amp1))).abs+(amp1))*c1*1;
+(SinOsc.ar(freq1*(rect),phase:phasex,mul:amp1))).abs+(amp1))*c1*5;
 sig2=((((SinOsc.ar(freq2*(rect*2),phase:phasey,mul:amp2)).abs+(amp2))*
-(SinOsc.ar(freq2*(rect),phase:phasey,mul:amp2))).abs+(amp2))*c2*1;
+(SinOsc.ar(freq2*(rect),phase:phasey,mul:amp2))).abs+(amp2))*c2*5;
 sig3=((((SinOsc.ar(freq3*(rect*2),phase:phasez,mul:amp3)).abs+(amp3))*
-(SinOsc.ar(freq3*(rect),phase:phasez,mul:amp3))).abs+(amp3))*c3*1;
+(SinOsc.ar(freq3*(rect),phase:phasez,mul:amp3))).abs+(amp3))*c3*5;
 
 ///distortion
 
-sig1=(sig1*mix.linexp(0,1,0.1,pi)).fold2(mrange);
-sig2=(sig2*mix.linexp(0,1,0.1,pi)).fold2(mrange);
-sig3=(sig3*mix.linexp(0,1,0.1,pi)).fold2(mrange);
+sig1=(sig1*mix.linexp(0,1,0.5,pi)).fold2(mrange);
+sig2=(sig2*mix.linexp(0,1,0.5,pi)).fold2(mrange);
+sig3=(sig3*mix.linexp(0,1,0.5,pi)).fold2(mrange);
 
 
 //////propagation
@@ -635,8 +634,8 @@ mag_x=((Complex(cos(az*harm),cos(az*harm)).rho/(2.sqrt))*(Complex(cos(el),cos(el
 mag_y=((Complex(sin(az*harm),sin(az*harm)).rho/(2.sqrt))*(Complex(cos(el),cos(el)).rho/(2.sqrt)));
 mag_z=(Complex(sin(el*harm),sin(el*harm)).rho/(2.sqrt));
 
-c1=c1*mag_x*perspective;
-c2=c2*mag_y*perspective;
+c1=c1*mag_x;
+c2=c2*mag_y;
 c3=c3*mag_z;
 
 /////compresion
@@ -704,8 +703,8 @@ g_ch4=
 //Out.ar(busArray.[3],LeakDC.ar(sig1*env*g_ch4));
 //Out.ar(busArray.[3],LeakDC.ar(sig2*env*g_ch4));
 //no pan
-Out.ar(busArray.[0],LeakDC.ar(sig1*env));
-Out.ar(busArray.[1],LeakDC.ar(sig2*env));
+Out.ar(busArray.[0],LeakDC.ar(sig1*env*g_ch1));
+Out.ar(busArray.[1],LeakDC.ar(sig2*env*g_ch3));
 //Out.ar(busArray.[2],LeakDC.ar(sig3*env*mag_z));
 
 Out.kr(~controlBus_1.index,Amplitude.kr((sig1*env)));
@@ -755,10 +754,10 @@ rrr=Spherical(pi,Select.kr(select.x.abs.round(1),~azth),Select.kr(select.x.abs.r
 
 r1 = SinOsc.kr(rx.lag(0.1),rrr.x,mul:pi);
 r2 = SinOsc.kr(ry.lag(0.1),rrr.y,mul:pi);
-r3 = SinOsc.kr(rz.lag(0.1),rrr.z,mul:0.5pi);
+r3 = SinOsc.kr(rz.lag(0.1),rrr.z,mul:1);
 
 //pan=LFNoise1.ar(elosc,pi);
-pan=(r1+r2+r3)/mix.reciprocal/2pi;
+pan=((r1+r2)*r3)/mix.reciprocal/2pi;
 pan=pan.abs;
 pan1=SinOsc.ar(pan,~az.[0]).range(pi.neg,pi).lag(0.01);
 pan2=SinOsc.ar(pan,~az.[1]).range(pi.neg,pi).lag(0.01);
@@ -772,8 +771,8 @@ pan44=SinOsc.ar(pan,~el.[3]).range(0.5pi.neg,0.5pi).lag(0.01);
 //aaz = (r1+r2).wrap(pi.neg,pi);
 //eel = r3.lag(0.1);
 
-th=(az+r3.lag(0.01)).wrap(pi.neg,pi);
-ph=(el+r3.lag(0.01)).wrap(0.5pi.neg,0.5pi);
+th=(az*r3.lag(0.01)).wrap(pi.neg,pi);
+ph=(el*r3.lag(0.01)).wrap(0.5pi.neg,0.5pi);
 
 //th=az.lag(0.01);
 //ph=el.lag(0.01);
@@ -781,7 +780,6 @@ ph=(el+r3.lag(0.01)).wrap(0.5pi.neg,0.5pi);
 x = (harm*cos(ph)*cos(th))+(cos(harm*ph)*cos(harm*th));
 y = (harm*cos(ph)*sin(th))+(cos(harm*ph)*sin(harm*th));
 z = (harm*sin(ph))+(sin(harm*ph));
-
 
 ///osc
 mp_x = (sc)  * x;
@@ -816,9 +814,9 @@ amp1=b_x.reciprocal*expansion.reciprocal*s_x.reciprocal;
 amp2=b_y.reciprocal*expansion.reciprocal*s_y.reciprocal;
 amp3=b_z.reciprocal*expansion.reciprocal*s_z.reciprocal;
 
-view=1/dist;
+view=harm/dist;
 perspective = view / (view + z + (view/vanish));
-revm=perspective.linlin(0,1,1,0);
+revm=perspective.linlin(0,0.5,0,1);
 
 //phasex=(Complex(1,mod_x).theta*2)+envf;
 //phasey=(Complex(1,mod_y).theta*2)+envf;
@@ -826,8 +824,8 @@ revm=perspective.linlin(0,1,1,0);
 //phasex=atan2(mod_x,mod_y);
 //phasey=atan2(mod_y,mod_z);
 //phasez=atan2(mod_z,mod_x);
-phasex=mpf_x*perspective;
-phasey=mpf_y*perspective;
+phasex=mpf_x;
+phasey=mpf_y;
 phasez=mpf_z;
 
 c1=FreeVerb.ar(BPF.ar((Osc.ar(~wt.bufnum,freq1,phase:phasex,mul:1200).abs*
@@ -839,17 +837,17 @@ SinOsc.ar(freq3,phase:phasez)),freq3,heavy,amp3),revm,room);
 
 ////rectifier
 sig1=((((SinOsc.ar(freq1*(rect*2),phase:phasex,mul:amp1)).abs+(amp1))*
-(SinOsc.ar(freq1*(rect),phase:phasex,mul:amp1))).abs+(amp1))*c1*1;
+(SinOsc.ar(freq1*(rect),phase:phasex,mul:amp1))).abs+(amp1))*c1*5;
 sig2=((((SinOsc.ar(freq2*(rect*2),phase:phasey,mul:amp2)).abs+(amp2))*
-(SinOsc.ar(freq2*(rect),phase:phasey,mul:amp2))).abs+(amp2))*c2*1;
+(SinOsc.ar(freq2*(rect),phase:phasey,mul:amp2))).abs+(amp2))*c2*5;
 sig3=((((SinOsc.ar(freq3*(rect*2),phase:phasez,mul:amp3)).abs+(amp3))*
-(SinOsc.ar(freq3*(rect),phase:phasez,mul:amp3))).abs+(amp3))*c3*1;
+(SinOsc.ar(freq3*(rect),phase:phasez,mul:amp3))).abs+(amp3))*c3*5;
 
 ///distortion
 
-sig1=(sig1*mix.linexp(0,1,0.1,pi)).fold2(mrange);
-sig2=(sig2*mix.linexp(0,1,0.1,pi)).fold2(mrange);
-sig3=(sig3*mix.linexp(0,1,0.1,pi)).fold2(mrange);
+sig1=(sig1*mix.linexp(0,1,0.5,pi)).fold2(mrange);
+sig2=(sig2*mix.linexp(0,1,0.5,pi)).fold2(mrange);
+sig3=(sig3*mix.linexp(0,1,0.5,pi)).fold2(mrange);
 
 
 //////propagation
@@ -871,8 +869,8 @@ mag_x=((Complex(cos(az*harm),cos(az*harm)).rho/(2.sqrt))*(Complex(cos(el),cos(el
 mag_y=((Complex(sin(az*harm),sin(az*harm)).rho/(2.sqrt))*(Complex(cos(el),cos(el)).rho/(2.sqrt)));
 mag_z=(Complex(sin(el*harm),sin(el*harm)).rho/(2.sqrt));
 
-c1=c1*mag_x*perspective;
-c2=c2*mag_y*perspective;
+c1=c1*mag_x;
+c2=c2*mag_y;
 c3=c3*mag_z;
 
 /////compresion
@@ -940,8 +938,8 @@ g_ch4=
 //Out.ar(busArray.[3],LeakDC.ar(sig1*env*g_ch4));
 //Out.ar(busArray.[3],LeakDC.ar(sig2*env*g_ch4));
 //no pan
-Out.ar(busArray.[0],LeakDC.ar(sig1*env));
-Out.ar(busArray.[1],LeakDC.ar(sig2*env));
+Out.ar(busArray.[0],LeakDC.ar(sig1*env*g_ch1));
+Out.ar(busArray.[1],LeakDC.ar(sig2*env*g_ch3));
 //Out.ar(busArray.[2],LeakDC.ar(sig3*env*mag_z));
 
 Out.kr(~controlBus_1.index,Amplitude.kr((sig1*env)));
@@ -1609,7 +1607,7 @@ value=obj.value.linlin(0,1,1,7).round(1).postln;
 ~sl20=Knob.new(~vw1, Rect.new(450,(50+sk+50+sk+25+25+sk+50+sk+50),sk, sk)).background_(Color.black).action_({
 arg obj;
 var value,v;
-value=obj.value.linexp(0,1,100.01,0.1).postln;
+value=obj.value.linexp(0,1,100.01,0.01).postln;
 ~dist1=value;
 ~log1.(value.asString);
 });
@@ -1963,7 +1961,7 @@ value=obj.value.linlin(0,1,1,7).round(1).postln;
 ~sl20b=Knob.new(~vw, Rect.new(450,(50+sk+50+sk+25+25+sk+50+sk+50),sk, sk)).background_(Color.black).action_({
 arg obj;
 var value,v;
-value=obj.value.linexp(0,1,100.01,0.1).postln;
+value=obj.value.linexp(0,1,100.01,0.01).postln;
 ~dist2=value;
 ~log2.(value.asString);
 });
