@@ -459,7 +459,7 @@ var nn=1.neg;
 ~scale=~note.collect{nn=nn+1;Scale.dorian.performDegreeToKey(nn,12)};
 }.value;
 );
-~octaves=2;
+~octaves=3;
 (
 {
 var nn=1.neg,scale1,scale2;
@@ -486,11 +486,11 @@ arg gain=1,lowend=20,s_size=1,room=1,drive=0,au=0,sb=0,mag1=1,elosc=1,
 c=0,timbr=1,az=0,el=0,dicay=2,attack=2,sc=20,ssc=1,mix=0,rect=16,s1,s2,s3,s4,
 busArray = #[0,1,2,3],dist=1,harm=1,rx=0,ry=0,rz=0,mrange=1,lim=1;
 var fund,fu=32,n=0,mod_x,mod_y,mod_z,phasex,phasey,phasez,low=0,tremolo=32;
-var freq1,freq2,freq3,amp1,amp2,amp3,sig1,sig2,sig3,heavy;
+var freq1,freq2,freq3,amp1,amp2,amp3,sig1,sig2,sig3,heavy,pen;
 var b_x,b_y,b_z,polytope,env,expansion,sph1,sph2,envf,pan,pan11,pan22,pan33,pan44;
 var g_ch1,g_ch2,g_ch3,g_ch4,mp,mps,mpf,x,y,z,mag_x,mag_y,mag_z;
 var s_x,s_y,s_z,threshold,c1,c2,c3,mp_x,mp_y,mp_z,mps_x,mps_y,mps_z,mpf_x,mpf_y,mpf_z;
-var peak, times,signal,rip,enva,key,attackLen,sustainLen,decayLen,tx,ty,tz;
+var peak, times,signal,rip,enva,key,attackLen,sustainLen,decayLen,tx,ty,tz,view;
 var vanish=2,perspective,revm,rot,r1,r2,r3,th,ph,aaz,eel,rrr,select,pan1,pan2,pan3,pan4;
 
 //envf=EnvGen.ar(Env.new([0,0,pi,pi,2pi],[(dicay/2),(attack/2),(dicay/2),(attack/2)]),doneAction:0);
@@ -536,11 +536,11 @@ pan44=SinOsc.ar(pan,~el.[3]).range(0.5pi.neg,0.5pi).lag(0.01);
 //aaz = (r1+r2).wrap(pi.neg,pi);
 //eel = r3.lag(0.1);
 
-//th=(az+aaz).wrap(pi.neg,pi).lag(0.05);
-//ph=(el+eel).wrap(0.5pi.neg,0.5pi).lag(0.05);
+th=(az+r3.lag(0.01)).wrap(pi.neg,pi);
+ph=(el+r3.lag(0.01)).wrap(0.5pi.neg,0.5pi);
 
-th=az.lag(0.01);
-ph=el.lag(0.01);
+//th=az.lag(0.01);
+//ph=el.lag(0.01);
 
 x = (harm*cos(ph)*cos(th))+(cos(harm*ph)*cos(harm*th));
 y = (harm*cos(ph)*sin(th))+(cos(harm*ph)*sin(harm*th));
@@ -580,8 +580,10 @@ amp1=b_x.reciprocal*expansion.reciprocal*s_x.reciprocal;
 amp2=b_y.reciprocal*expansion.reciprocal*s_y.reciprocal;
 amp3=b_z.reciprocal*expansion.reciprocal*s_z.reciprocal;
 
-perspective = ((~octaves*2)*dist) / (((~octaves*2)*dist) + b_z.reciprocal + (((~octaves*2)*dist)/vanish));
+view=gain/dist;
+perspective = ((~octaves*2)*view) / (((~octaves*2)*view) + z + (((~octaves*2)*view)/vanish));
 revm=perspective.linlin(0,1,1,0);
+perspective.poll;
 //mod_x=mpf_x;
 //mod_y=mpf_y;
 //mod_z=mpf_z;
@@ -600,8 +602,8 @@ revm=perspective.linlin(0,1,1,0);
 //phasex=atan2(mod_x,mod_y);
 //phasey=atan2(mod_y,mod_z);
 //phasez=atan2(mod_z,mod_x);
-phasex=mpf_x;
-phasey=mpf_y;
+phasex=mpf_x*perspective;
+phasey=mpf_y*perspective;
 phasez=mpf_z;
 
 c1=FreeVerb.ar(BPF.ar((Osc.ar(~wt.bufnum,freq1,phase:phasex,mul:1200).abs*
@@ -613,11 +615,11 @@ SinOsc.ar(freq3,phase:phasez)),freq3,heavy,amp3),revm,room);
 
 ////rectifier
 sig1=((((SinOsc.ar(freq1*(rect*2),phase:phasex,mul:amp1)).abs+(amp1))*
-(SinOsc.ar(freq1*(rect),phase:phasex,mul:amp1))).abs+(amp1))*c1*10;
+(SinOsc.ar(freq1*(rect),phase:phasex,mul:amp1))).abs+(amp1))*c1*1;
 sig2=((((SinOsc.ar(freq2*(rect*2),phase:phasey,mul:amp2)).abs+(amp2))*
-(SinOsc.ar(freq2*(rect),phase:phasey,mul:amp2))).abs+(amp2))*c2*10;
+(SinOsc.ar(freq2*(rect),phase:phasey,mul:amp2))).abs+(amp2))*c2*1;
 sig3=((((SinOsc.ar(freq3*(rect*2),phase:phasez,mul:amp3)).abs+(amp3))*
-(SinOsc.ar(freq3*(rect),phase:phasez,mul:amp3))).abs+(amp3))*c3*10;
+(SinOsc.ar(freq3*(rect),phase:phasez,mul:amp3))).abs+(amp3))*c3*1;
 
 
 //sig1=(sig1*mix.linexp(0,1,0.5,pi)).softclip;
@@ -663,8 +665,8 @@ sig1=Compander.ar(sig1,c1,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 sig2=Compander.ar(sig2,c2,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 sig3=Compander.ar(sig3,c3,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 
-
 /////spat
+
 (
 g_ch1=
 (c1.abs.range(0.001,1)*cos(ph+pan11)*cos((th+pan1).wrap(pi.neg,pi))*
@@ -740,7 +742,7 @@ var freq1,freq2,freq3,amp1,amp2,amp3,sig1,sig2,sig3,heavy;
 var b_x,b_y,b_z,polytope,env,expansion,sph1,sph2,envf,pan,pan11,pan22,pan33,pan44;
 var g_ch1,g_ch2,g_ch3,g_ch4,mp,mps,mpf,x,y,z,mag_x,mag_y,mag_z;
 var s_x,s_y,s_z,threshold,c1,c2,c3,mp_x,mp_y,mp_z,mps_x,mps_y,mps_z,mpf_x,mpf_y,mpf_z;
-var peak, times,signal,rip,enva,key,attackLen,sustainLen,decayLen,tx,ty,tz;
+var peak, times,signal,rip,enva,key,attackLen,sustainLen,decayLen,tx,ty,tz,view;
 var vanish=2,perspective,revm,rot,r1,r2,r3,th,ph,aaz,eel,rrr,select,pan1,pan2,pan3,pan4;
 
 //envf=EnvGen.ar(Env.new([0,0,pi,pi,2pi],[(dicay/2),(attack/2),(dicay/2),(attack/2)]),doneAction:0);
@@ -786,11 +788,11 @@ pan44=SinOsc.ar(pan,~el.[3]).range(0.5pi.neg,0.5pi).lag(0.01);
 //aaz = (r1+r2).wrap(pi.neg,pi);
 //eel = r3.lag(0.1);
 
-//th=(az+aaz).wrap(pi.neg,pi).lag(0.05);
-//ph=(el+eel).wrap(0.5pi.neg,0.5pi).lag(0.05);
+th=(az+r3.lag(0.01)).wrap(pi.neg,pi);
+ph=(el+r3.lag(0.01)).wrap(0.5pi.neg,0.5pi);
 
-th=az.lag(0.01);
-ph=el.lag(0.01);
+//th=az.lag(0.01);
+//ph=el.lag(0.01);
 
 x = (harm*cos(ph)*cos(th))+(cos(harm*ph)*cos(harm*th));
 y = (harm*cos(ph)*sin(th))+(cos(harm*ph)*sin(harm*th));
@@ -830,7 +832,8 @@ amp1=b_x.reciprocal*expansion.reciprocal*s_x.reciprocal;
 amp2=b_y.reciprocal*expansion.reciprocal*s_y.reciprocal;
 amp3=b_z.reciprocal*expansion.reciprocal*s_z.reciprocal;
 
-perspective = ((~octaves*2)*dist) / (((~octaves*2)*dist) + b_z.reciprocal + (((~octaves*2)*dist)/vanish));
+view=gain/dist;
+perspective = ((~octaves*2)*view) / (((~octaves*2)*view) + z + (((~octaves*2)*view)/vanish));
 revm=perspective.linlin(0,1,1,0);
 //mod_x=mpf_x;
 //mod_y=mpf_y;
@@ -850,8 +853,8 @@ revm=perspective.linlin(0,1,1,0);
 //phasex=atan2(mod_x,mod_y);
 //phasey=atan2(mod_y,mod_z);
 //phasez=atan2(mod_z,mod_x);
-phasex=mpf_x;
-phasey=mpf_y;
+phasex=mpf_x*perspective;
+phasey=mpf_y*perspective;
 phasez=mpf_z;
 
 c1=FreeVerb.ar(BPF.ar((Osc.ar(~wt.bufnum,freq1,phase:phasex,mul:1200).abs*
@@ -863,11 +866,11 @@ SinOsc.ar(freq3,phase:phasez)),freq3,heavy,amp3),revm,room);
 
 ////rectifier
 sig1=((((SinOsc.ar(freq1*(rect*2),phase:phasex,mul:amp1)).abs+(amp1))*
-(SinOsc.ar(freq1*(rect),phase:phasex,mul:amp1))).abs+(amp1))*c1*10;
+(SinOsc.ar(freq1*(rect),phase:phasex,mul:amp1))).abs+(amp1))*c1*1;
 sig2=((((SinOsc.ar(freq2*(rect*2),phase:phasey,mul:amp2)).abs+(amp2))*
-(SinOsc.ar(freq2*(rect),phase:phasey,mul:amp2))).abs+(amp2))*c2*10;
+(SinOsc.ar(freq2*(rect),phase:phasey,mul:amp2))).abs+(amp2))*c2*1;
 sig3=((((SinOsc.ar(freq3*(rect*2),phase:phasez,mul:amp3)).abs+(amp3))*
-(SinOsc.ar(freq3*(rect),phase:phasez,mul:amp3))).abs+(amp3))*c3*10;
+(SinOsc.ar(freq3*(rect),phase:phasez,mul:amp3))).abs+(amp3))*c3*1;
 
 
 //sig1=(sig1*mix.linexp(0,1,0.5,pi)).softclip;
@@ -1168,7 +1171,7 @@ d=[~dur.[9]+~dur.[10]+~dur.[11]];
 {
 Routine({loop{
 ~nn=~set.rand;
-(~dursum/2).wait; // frame duration
+(~dursum*3).wait; // frame duration
 };
 }).play(~clock);
 }.defer
@@ -1573,7 +1576,7 @@ value=obj.value.linexp(0,1,0.01,1).postln;
 ~room=value;
 ~log1.(value.asString);
 });
-~st14=StaticText(~vw1,Rect(350,(50+sk+50+sk+25+25+sk+50),sk+20,sk)).string_("revroom")
+~st14=StaticText(~vw1,Rect(350,(50+sk+50+sk+25+25+sk+50),sk+20,sk)).string_("room")
 .stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
 );
 (
@@ -1584,7 +1587,7 @@ value=obj.value.linexp(0,1,0.01,1).postln;
 ~mix=value;
 ~log1.(value.asString);
 });
-~st15=StaticText(~vw1,Rect(450,(50+sk+50+sk+25+25+sk+50),sk+20,sk)).string_("revmix")
+~st15=StaticText(~vw1,Rect(450,(50+sk+50+sk+25+25+sk+50),sk+20,sk)).string_("fmix")
 .stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
 );
 (
@@ -1637,7 +1640,7 @@ value=obj.value.linlin(0,1,1,7).round(1).postln;
 ~sl20=Knob.new(~vw1, Rect.new(450,(50+sk+50+sk+25+25+sk+50+sk+50),sk, sk)).background_(Color.black).action_({
 arg obj;
 var value,v;
-value=obj.value.linexp(0,1,0.01,1000).postln;
+value=obj.value.linexp(0,1,10000.01,0.01).postln;
 ~dist1=value;
 ~log1.(value.asString);
 });
@@ -1927,7 +1930,7 @@ value=obj.value.linexp(0,1,0.01,1).postln;
 ~roomb=value;
 ~log2.(value.asString);
 });
-~st14b=StaticText(~vw,Rect(350,(50+sk+50+sk+25+25+sk+50),sk+20,sk)).string_("revroom")
+~st14b=StaticText(~vw,Rect(350,(50+sk+50+sk+25+25+sk+50),sk+20,sk)).string_("room")
 .stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
 );
 (
@@ -1938,7 +1941,7 @@ value=obj.value.linexp(0,1,0.01,1).postln;
 ~mixb=value;
 ~log2.(value.asString);
 });
-~st15b=StaticText(~vw,Rect(450,(50+sk+50+sk+25+25+sk+50),sk+20,sk)).string_("revmix")
+~st15b=StaticText(~vw,Rect(450,(50+sk+50+sk+25+25+sk+50),sk+20,sk)).string_("fmix")
 .stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
 );
 (
@@ -1991,7 +1994,7 @@ value=obj.value.linlin(0,1,1,7).round(1).postln;
 ~sl20b=Knob.new(~vw, Rect.new(450,(50+sk+50+sk+25+25+sk+50+sk+50),sk, sk)).background_(Color.black).action_({
 arg obj;
 var value,v;
-value=obj.value.linexp(0,1,0.01,1000).postln;
+value=obj.value.linexp(0,1,10000.01,0.01).postln;
 ~dist2=value;
 ~log2.(value.asString);
 });
