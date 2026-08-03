@@ -53,3 +53,8 @@ n=MouseY.kr(0.1,1);
 
 }.play
 )
+
+
+///or use pulse on Env gate
+
+{LFPulse.ar(5,width:0.01).poll}.play
