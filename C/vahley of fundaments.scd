@@ -16,6 +16,7 @@ Window.closeAll;
 );
 s.waitForBoot{
 Tdef(\drone, {
+~frames=0.1;
 /////axis array
 (
 {
@@ -81,16 +82,23 @@ wt = signal.asSignal(1024).asWavetable;
 }.value;
 {
 var signal,wt;
-signal=Env([1,1000,1000,1],[1,1/2,1],[2,0,2.neg]);
+signal=Env([1,1000,1000,1],[1,1,1],[2,0,2.neg]);
 wt = signal.asSignal(1024).asWavetable;
 ~scale1.loadCollection(wt);
 //signal.plot;
 }.value;
 {
 var signal,wt;
-signal=Env([1,1,1000,1],[2,1,1],[2,0,2.neg]);
+signal=Env([1,1,1000,1],[1,1,1],[2,0,2.neg]);
 wt = signal.asSignal(1024).asWavetable;
 ~scale2.loadCollection(wt);
+//signal.plot;
+}.value;
+{
+var signal,wt;
+signal=Env([1,6,6],[1,1,1],[2,0,2.neg]);
+wt = signal.asSignal(1024).asWavetable;
+~ps.loadCollection(wt);
 //signal.plot;
 }.value;
 {
@@ -99,13 +107,6 @@ r=(2pi-(2pi/((1+5.sqrt)/2)));
 signal=Env([r/512,0.001,r/512],[1,1],[2.neg,2]);
 wt = signal.asSignal(1024).asWavetable;
 ~rotation.loadCollection(wt);
-//signal.plot;
-}.value;
-{
-var signal,wt;
-signal=Env([100,600,100],[1,1,1],[8,0,8.neg]);
-wt = signal.asSignal(1024).asWavetable;
-~ps.loadCollection(wt);
 //signal.plot;
 }.value;
 {
@@ -119,32 +120,32 @@ wt = signal.asSignal(1024).asWavetable;
 (
 SynthDef.new(\run,{
 arg cor=0;
-var p,az,el,f1,f2,f3,f=0.025;
-az=Select.kr(cor,~azi);
-el=Select.kr(cor,~eli);
-p=Spherical(992,az,el);
-f1=2.pow(p.x.round(1)/992)*6;
-f2=2.pow(p.y.round(1)/992)*6;
-f3=2.pow(p.x.round(1)/992)*6;
+var p,az,el,f1,f2,f3,f=0.1;
+//az=Select.kr(cor,~azi);
+//el=Select.kr(cor,~eli);
+p=Spherical(16256,0,0);
+f1=2.pow(p.x.round(1)/16256)*0.01;
+f2=2.pow(p.y.round(1)/16256)*0.01;
+f3=2.pow(p.x.round(1)/16256)*0.01;
 Out.kr(~controlBus_s.index,(Osc.kr(~scale.bufnum,f).abs));
 Out.kr(~controlBus_s1.index,(Osc.kr(~scale1.bufnum,f).abs));
 Out.kr(~controlBus_s2.index,(Osc.kr(~scale2.bufnum,f).abs));
 //Out.kr(~controlBus_r.index,(Osc.kr(~rotation.bufnum,f.rand).abs));
 //Out.kr(~controlBus_s1.index,(SinOsc.kr(TExpRand.kr(0.01,0.1,Impulse.kr(f.rand))).range(1,1000)));
 //Out.kr(~controlBus_s2.index,(SinOsc.kr(TExpRand.kr(0.01,0.1,Impulse.kr(f.rand))).range(1,1000)));
-Out.kr(~controlBus_r.index,(SinOsc.kr(TExpRand.kr(0.01,0.1,Impulse.kr(f.rand))).range(0.001,0.01)));
-Out.kr(~controlBus_shx.index,(SinOsc.kr(f1,f1.reciprocal*2pi,1).range(pi.neg,pi)));
-Out.kr(~controlBus_shy.index,(SinOsc.kr(f2,f2.reciprocal*2pi,1).range(pi.neg,pi)));
-Out.kr(~controlBus_shz.index,(SinOsc.kr(f3,f3.reciprocal*2pi,1).range(0.5pi.neg,0.5pi)));
-Out.kr(~controlBus_wx.index,(LFNoise0.kr(f1).abs));
-Out.kr(~controlBus_wy.index,(LFNoise0.kr(f2).abs));
-Out.kr(~controlBus_wz.index,(LFNoise0.kr(f3).abs));
+//Out.kr(~controlBus_r.index,(SinOsc.kr(TExpRand.kr(0.01,0.1,Impulse.kr(f.rand))).range(0.001,0.01)));
+Out.kr(~controlBus_shx.index,(SinOsc.kr(f1,f1*pi).range(pi.neg,pi)));
+Out.kr(~controlBus_shy.index,(SinOsc.kr(f2,f2*pi).range(pi.neg,pi)));
+Out.kr(~controlBus_shz.index,(SinOsc.kr(f3,f3*pi).range(0.5pi.neg,0.5pi)));
+//Out.kr(~controlBus_wx.index,(LFNoise0.kr(f1).abs));
+//Out.kr(~controlBus_wy.index,(LFNoise0.kr(f2).abs));
+//Out.kr(~controlBus_wz.index,(LFNoise0.kr(f3).abs));
 //Out.kr(~controlBus_wx.index,(Amplitude.kr(InFeedback.ar(0)))); ////distribution control array period feedback
 //Out.kr(~controlBus_wy.index,(Amplitude.kr(InFeedback.ar(1))));
 //Out.kr(~controlBus_wz.index,(Amplitude.kr(InFeedback.ar(2))));
 Out.kr(~controlBus_points.index,(Osc.kr(~ps.bufnum,f).abs));
 //Out.kr(~controlBus_points.index,(SinOsc.kr(TExpRand.kr(0.01,0.1,Impulse.kr(f.rand))).range(10,600)));
-Out.kr(~controlBus_sh.index,(Osc.kr(~sh.bufnum,f).abs));
+//Out.kr(~controlBus_sh.index,(Osc.kr(~sh.bufnum,f).abs));
 //Out.kr(~controlBus_sh.index,(SinOsc.kr(TExpRand.kr(0.01,0.1,Impulse.kr(f.rand))).range(1,4)));
 }).add;
 );
@@ -153,6 +154,7 @@ Out.kr(~controlBus_sh.index,(Osc.kr(~sh.bufnum,f).abs));
 ////animation routine
 ~countf=[2,2,3,3,2,2];
 ~sc=((1+5.sqrt)/2);
+~harmm=3;
 ~animation=Synth.new(\run).register;
 (
 //~countf=[4,3,2,2,2,2];
@@ -171,25 +173,29 @@ var azimuth,elevation,magnitudex,magnitudey,magnitudez,magnitudeqx;
 var magx,magy,magz,magqx,rotation;
 var angle=0,angle1=0,angle11=0;
 var g=((1+5.sqrt)/2),s=(1+2.sqrt),ott=pi.rand2,temp,space,mod_el=0;
-var waveSpeed = 0.5,waveFreq = 3,amp=0.5;
+var waveSpeed = 0.5,waveFreq = 3,amp=0.5,pointcount;
 var theta,phi,wave,anglex,angley,anglez,ratio1,ratio2,ratio3;
 
-~azf=[];~elf=[];~magxf=[];~magyf=[];~magzf=[];~qxf=[];~azu=[];~elu=[];
+~azf=[];~elf=[];~magxf=[];~magyf=[];~magzf=[];~qxf=[];~azu=[];~elu=[];~rx=0;~ry=0;~rz=0;
 g=s=~sc;
 ~treef= Routine({loop{
+
+pointcount=~controlBus_points.getSynchronous;
+//~countf=[pointcount,pointcount,pointcount,pointcount,pointcount,pointcount]
+~verticef=(~countf.[0]*~countf.[1]*~countf.[2]*~countf.[3]*~countf.[4]*~countf.[5]);
 scale=~controlBus_s.getSynchronous;
 scale1=~controlBus_s1.getSynchronous;
 scale2=~controlBus_s2.getSynchronous;
 //scale=~fuse;
 ///scale1=~fuse1;
 //scale2=~fuse2;
-rotation=~controlBus_r.getSynchronous;
-harm=~controlBus_sh.getSynchronous;
+//rotation=~controlBus_r.getSynchronous;
+//harm=~controlBus_sh.getSynchronous;
 anglex=~controlBus_shx.getSynchronous;
 angley=~controlBus_shy.getSynchronous;
 anglez=~controlBus_shz.getSynchronous;
 rotation=0.1;
-harm=1;
+harm=~harmm;
 anglex=0;
 angley=0;
 anglez=0;
@@ -476,93 +482,51 @@ val * wave;
 };
 );
 (
-(~countf.[0]*~countf.[1]*~countf.[2]*~countf.[3]*~countf.[4]*~countf.[5]).do{
+~verticef.do{
 az=~azf.[pla];
 el=~elf.[pla];
 mag=(Cartesian(~magxf.[pla],~magyf.[pla],~magzf.[pla]).rho)/2.sqrt;
-mag=1;
+//mag=1;
 pla=pla+1;
-sph=Spherical((mag+scale.rand).wrap(1,mag),az,el).asCartesian;
+sph=Spherical(mag,az,el);
 sph=sph.rotateYZ(0.5pi).asSpherical;
+sph=sph.rotateYZ(~rx).rotateXZ(~ry).rotateXY(~rz);
 ~azu=~azu++[sph.theta];
 ~elu=~elu++[sph.phi];
 });
-(0.05).wait;
+(~frames).wait;
 };};
 );
 }.value
 );
 	1.wait;
+//object rot
+(
+{var sph,rot;
+Routine({loop{
+(
+~rx=(~rx +0.01).wrap(0,2pi);
+~ry=(~ry +0.01).wrap(0,2pi);
+~rz=(~rz +0.01).wrap(0,2pi);
+);
+(~frames).wait;
+};
+}).play;
+}.defer
+);
+
+
+///////////plot
+(
+~shade=20;
+~llinee1=50;
+~harmm=1;
+~diameter=400;
+~distpers=500;
+~limitc=300;
+~frame=50.neg;
 ~treef.play;
-
-//lining
-/*(
-(
-~controlBusx = Bus.control(s, 1);
-~controlBusy = Bus.control(s, 1);
-~controlBusz = Bus.control(s, 1);
 );
-(
-SynthDef.new(\coo,{
-arg cor=0;
-var p,az,el,f1,f2,f3;
-/*az=Select.kr(cor,~az);
-el=Select.kr(cor,~el);
-p=Spherical(992,az,el);
-f1=2.pow(p.x.round(1)/992)*1;
-f2=2.pow(p.y.round(1)/992)*1;
-f3=2.pow(p.x.round(1)/992)*1;*/
-Out.kr(~controlBusx.index, InFeedback.ar(0));
-Out.kr(~controlBusy.index, InFeedback.ar(1));
-Out.kr(~controlBusz.index, InFeedback.ar(2));
-}).add;
-);///line data in routine
-/*(
-{
-~thread=Synth(\coo);
-Routine({loop{
-	~thread.set(\cor,~az.size.rand);
-        (0.01).wait; // frame duration
-};
-}).play;
-}.defer
-);*/*/
-//////l-system thread
-/*({
-var dict = IdentityDictionary[\A -> "AB", \B -> "A"];
-//These are the production rules of the L-system
-var word = "A";
-var string_temp = "";
-var iter = 18;
-//These are diction for the mapping of the alphabet to "artistic" parameters: degrees in a scale, beat occurrence, etc.
-var dictnotes = IdentityDictionary[\A ->0, \B -> 1];  ///amount of 0 in A (array), is the value of Rest(A) for silent events, eg. if A=[0,0,0] then Rest(3)
- ~lseq=[];
-//This iteration generates the system recursively
-iter.do({
-word.asArray.do({|i|string_temp = string_temp ++ dict[i.asSymbol];});
-word = string_temp;string_temp = "";});
-word.postln;
-//Here we map the final system to the parameters as above
-word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
-~lseq.postln;
-~lseq.size;////check for sequence size >= vertices count
-4.do{~lseq=~lseq*~lseq.size.collect{2.rand}};
-}.value);*/
-(
-{
-Routine({loop{
-	~animation.set(\cor,~vertices.rand);
-        (5).wait; // frame duration
-};
-}).play;
-}.defer
-);
-
-~wave=30;
-~llinee1=100;
-~harmm=5;
-~di=300;
-~dista=450;
 ///image plotter
 ({
 var w,u,size=1000,diameter=400,n=0,m=0,k=0,harm=2;
@@ -571,87 +535,79 @@ var point,perspective,dist=600,depth=2,mag=1;
 var rx = 0.0,ry = 0.0,rz = 0.0,rate=0.01;
 var plane,pointx,pointy,x,y,z;
 var d_o=4,lined=25,run = true,tilt=0.15pi;
-var wave=12,sph,ratio1,ratio2,ratio3;
-			~treef.play;
-~verticef=(~countf.[0]*~countf.[1]*~countf.[2]*~countf.[3]*~countf.[4]*~countf.[5]);
+var wave=12,sph,ratio1,ratio2,ratio3,azh,elh,px,py,pz;
+
+
 w = Window("3d Plotter", Rect(400,100,size,size));
 v = UserView(w, w.view.bounds).background_(Color.black);
 v.drawFunc = {
-ratio1=~controlBus_wx.getSynchronous;
-ratio2=~controlBus_wy.getSynchronous;
-ratio3=~controlBus_wz.getSynchronous;
+
 Pen.translate(v.bounds.width/2,v.bounds.height/2);
 ///Pen.scale(0.5, 2);
 ~point_cloud=[];
-				diameter=~di*~harmm.reciprocal;
-				harm=~harmm;
-				d_o=2;
-				wave=~wave;
-				dist=~dista*~harmm.reciprocal;
-//dist=~controlBus_points.getSynchronous;
+diameter=~diameter;//*~harmm.reciprocal;
+harm=~harmm;
+d_o=1;
+wave=~shade;
+dist=~distpers;
 lined=~llinee1;
 n=0;
+
 (~verticef).do {
-az=~azf.[n];el=~elf.[n];
 
-point = Spherical(diameter*mag,az,el).asCartesian;
-point=point.rotateYZ(rx).rotateXZ(ry).rotateXY(rz);
-point=point.rotateYZ(tilt);
+az=~azu.[n];el=~elu.[n];
+mag=(Cartesian(~magxf.[n],~magyf.[n],~magzf.[n]).rho/(2.sqrt));
+sph = Spherical(1,az,el).asCartesian;
 
-az=point.theta;
-el=point.phi;
-x = (harm*cos(el)*cos(az))+(cos(harm*el)*cos(harm*az));
-y = (harm*cos(el)*sin(az))+(cos(harm*el)*sin(harm*az));
-z = (harm*sin(el))+(sin(harm*el));
+azh=sph.theta;
+elh=sph.phi;
+x = (harm*cos(elh)*cos(azh))+(cos(harm*elh)*cos(harm*azh));
+y = (harm*cos(elh)*sin(azh))+(cos(harm*elh)*sin(harm*azh));
+z = (harm*sin(elh))+(sin(harm*elh));
 
-//mag=(Cartesian(~magxf.[n],~magyf.[n],~magzf.[n]).rho/(2.sqrt));
-//mag=(Cartesian(~magqxf.[n],~magyf.[n],~magzf.[n]).rho/(2.sqrt));
-///mag=(Cartesian(~magx.[n],~magy.[n],~magz.[n]).rho/(2.sqrt))+(Cartesian(~qx.[n],~qy.[n],0).rho/(2.sqrt));
-///cloud assignment and distortion
-protaz=(az + r_az).wrap(pi.neg,pi);
-protel=(el + r_el).wrap(0.5pi.neg,0.5pi);
-point=Cartesian(mag*diameter*x,mag*diameter*y,mag*diameter*z);
-/*(
-point.x = point.x.wrap2(400/2.sqrt);
-point.y = point.y.wrap2(400/2.sqrt);
-point.z = point.z.wrap2(400/2.sqrt);
-		)*/
+x = x*diameter*mag;
+y = y*diameter*mag;
+z = z*diameter*mag;
+
+(
+px = x.clip2(~limitc+~frame);
+py = y.clip2(~limitc+~frame);
+pz = z.clip2(~limitc+~frame);
+		);
+
+point=Cartesian(x,y,z);
+(
+point.x = point.x.wrap2(~limitc);
+point.y = point.y.wrap2(~limitc);
+point.z = point.z.wrap2(~limitc);
+		);
 		/*(
-point.x = point.x.clip2(200);
-point.y = point.y.clip2(200);
-point.z = point.z.clip2(200);
+point.x = point.x.clip2(~limitc);
+point.y = point.y.clip2(~limitc);
+point.z = point.z.clip2(~limitc);
 		)*/
 					/*(
-point.x = point.x.fold2(250);
-point.y = point.y.fold2(250);
-point.z = point.z.fold2(250);
+point.x = point.x.fold2(~limitc);
+point.y = point.y.fold2(~limitc);
+point.z = point.z.fold2(~limitc);
 		)*/
 
-///////use fixed rotations for vanishing points and animated for contnious frame rotation
-// X rotation
-/*point = Cartesian(point.x,point.y,point.z).rotateYZ(rx);
-// Y rotation
-point = Cartesian(point.x,point.y,point.z).rotateXZ(ry);
-// Z rotation
-point = Cartesian(point.x,point.y,point.z).rotateXY(rz);*/
+point = point.rotateYZ(rx); point = point.rotateXZ(ry); point = point.rotateXY(rz);
 //////remaping
-plane=Complex(point.x,point.y);
-cp=Polar(point.z,plane.theta);
+//plane=Complex(point.x,point.y);
+//cp=Polar(point.z,plane.theta);
 cp=point;
 ////////////////////perspective
-perspective = dist / (dist + point.z + (dist/depth));///remove (dist/2) for no depth
+perspective = dist / (dist + point.z + (dist/2));
 ///color
 Pen.fillColor = Color.white.alpha_(perspective.clip(0.1,1.0));
 Pen.strokeColor = Color.white.alpha_(perspective.clip(0.1,1.0));
-//Pen.strokeColor = Color.new(0.999.rand,0.999.rand,0.999.rand,(perspective.clip(0.1,1.0)));
 //////points
 pointx=cp.x*perspective;
 pointy=cp.y*perspective;
 ~point_cloud=~point_cloud++Point(pointx,pointy);
 ///point_oval
 Pen.addOval(Rect.aboutPoint(Point(pointx,pointy),d_o*perspective,d_o*perspective));
-///rectangle
-//Pen.addRect(Rect.aboutPoint(Point(pointx,pointy),d_o*perspective*,d_o*perspective*));
 Pen.fillStroke;
 n=n+1;
 };
@@ -665,17 +621,6 @@ var m = n + 1;
 Pen.width = perspective.clip(2,1.0)*d_o/wave;
 Pen.fillColor = Color.white.alpha_(perspective.clip(0.1,1.0));
 Pen.strokeColor = Color.white.alpha_(perspective.clip(0.1,1.0));
-//Pen.strokeColor = Color.new(0.999.rand,0.999.rand,0.999.rand,(perspective.clip(0.1,1.0)));
-//Pen.strokeColor = Color.new(0.999.rand,0.999.rand,0.999.rand,(perspective.clip(0.1,1.0)));
-///sequence exclusion
-//compound exclusion, based on sequence and point distance
-//if( (~lseq.[k] == 0) and: { ~point_cloud[n].dist(~point_cloud[m]) < (diameter/lined) }) {Pen.line( ~point_cloud.[n], ~point_cloud.[m])};
-//automaton threading
-/*~sseq=((~controlBusx.getSynchronous*
-~controlBusz.getSynchronous)+(~controlBusy.getSynchronous*
-~controlBusz.getSynchronous)).round(rate);*/
-/*(if( (~sseq == 0) and: { ~point_cloud[n].dist(~point_cloud[m]) < (diameter/lined) })
-{Pen.line( ~point_cloud.[n], ~point_cloud.[m])};);*/
 (if(~point_cloud[n].dist(~point_cloud[m]) < lined)
 {Pen.line( ~point_cloud.[n], ~point_cloud.[m])};);
 Pen.fillStroke;
@@ -685,16 +630,14 @@ m=m+1;k=k+1
 };
 )
 };
-{ while { run } {v.background_(Color.black); v.refresh; (0.01).wait } }.fork(AppClock);
+{ while { run } {v.background_(Color.black); v.refresh; (~frames).wait } }.fork(AppClock);
 w.front;
 Routine({
 inf.do {
-r_az = r_az + 0;
-r_el = r_el + 0;
 (
-rx=(rx +0.001).wrap(0,2pi);
-ry=(ry +0.001).wrap(0,2pi);
-rz=(rz +0.001).wrap(0,2pi);
+rx=(rx +0.01).wrap(0,2pi);
+ry=(ry +0.01).wrap(0,2pi);
+rz=(rz +0.01).wrap(0,2pi);
 );
 /*(
 rx=(rx +~rotationx).wrap(0,2pi);
@@ -702,254 +645,10 @@ ry=(ry +~rotationy).wrap(0,2pi);
 rz=(rz +~rotationz).wrap(0,2pi);
 )*/
 {v.refresh}.defer;
-(0.01).wait;
+(~frames).wait;
 };
 }).play;
 }.defer)
 }); Tdef(\drone).play;
 }
 )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/////space symmetric, for music keys, timbre or vbap
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////spaces
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////tetrahedron
-(
-~azimuth=[45.degrad,135.neg.degrad,45.neg.degrad,135.degrad];
-~elevation=[35.264390.neg.degrad,35.264390.neg.degrad,35.264390.degrad,35.264390.degrad];
-);
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////cube
-(
-~azimuth=[45.degrad,135.degrad,45.neg.degrad,135.neg.degrad,45.degrad,135.degrad,45.neg.degrad,135.neg.degrad];
-~elevation=[35.264390.neg.degrad,35.264390.neg.degrad,35.264390.neg.degrad,35.264390.neg.degrad,35.264390.degrad,35.264390.degrad,35.264390.degrad,35.264390.degrad];
-)
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////octahedron
-(
-~azimuth=[0.degrad,0.degrad,90.degrad,180.degrad,90.neg.degrad,0.degrad];
-~elevation=[90.neg.degrad,0.degrad,0.degrad,0.degrad,0.degrad,90.degrad];
-)
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////icosahedron
-(
-~azimuth=[90.degrad,90.neg.degrad,0.degrad,180.degrad,58.28.degrad,121.72.degrad,121.72.neg.degrad,58.neg.degrad,90.degrad,90.neg.degrad,0.degrad,180.degrad];
-~elevation=[58.28.neg.degrad,58.28.neg.degrad,31.72.neg.degrad,31.72.neg.degrad,0.degrad,0.degrad,0.degrad,0.degrad,58.28.degrad,58.28.degrad,31.72.degrad,31.72.degrad];
-)
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////dodecahedron
-(
-~azimuth=[45.degrad,135.neg.degrad,135.degrad,45.neg.degrad,90.degrad,90.neg.degrad,0.degrad,180.degrad,45.degrad,135.neg.degrad,135.degrad,45.neg.degrad,90.degrad,
-	90.neg.degrad,69.09.degrad,110.91.degrad,110.91.neg.degrad,69.09.neg.degrad,0.degrad,180.degrad];
-
-~elevation=[35.26.neg.degrad,35.26.neg.degrad,35.26.neg.degrad,35.26.neg.degrad,69.09.neg.degrad,69.09.neg.degrad,20.91.neg.degrad,20.91.neg.degrad,
-	35.26.degrad,35.26.degrad,35.26.degrad,35.26.degrad,69.09.degrad,69.09.degrad,0.degrad,0.degrad,0.degrad,0.degrad,20.91.degrad,20.91.degrad]
-)
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Rhombic dodecahedron
-(
-~azimuth=[0.degrad,45.degrad,135.neg.degrad,135.degrad,45.neg.degrad,0.degrad,180.degrad,90.degrad,90.neg.degrad,0.degrad,
-	45.degrad,135.neg.degrad,135.degrad,45.neg.degrad];
-~elevation=[90.neg.degrad,35.264390.neg.degrad,35.264390.neg.degrad,35.264390.neg.degrad,35.264390.neg.degrad,0.degrad
-	,0.degrad,0.degrad,0.degrad,90.degrad,35.264390.degrad,35.264390.degrad,35.264390.degrad,35.264390.degrad];
-)
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////cuboctahedron
-(
-~azimuth=[0.degrad,90.degrad,180.degrad,90.neg.degrad,45.degrad,135.degrad,45.neg.degrad,135.neg.degrad,
-	0.degrad,90.degrad,180.degrad,90.neg.degrad];
-~elevation=[45.neg.degrad,45.neg.degrad,45.neg.degrad,45.neg.degrad,0.degrad,0.degrad,0.degrad,0.degrad,
-	45.degrad,45.degrad,45.degrad,45.degrad];
-)
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////Rhombic Triacontahedron
-(
-~azimuth=[0.degrad,0.degrad,72.degrad,144.degrad,144.neg.degrad,72.neg.degrad,36.degrad,108.degrad,180.degrad,108.neg.degrad,36.neg.degrad,
-	0.degrad,72.degrad,144.degrad,144.neg.degrad,72.neg.degrad,36.degrad,108.degrad,180.degrad,108.neg.degrad,36.neg.degrad,
-	0.degrad,72.degrad,144.degrad,144.neg.degrad,72.neg.degrad,36.degrad,108.degrad,180.degrad,108.neg.degrad,36.neg.degrad,0.degrad];
-
-~elevation=[90.neg.degrad,52.6.neg.degrad,52.6.neg.degrad,52.6.neg.degrad,52.6.neg.degrad,52.6.neg.degrad,26.6.neg.degrad,26.6.neg.degrad,26.6.neg.degrad,26.6.neg.degrad,26.6.neg.degrad,10.8.neg.degrad,10.8.neg.degrad,10.8.neg.degrad,10.8.neg.degrad,10.8.neg.degrad,52.6.degrad,52.6.degrad,52.6.degrad,52.6.degrad,52.6.degrad,26.6.degrad,26.6.degrad,26.6.degrad,26.6.degrad,26.6.degrad,10.8.degrad,10.8.degrad,10.8.degrad,10.8.degrad,10.8.degrad,90.degrad];
-
-)
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////icosidodecahedron
-(
-~azimuth=[18.degrad,90.degrad,162.degrad,126.neg.degrad,54.neg.degrad,54.degrad,126.degrad,162.neg.degrad,90.neg.degrad,18.neg.degrad,
-	0.degrad,36.degrad,72.degrad,108.degrad,144.degrad,180.degrad,144.neg.degrad,108.neg.degrad,72.neg.degrad,36.neg.degrad,
-	54.degrad,126.degrad,162.neg.degrad,90.neg.degrad,18.neg.degrad,18.degrad,90.degrad,162.degrad,126.neg.degrad,54.neg.degrad];
-
-~elevation=[58.283.degrad,58.283.degrad,58.283.degrad,58.283.degrad,58.283.degrad,58.283.neg.degrad,58.283.neg.degrad,58.283.neg.degrad,58.283.neg.degrad,58.283.neg.degrad,0.degrad,0.degrad,0.degrad,0.degrad,0.degrad,0.degrad,0.degrad,0.degrad,0.degrad,0.degrad,
-37.717.degrad,37.717.degrad,37.717.degrad,37.717.degrad,37.717.degrad,37.717.neg.degrad,37.717.neg.degrad,37.717.neg.degrad,37.717.neg.degrad,37.717.neg.degrad];
-)*/

@@ -471,17 +471,24 @@ var nn=1.neg;
 (
 {
 var nn=1.neg;
-~scale5=~note.collect{nn=nn+1;Scale.phrygian.performDegreeToKey(nn,12)};
+~scale3=~note.collect{nn=nn+1;Scale.ionian.performDegreeToKey(nn,12)};
+}.value;
+);
+
+(
+{
+var nn=1.neg;
+~scale4=~note.collect{nn=nn+1;Scale.phrygian.performDegreeToKey(nn,12)};
 }.value;
 );
 (
 {
 var nn=1.neg,scale1,scale2;
-~scale3=~note.collect{nn=nn+1;Scale.minorPentatonic.performDegreeToKey(nn,12)};
+~scale5=~note.collect{nn=nn+1;Scale.minorPentatonic.performDegreeToKey(nn,12)};
 nn=1.neg;
-~scale4=~note.collect{nn=nn+1;Scale.majorPentatonic.performDegreeToKey(nn,12)};
+~scale6=~note.collect{nn=nn+1;Scale.majorPentatonic.performDegreeToKey(nn,12)};
 //~scale10=[scale1,scale2];
-~scale=[~scale2,~scale2,~scale3,~scale4,~scale5];
+~scale=[~scale1,~scale2,~scale3,~scale4,~scale5,~scale6];
 }.value;
 );
 );
@@ -937,10 +944,10 @@ times1 =Array.fill(peak1, attack / peak1) ++ Array.fill(signal1.size - peak1 - 1
 envb = Env(rip1.asArray, times1);
 envenv = EnvGen.ar(envb,gate:Trig.kr(LFSaw.kr(erate),0.01));*/
 envenv=1;
-sigx=FreeVerb.ar(sigx,revm1+(mix/10),room);
-sigy=FreeVerb.ar(sigy,revm1+(mix/10),room);
-sigx1=FreeVerb.ar(sigx1,revm2+(mix/10),room);
-sigy1=FreeVerb.ar(sigy1,revm2+(mix/10),room);
+synthx=FreeVerb.ar(synthx,revm1+(mix/10),room);
+synthy=FreeVerb.ar(synthy,revm1+(mix/10),room);
+synthx1=FreeVerb.ar(synthx1,revm2+(mix/10),room);
+synthy1=FreeVerb.ar(synthy1,revm2+(mix/10),room);
 
 sigx=Limiter.ar(LPF.ar(HPF.ar(synthx*envenv,lowend),18000),lim);
 sigy=Limiter.ar(LPF.ar(HPF.ar(synthy*envenv, lowend),18000),lim);
@@ -1155,7 +1162,7 @@ Pmono( \synth,
 \lowend,Pfunc { ~lowend },
 \room,Pfunc { ~room },
 \gain,Pfunc { ~gain },
-\au,Pseq([1,1],inf),
+\au,Pseq([2],inf),
 \sc, Pfunc { ~sc },
 \ssc, Pfunc{~ssc},
 \c, Pfunc { ~c },
