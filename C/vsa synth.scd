@@ -66,7 +66,7 @@ var silver_r=(1+2.sqrt), g=((1+5.sqrt)/2), azimuth, elevation;
 }.value;
 );
 ~timbr_dur=(1/16);
-~octaves=3;
+~octaves=2;
 ~vertices = 32*32;
 ~count=[1,1,2,4,4,4];
 ~set=(~count.[0]*~count.[1]*~count.[2]*~count.[3]*~count.[4]*~count.[5]);
@@ -518,10 +518,10 @@ SynthDef.new(\synth,{
 
 arg gain=1,lowend=20,s_size=1,room=1,drive=0,au=0,sb=0,mag1=1,mag2=1,elosc=1,
 erate=1,azrot=0,elrot=0,azrot1=1,elrot1=1,az1=0,el1=0,
-c=0,timbr=1,az=0,el=0,dicay=16,attack=2,sc=10,ssc=5,mix=0,rect=16,s1,s2,s3,s4,
+c=0,timbr=1,az=0,el=0,dicay=16,attack=2,sc=10,ssc=5,mix=0,rect=4,s1,s2,s3,s4,
 busArray = #[0,1,2,3,4,5,6,7],dist=1,harm=1,rx=0,ry=0,rz=0,mrange=1,lim=1,hold=4;
 
-var fund,fu=32,n=0,mod_x,mod_y,mod_z,phasex,phasey,phasez,low=0,tremolo=32;
+var fund,fu=8,n=0,mod_x,mod_y,mod_z,phasex,phasey,phasez,low=0,tremolo=32;
 var freq1,freq2,freq3,amp1,amp2,amp3,sig1,sig2,sig3,heavy,pen;
 var b_x,b_y,b_z,polytope,env,expansion,sph1,sph2,envf,pan,pan11,pan22,pan33,pan44;
 var g_ch1,g_ch2,g_ch3,g_ch4,mp,mps,mpf,x,y,z,mag_x,mag_y,mag_z,cm,cm1,cm2;
@@ -534,7 +534,9 @@ var mp_x1,mp_y1,mp_z1,mps_x1,mps_y1,mps_z1,mpf_x1,mpf_y1,mpf_z1;
 var b_x1,b_y1,b_z1,s_x1,s_y1,s_z1,freq11,freq22,freq33,amp11,amp22;
 var amp33,sig11,sig22,sig33,phasex1,phasey1,phasez1,envenv,p1,p2,p3,wt,perspective1;
 var c11,c22,c33,siga,sigb,mag_x1,mag_y1,mag_z1,decay=4,synthx1,synthy1,sigx1,sigy1;
-var ths,phs,ths1,phs1,azpls,elpls,azpls1,elpls1,azpl,elpl,azpl1,elpl1,c3a,c3b,c33a,c33b;
+var ths,phs,ths1,phs1,azpls,elpls,azpls1,elpls1,azpl,elpl,azpl1,elpl1,c1a,c2a,c3a,c11a,c22a,c33a;
+var freq1fm,freq2fm,freq3fm,amp1fm,amp2fm,amp3fm,freq11fm,freq22fm,freq33fm,amp11fm,amp22fm,amp33fm;
+var c1ar,c2ar,c3ar,c11ar,c22ar,c33ar,c1br,c2br,c3br,c11br,c22br,c33br;
 
 
 ///fund
@@ -542,7 +544,7 @@ expansion=2.pow(c.lag(0.01)/16256);
 fund=(fu*(9/8))*expansion;
 heavy=2.pow(drive.lag(0.01)/16256);
 gain=gain*harm.reciprocal;
-gain=gain*10;
+gain=gain*100;
 
 //////////pbind stack env
 /*signal = Signal.sineFill(~signalSizee, ~arraye, [0]);
@@ -692,19 +694,36 @@ s_z1=2.pow(Select.kr(mps_z1.round(1).abs,key).asInteger /12);
 
 freq1=(fund)*b_x*s_x;
 freq2=(fund)*b_y*s_y;
-freq3=((fund)*b_z*s_z)/rect;
+freq3=(fund)*b_z*s_z;
 
 amp1=b_x.reciprocal*expansion.reciprocal*s_x.reciprocal;
 amp2=b_y.reciprocal*expansion.reciprocal*s_y.reciprocal;
-amp3=freq3;
+amp3=b_z.reciprocal*expansion.reciprocal*s_z.reciprocal;
 
 freq11=(fund)*b_x1*s_x1;
 freq22=(fund)*b_y1*s_y1;
-freq33=((fund)*b_z1*s_z1)/rect;
+freq33=(fund)*b_z1*s_z1;
 
 amp11=b_x1.reciprocal*expansion.reciprocal*s_x1.reciprocal;
 amp22=b_y1.reciprocal*expansion.reciprocal*s_y1.reciprocal;
-amp33=freq33;
+amp33=b_z1.reciprocal*expansion.reciprocal*s_z1.reciprocal;
+
+//fm
+freq1fm=((fund)*b_x*s_x)/rect;
+freq2fm=((fund)*b_y*s_y)/rect;
+freq3fm=((fund)*b_z*s_z)/rect;
+
+amp1fm=freq1fm*0.1;
+amp2fm=freq2fm*0.1;
+amp3fm=freq3fm*0.1;
+
+freq11fm=((fund)*b_x1*s_x1)/rect;
+freq22fm=((fund)*b_y1*s_y1)/rect;
+freq33fm=((fund)*b_z1*s_z1)/rect;
+
+amp11fm=freq11fm*0.1;
+amp22fm=freq22fm*0.1;
+amp33fm=freq33fm*0.1;
 
 ///other phase sets
 //phasex=(Complex(1,mod_x).theta*2);
@@ -722,47 +741,61 @@ phasey1=mpf_y1;
 phasez1=mpf_z1;
 
 //osc
-/*c3=BPF.ar((Osc.ar(~wt.bufnum,freq3,phase:phasez,mul:1200).abs*
-SinOsc.ar(freq3,phase:phasez)),freq3,heavy,amp3);
-c33=BPF.ar((Osc.ar(~wt.bufnum,freq33,phase:phasez1,mul:1200).abs*
-SinOsc.ar(freq33,phase:phasez1)),freq33,heavy,amp33);*///fm
+c1a=(SinOsc.ar(freq1fm,phase:phasex,mul:amp1fm));
+c2a=(SinOsc.ar(freq2fm,phase:phasey,mul:amp2fm));
+c3a=(SinOsc.ar(freq3fm,phase:phasez,mul:amp3fm));
 
-c3=0;
-c33=0;
+c11a=(SinOsc.ar(freq11fm,phase:phasex,mul:amp11fm));
+c22a=(SinOsc.ar(freq22fm,phase:phasey,mul:amp22fm));
+c33a=(SinOsc.ar(freq33fm,phase:phasez,mul:amp33fm));
 
-c1=BPF.ar((Osc.ar(~wt.bufnum,freq1+c3,phase:phasex,mul:1200).abs*
-SinOsc.ar(freq1+c3,phase:phasex)),freq1+c3,heavy,amp1);
-c2=BPF.ar((Osc.ar(~wt.bufnum,freq2+c3,phase:phasey,mul:1200).abs*
-SinOsc.ar(freq2+c3,phase:phasey)),freq2+c3,heavy,amp2);
+//c1a=0;c2a=0;c3a=0;c11a=0;c22a=0;c33a=0;
 
-c11=BPF.ar((Osc.ar(~wt.bufnum,freq11+c33,phase:phasex1,mul:1200).abs*
-SinOsc.ar(freq11+c33,phase:phasex1)),freq11+c33,heavy,amp11);
-c22=BPF.ar((Osc.ar(~wt.bufnum,freq22+c33,phase:phasey1,mul:1200).abs*
-SinOsc.ar(freq22+c33,phase:phasey1)),freq22+c33,heavy,amp22);
+c1=BPF.ar((Osc.ar(~wt.bufnum,freq1+c1a,phase:phasex,mul:1200).abs*
+SinOsc.ar(freq1+c1a,phase:phasex)),freq1+c1a,heavy,amp1);
+c2=BPF.ar((Osc.ar(~wt.bufnum,freq2+c2a,phase:phasey,mul:1200).abs*
+SinOsc.ar(freq2+c2a,phase:phasey)),freq2+c2a,heavy,amp2);
+//c3=BPF.ar((Osc.ar(~wt.bufnum,freq3+c3a,phase:phasez,mul:1200).abs*
+//SinOsc.ar(freq3+c3a,phase:phasez)),freq3+c3a,heavy,amp3);
 
-////rectifier
-/*c3a=(SinOsc.ar(freq3*(rect*2),phase:phasez,mul:amp3));///fm
-c3b=(SinOsc.ar(freq3*(rect),phase:phasez,mul:amp3));
-
-c33a=(SinOsc.ar(freq33*(rect*2),phase:phasez1,mul:amp33));
-c33b=(SinOsc.ar(freq33*(rect),phase:phasez1,mul:amp33));*/
-
-c3a=0;
-c3b=0;
-
-c33a=0;
-c33b=0;
-
-sig1=((((SinOsc.ar(freq1*(rect*2)+c3a,phase:phasex,mul:amp1)).abs+(amp1))*
-(SinOsc.ar(freq1*(rect)+c3b,phase:phasex,mul:amp1))).abs+(amp1))*c1*5;
-sig2=((((SinOsc.ar(freq2*(rect*2)+c3a,phase:phasey,mul:amp2)).abs+(amp2))*
-(SinOsc.ar(freq2*(rect)+c3b,phase:phasey,mul:amp2))).abs+(amp2))*c2*5;
+c11=BPF.ar((Osc.ar(~wt.bufnum,freq11+c11a,phase:phasex1,mul:1200).abs*
+SinOsc.ar(freq11+c11a,phase:phasex1)),freq11+c11a,heavy,amp11);
+c22=BPF.ar((Osc.ar(~wt.bufnum,freq22+c22a,phase:phasey1,mul:1200).abs*
+SinOsc.ar(freq22+c22a,phase:phasey1)),freq22+c22a,heavy,amp22);
+//c33=BPF.ar((Osc.ar(~wt.bufnum,freq33+c33a,phase:phasez1,mul:1200).abs*
+//SinOsc.ar(freq33+c33a,phase:phasez)),freq33+c33a,heavy,amp33);
 
 
-sig11=((((SinOsc.ar(freq11*(rect*2)+c33a,phase:phasex1,mul:amp11)).abs+(amp11))*
-(SinOsc.ar(freq11*(rect)+c33b,phase:phasex1,mul:amp11))).abs+(amp11))*c11*5;
-sig22=((((SinOsc.ar(freq22*(rect*2)+c33a,phase:phasey1,mul:amp22)).abs+(amp22))*
-(SinOsc.ar(freq22*(rect)+c33b,phase:phasey1,mul:amp22))).abs+(amp22))*c22*5;
+//////rectifier
+c1ar=(SinOsc.ar(freq1fm*(rect*2),phase:phasex,mul:amp1fm*(rect*2)));
+c2ar=(SinOsc.ar(freq2fm*(rect*2),phase:phasey,mul:amp1fm*(rect*2)));
+//c3ar=(SinOsc.ar(freq3fm*(rect*2),phase:phasez,mul:amp1fm*(rect*2)));
+c1br=(SinOsc.ar(freq1fm*(rect),phase:phasex,mul:amp1fm*(rect)));
+c2br=(SinOsc.ar(freq2fm*(rect),phase:phasey,mul:amp2fm*(rect)));
+//c3br=(SinOsc.ar(freq3fm*(rect),phase:phasez,mul:amp3fm*(rect)));
+
+c11ar=(SinOsc.ar(freq11fm*(rect*2),phase:phasex1,mul:amp11fm*(rect*2)));
+c22ar=(SinOsc.ar(freq22fm*(rect*2),phase:phasey1,mul:amp22fm*(rect*2)));
+//c33ar=(SinOsc.ar(freq33fm*(rect*2),phase:phasez1,mul:amp33fm*(rect*2)));
+c11br=(SinOsc.ar(freq11fm*(rect),phase:phasex1,mul:amp11fm*(rect)));
+c22br=(SinOsc.ar(freq22fm*(rect),phase:phasey1,mul:amp22fm*(rect)));
+//c33br=(SinOsc.ar(freq33fm*(rect),phase:phasez1,mul:amp33fm*(rect)));
+
+//c1ar=0;c2ar=0;c3ar=0;c11ar=0;c22ar=0;c33ar=0;c1br=0;c2br=0;c3br=0;c11br=0;c22br=0;c33br=0;
+
+sig1=((((SinOsc.ar(freq1*(rect*2)+c1ar,phase:phasex,mul:amp1)).abs+(amp1))*
+(SinOsc.ar(freq1*(rect)+c1br,phase:phasex,mul:amp1))).abs+(amp1))*c1*5;
+sig2=((((SinOsc.ar(freq2*(rect*2)+c2ar,phase:phasey,mul:amp2)).abs+(amp2))*
+(SinOsc.ar(freq2*(rect)+c2br,phase:phasey,mul:amp2))).abs+(amp2))*c2*5;
+//sig3=((((SinOsc.ar(freq3*(rect*2)+c3ar,phase:phasez,mul:amp3)).abs+(amp3))*
+//(SinOsc.ar(freq3*(rect)+c3br,phase:phasez,mul:amp3))).abs+(amp3))*c3*5;
+
+sig11=((((SinOsc.ar(freq11*(rect*2)+c11ar,phase:phasex1,mul:amp11)).abs+(amp11))*
+(SinOsc.ar(freq11*(rect)+c11br,phase:phasex1,mul:amp11))).abs+(amp11))*c11*5;
+sig22=((((SinOsc.ar(freq22*(rect*2)+c22ar,phase:phasey1,mul:amp22)).abs+(amp22))*
+(SinOsc.ar(freq22*(rect)+c22br,phase:phasey1,mul:amp22))).abs+(amp22))*c22*5;
+//sig33=((((SinOsc.ar(freq33*(rect*2)+c33ar,phase:phasez1,mul:amp33)).abs+(amp33))*
+//(SinOsc.ar(freq33*(rect)+c33br,phase:phasez1,mul:amp33))).abs+(amp33))*c33*5;
 
 /*sig1=c1;
 sig2=c2;
@@ -898,7 +931,7 @@ synthy1=(synthy1).fold2(mrange*mdistance);
 //synthx=(synthx*gain.linli.n(0,1,0.1,2)).fold2((mrange*mdistance));
 //synthy=(synthy*gain.linlin(0,1,0.1,2)).fold2(mrange*mdistance);
 
-///vca env
+///vca env///dont burn out, vca and env can ba applied via eurorack modular external
 /*signal1 = Signal.sineFill(~signalSizee, ~arraye, [0]);
 signal1 = signal1.rotate(signal1.size div: 2);
 peak1 = signal1.abs.maxIndex.max(1);
