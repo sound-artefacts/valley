@@ -68,7 +68,7 @@ var silver_r=(1+2.sqrt), g=((1+5.sqrt)/2), azimuth, elevation;
 }.value;
 );
 ~timbr_dur=(1/16);
-~octaves=2;
+~octaves=3;
 ~vertices = 32*32;
 ~count=[1,1,2,4,4,4];
 ~set=(~count.[0]*~count.[1]*~count.[2]*~count.[3]*~count.[4]*~count.[5]);
@@ -817,11 +817,11 @@ sig2=sig2*mp_y.sign*perspective*env;
 sig11=sig11*mp_x1.sign*perspective1*env;
 sig22=sig22*mp_y1.sign*perspective1*env;
 
-sig1=sig1*mp_x.sign;
-sig2=sig2*mp_y.sign;
+//sig1=sig1*mp_x.sign;
+//sig2=sig2*mp_y.sign;
 
-sig11=sig11*mp_x1.sign;
-sig22=sig22*mp_y1.sign;
+//sig11=sig11*mp_x1.sign;
+//sig22=sig22*mp_y1.sign;
 
 ///spectral compensation
 //sig1=BRF.ar(c1,freq1/2,heavy);
