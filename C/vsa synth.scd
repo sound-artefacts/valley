@@ -419,6 +419,8 @@ n = n + 1;
 }.defer;
 );
 0.1.wait;
+///tensor rotation
+		~erate=1;
 (
 {var sph,rot;
 Routine({loop{
@@ -429,9 +431,9 @@ Routine({loop{
 );
 (~timbr_dur).wait; // frame duration
 };
-}).play;
+}).play(~clock);
 }.defer
-);
+);0.1.wait;
 ////envelope sig
 		(
 ~ne=1.neg;~arraye=56.collect{~ne=~ne+1;2.pow(~ne/56)};
@@ -534,10 +536,15 @@ var amp33,sig11,sig22,sig33,phasex1,phasey1,phasez1,envenv,p1,p2,p3,wt,perspecti
 var c11,c22,c33,siga,sigb,mag_x1,mag_y1,mag_z1,decay=4,synthx1,synthy1,sigx1,sigy1;
 var ths,phs,ths1,phs1,azpls,elpls,azpls1,elpls1,azpl,elpl,azpl1,elpl1,c3a,c3b,c33a,c33b;
 
-gain=gain*harm.reciprocal;
-gain=gain*25;
 
-///pbind stack env
+///fund
+expansion=2.pow(c.lag(0.01)/16256);
+fund=(fu*(9/8))*expansion;
+heavy=2.pow(drive.lag(0.01)/16256);
+gain=gain*harm.reciprocal;
+gain=gain*10;
+
+//////////pbind stack env
 /*signal = Signal.sineFill(~signalSizee, ~arraye, [0]);
 signal = signal.rotate(signal.size div: 2);
 peak = signal.abs.maxIndex.max(1);
@@ -549,33 +556,7 @@ times =Array.fill(signal.size - peak - 1, hold / (signal.size - peak - 1));
 enva = Env(rip.asArray, times);
 env = EnvGen.ar(enva,levelScale:gain,doneAction:2);*/
 env=gain;
-
-///fund
-expansion=2.pow(c.lag(0.01)/16256);
-fund=(fu*(9/8))*expansion;
-heavy=2.pow(drive.lag(0.01)/16256);
-
-///pan
-select=Spherical(~vertices,az,el);
-//rrr=Spherical(pi,0.5pi,0.125pi);
-rrr=Spherical(pi,Select.kr(select.x.abs.round(1),~azth),Select.kr(select.x.abs.round(1),~elth));
-r1 = SinOsc.kr(rx.lag(0.01),rrr.x,0.57735026918963);
-r2 = SinOsc.kr(ry.lag(0.01),rrr.y,0.57735026918963);
-r3 = SinOsc.kr(rz.lag(0.01),rrr.z,0.57735026918963);
-//pan=LFNoise1.ar(elosc,pi);
-pan=((r1+r2)*r3)/mix.reciprocal/2;
-pan=pan.abs;
-pan1=SinOsc.ar(pan,~az.[0]).range(pi.neg,pi).lag(0.01);
-pan2=SinOsc.ar(pan,~az.[1]).range(pi.neg,pi).lag(0.01);
-pan3=SinOsc.ar(pan,~az.[2]).range(pi.neg,pi).lag(0.01);
-pan4=SinOsc.ar(pan,~az.[3]).range(pi.neg,pi).lag(0.01);
-pan11=SinOsc.ar(pan,~el.[0]).range(0.5pi.neg,0.5pi).lag(0.01);
-pan22=SinOsc.ar(pan,~el.[1]).range(0.5pi.neg,0.5pi).lag(0.01);
-pan33=SinOsc.ar(pan,~el.[2]).range(0.5pi.neg,0.5pi).lag(0.01);
-pan44=SinOsc.ar(pan,~el.[3]).range(0.5pi.neg,0.5pi).lag(0.01);
-
-
-//osc data
+//osc data pbind
 
 //aaz=atan2(r1,r2);
 //eel=atan2(r3, hypot(r1,r2));
@@ -599,10 +580,10 @@ elpls=In.kr(~controlBus_re1.index).lag(0.01);
 azpls1=In.kr(~controlBus_ra1.index).lag(0.01);
 elpls1=In.kr(~controlBus_re2.index).lag(0.01);*/
 
-azpl=azrot.lag(0.01)/10;
-elpl=elrot.lag(0.01)/10;
-azpl1=azrot1.lag(0.01)/10;
-elpl1=elrot1.lag(0.01)/10;
+/*azpl=azrot.lag(0.01)/rect;
+elpl=elrot.lag(0.01)/rect;
+azpl1=azrot1.lag(0.01)/rect;
+elpl1=elrot1.lag(0.01)/rect;
 azpls=azrot.lag(0.01);
 elpls=elrot.lag(0.01);
 azpls1=azrot1.lag(0.01);
@@ -618,7 +599,20 @@ ths=(az+azpls).wrap(pi.neg,pi);
 phs=(el+elpls).wrap(0.5pi.neg,0.5pi);
 
 ths1=(az1+azpls1).wrap(pi.neg,pi);
-phs1=(el1+elpls1).wrap(0.5pi.neg,0.5pi);
+phs1=(el1+elpls1).wrap(0.5pi.neg,0.5pi);*/
+
+/////osc data
+th=(az).wrap(pi.neg,pi);
+ph=(el).wrap(0.5pi.neg,0.5pi);
+
+th1=(az1).wrap(pi.neg,pi);
+ph1=(el1).wrap(0.5pi.neg,0.5pi);
+
+ths=(az).wrap(pi.neg,pi);
+phs=(el).wrap(0.5pi.neg,0.5pi);
+
+ths1=(az1).wrap(pi.neg,pi);
+phs1=(el1).wrap(0.5pi.neg,0.5pi);
 
 ///cardioid
 x = (harm*cos(ph)*cos(th))+(cos(harm*ph)*cos(harm*th));
@@ -728,30 +722,36 @@ phasey1=mpf_y1;
 phasez1=mpf_z1;
 
 //osc
-c3=BPF.ar((Osc.ar(~wt.bufnum,freq3,phase:phasez,mul:1200).abs*
+/*c3=BPF.ar((Osc.ar(~wt.bufnum,freq3,phase:phasez,mul:1200).abs*
 SinOsc.ar(freq3,phase:phasez)),freq3,heavy,amp3);
 c33=BPF.ar((Osc.ar(~wt.bufnum,freq33,phase:phasez1,mul:1200).abs*
-SinOsc.ar(freq33,phase:phasez1)),freq33,heavy,amp33);
+SinOsc.ar(freq33,phase:phasez1)),freq33,heavy,amp33);*///fm
 
 c3=0;
 c33=0;
 
 c1=BPF.ar((Osc.ar(~wt.bufnum,freq1+c3,phase:phasex,mul:1200).abs*
-SinOsc.ar(freq1+c3,phase:phasex)),freq1,heavy,amp1);
-c2=BPF.ar((Osc.ar(~wt.bufnum,freq2,phase:phasey,mul:1200).abs*
-SinOsc.ar(freq2+c3,phase:phasey)),freq2,heavy,amp2);
+SinOsc.ar(freq1+c3,phase:phasex)),freq1+c3,heavy,amp1);
+c2=BPF.ar((Osc.ar(~wt.bufnum,freq2+c3,phase:phasey,mul:1200).abs*
+SinOsc.ar(freq2+c3,phase:phasey)),freq2+c3,heavy,amp2);
 
 c11=BPF.ar((Osc.ar(~wt.bufnum,freq11+c33,phase:phasex1,mul:1200).abs*
-SinOsc.ar(freq11+c33,phase:phasex1)),freq11,heavy,amp11);
+SinOsc.ar(freq11+c33,phase:phasex1)),freq11+c33,heavy,amp11);
 c22=BPF.ar((Osc.ar(~wt.bufnum,freq22+c33,phase:phasey1,mul:1200).abs*
-SinOsc.ar(freq22+c33,phase:phasey1)),freq22,heavy,amp22);
+SinOsc.ar(freq22+c33,phase:phasey1)),freq22+c33,heavy,amp22);
 
 ////rectifier
-/*c3a=(SinOsc.ar(freq3*(rect*2),phase:phasez,mul:amp3));
+/*c3a=(SinOsc.ar(freq3*(rect*2),phase:phasez,mul:amp3));///fm
 c3b=(SinOsc.ar(freq3*(rect),phase:phasez,mul:amp3));
 
 c33a=(SinOsc.ar(freq33*(rect*2),phase:phasez1,mul:amp33));
-c33b=(SinOsc.ar(freq33*(rect),phase:phasez1,mul:amp33));
+c33b=(SinOsc.ar(freq33*(rect),phase:phasez1,mul:amp33));*/
+
+c3a=0;
+c3b=0;
+
+c33a=0;
+c33b=0;
 
 sig1=((((SinOsc.ar(freq1*(rect*2)+c3a,phase:phasex,mul:amp1)).abs+(amp1))*
 (SinOsc.ar(freq1*(rect)+c3b,phase:phasex,mul:amp1))).abs+(amp1))*c1*5;
@@ -762,12 +762,12 @@ sig2=((((SinOsc.ar(freq2*(rect*2)+c3a,phase:phasey,mul:amp2)).abs+(amp2))*
 sig11=((((SinOsc.ar(freq11*(rect*2)+c33a,phase:phasex1,mul:amp11)).abs+(amp11))*
 (SinOsc.ar(freq11*(rect)+c33b,phase:phasex1,mul:amp11))).abs+(amp11))*c11*5;
 sig22=((((SinOsc.ar(freq22*(rect*2)+c33a,phase:phasey1,mul:amp22)).abs+(amp22))*
-(SinOsc.ar(freq22*(rect)+c33b,phase:phasey1,mul:amp22))).abs+(amp22))*c22*5;*/
+(SinOsc.ar(freq22*(rect)+c33b,phase:phasey1,mul:amp22))).abs+(amp22))*c22*5;
 
-sig1=c1;
+/*sig1=c1;
 sig2=c2;
 sig11=c11;
-sig22=c22;
+sig22=c22;*/
 
 //////propagation///perspective
 view=harm/dist;
@@ -804,6 +804,25 @@ sig11=FreeVerb.ar(sig11,revm+(mix/10),room,perspective);
 sig22=FreeVerb.ar(sig22,revm+(mix/10),room,perspective);
 
 /////////spat
+///pan
+/*select=Spherical(~vertices,az,el);
+//rrr=Spherical(pi,0.5pi,0.125pi);
+rrr=Spherical(pi,Select.kr(select.x.abs.round(1),~azth),Select.kr(select.x.abs.round(1),~elth));
+r1 = SinOsc.kr(rx.lag(0.01),rrr.x,0.57735026918963);
+r2 = SinOsc.kr(ry.lag(0.01),rrr.y,0.57735026918963);
+r3 = SinOsc.kr(rz.lag(0.01),rrr.z,0.57735026918963);
+//pan=LFNoise1.ar(elosc,pi);
+pan=((r1+r2)*r3)/mix.reciprocal/2;
+pan=pan.abs;
+pan1=SinOsc.ar(pan,~az.[0]).range(pi.neg,pi).lag(0.01);
+pan2=SinOsc.ar(pan,~az.[1]).range(pi.neg,pi).lag(0.01);
+pan3=SinOsc.ar(pan,~az.[2]).range(pi.neg,pi).lag(0.01);
+pan4=SinOsc.ar(pan,~az.[3]).range(pi.neg,pi).lag(0.01);
+pan11=SinOsc.ar(pan,~el.[0]).range(0.5pi.neg,0.5pi).lag(0.01);
+pan22=SinOsc.ar(pan,~el.[1]).range(0.5pi.neg,0.5pi).lag(0.01);
+pan33=SinOsc.ar(pan,~el.[2]).range(0.5pi.neg,0.5pi).lag(0.01);
+pan44=SinOsc.ar(pan,~el.[3]).range(0.5pi.neg,0.5pi).lag(0.01);
+				*/
 ////spherical harmonics
 /*mag_x=((Complex(cos(az*harm),cos(az*harm)).rho/(2.sqrt))*(Complex(cos(el),cos(el)).rho/(2.sqrt)));
 mag_y=((Complex(sin(az*harm),sin(az*harm)).rho/(2.sqrt))*(Complex(cos(el),cos(el)).rho/(2.sqrt)));
@@ -899,8 +918,8 @@ sigy1=Limiter.ar(LPF.ar(HPF.ar(synthy1*envenv, lowend),18000),lim);
 
 Out.ar(busArray.[0],LeakDC.ar(sigx));
 Out.ar(busArray.[1],LeakDC.ar(sigy));
-//Out.ar(busArray.[0],LeakDC.ar(sigx1));
-//Out.ar(busArray.[1],LeakDC.ar(sigy1));
+Out.ar(busArray.[0],LeakDC.ar(sigx1));
+Out.ar(busArray.[1],LeakDC.ar(sigy1));
 
 ////pan
 //Out.ar(busArray.[0],LeakDC.ar(sig1*env));
@@ -926,7 +945,6 @@ Out.ar(busArray.[1],LeakDC.ar(sigy));
 }).add;
 );
 0.6.wait;
-~synthf=Synth(\synth).register;
 ~erate=1;
 /////////////////////////////////////////////////////////////////////////////////////////////////////////pattern
 ({
@@ -1011,6 +1029,9 @@ d=[~dur.[9]+~dur.[10]+~dur.[11]];
 }.value);
 ~seqt= Pseq(~durt ,inf).asStream;
 ~seqt= Pseq(~dur ,inf).asStream;
+
+~intervalt=4;
+~dur=~dur*~intervalt;
 ~dursum=~dur.sum;
 
 ////l system boolean
@@ -1066,7 +1087,7 @@ Out.kr(~controlBus_re2.index,Pulse.kr(1,1,el1,el1));
 );
 0.1.wait;
 ~synths=Synth.new(\run).register;
-0.1.wait;
+
 (
 {
 var x,y,z,px,py,pz,x1,y1,z1,px1,py1,pz1;
@@ -1087,25 +1108,22 @@ pz1=~cz.[x1];
 ~azimuth1=Cartesian(px1,py1,pz1).theta;
 ~elevation1=Cartesian(px1,py1,pz1).phi;
 ~synths.set(\az,~azimuth,\el,~elevation,\az1,~azimuth1,\el1,~elevation1);
-~synthf.set(\azrot,~azimuth,\elrot,~elevation,\azrot1,~azimuth1,\elrot1,~elevation1);
 (~timbr_dur).wait;}
 }).play;
 }.defer
 );
 
-~intervalt=1;
-~dur=~dur*~intervalt;
-
 ~pattern = Pdef(\1,
 //Pbind( \instrument,\synth,
 Pmono( \synth,
-\dur, Pseq(~dur ,inf),
+//\dur, Pseq(~dur ,inf),
+\dur,~timbr_dur*2,
 \hold,Pseq(~dur ,inf),
 \s_size,Pfunc { ~s_size },
 \lowend,Pfunc { ~lowend },
 \room,Pfunc { ~room },
 \gain,Pfunc { ~gain },
-\au,Pseq([1,1],inf),
+\au,Pseq([0,0],inf),
 \sc, Pfunc { ~sc },
 \ssc, Pfunc{~ssc},
 \c, Pfunc { ~c },
