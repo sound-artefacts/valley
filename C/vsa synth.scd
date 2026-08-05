@@ -12,7 +12,7 @@ Window.closeAll;
 s.makeGui(w);
 s.meter;
 //s.freqscope;
-//s.scope;
+s.scope;
 );
 ~controlBus_1 = Bus.control(s, 1);
 ~controlBus_2 = Bus.control(s, 1);
@@ -511,9 +511,9 @@ wt = enva.asSignal(1024).asWavetable;
 SynthDef.new(\synth,{
 
 arg gain=1,lowend=20,s_size=1,room=1,drive=0,au=0,sb=0,mag1=1,mag2=1,elosc=1,
-erate=1,azrot=0,elrot=0,az1=0,el1=0,
+erate=1,azrot=0,elrot=0,azrot1=1,elrot1=1,az1=0,el1=0,
 c=0,timbr=1,az=0,el=0,dicay=16,attack=2,sc=10,ssc=5,mix=0,rect=16,s1,s2,s3,s4,
-busArray = #[0,1,2,3],dist=1,harm=1,rx=0,ry=0,rz=0,mrange=1,lim=1,hold=4;
+busArray = #[0,1,2,3,4,5,6,7],dist=1,harm=1,rx=0,ry=0,rz=0,mrange=1,lim=1,hold=4;
 
 var fund,fu=32,n=0,mod_x,mod_y,mod_z,phasex,phasey,phasez,low=0,tremolo=32;
 var freq1,freq2,freq3,amp1,amp2,amp3,sig1,sig2,sig3,heavy,pen;
@@ -521,14 +521,14 @@ var b_x,b_y,b_z,polytope,env,expansion,sph1,sph2,envf,pan,pan11,pan22,pan33,pan4
 var g_ch1,g_ch2,g_ch3,g_ch4,mp,mps,mpf,x,y,z,mag_x,mag_y,mag_z,cm,cm1,cm2;
 var s_x,s_y,s_z,threshold,c1,c2,c3,mp_x,mp_y,mp_z,mps_x,mps_y,mps_z,mpf_x,mpf_y,mpf_z;
 var peak, times,signal,rip,enva,key,tx,ty,tz,view,x1,y1,z1;
-var	peak1,times1,signal1,rip1,enva1,pan1,pan2,pan3,pan4,xc,yc,zc,xc1,yc1,zc1;
+var	peak1,times1,signal1,rip1,envb,pan1,pan2,pan3,pan4,xc,yc,zc,xc1,yc1,zc1;
 var vanish=2,perspective,revm,rot,r1,r2,r3,th,ph,aaz,eel,rrr,select;
-var synthx,synthy,freq,sigx,sigy,mdistance,th1,ph1;
+var synthx,synthy,freq,sigx,sigy,mdistance,th1,ph1,sumaz,sumel;
 var mp_x1,mp_y1,mp_z1,mps_x1,mps_y1,mps_z1,mpf_x1,mpf_y1,mpf_z1;
-var b_x1,b_y1,b_z1,s_x1,s_y1,s_z1,freq11,freq22,freq33,amp11,amp22,azpl,elpl;
+var b_x1,b_y1,b_z1,s_x1,s_y1,s_z1,freq11,freq22,freq33,amp11,amp22;
 var amp33,sig11,sig22,sig33,phasex1,phasey1,phasez1,envenv,p1,p2,p3,wt,perspective1;
 var c11,c22,c33,siga,sigb,mag_x1,mag_y1,mag_z1,decay=4,synthx1,synthy1,sigx1,sigy1;
-var ths,phs,ths1,phs1,azpls,elpls,c3a,c3b,c33a,c33b;
+var ths,phs,ths1,phs1,azpls,elpls,azpls1,elpls1,azpl,elpl,azpl1,elpl1,c3a,c3b,c33a,c33b;
 
 gain=gain*harm.reciprocal;
 gain=gain*50;
@@ -543,29 +543,21 @@ rip = rip.normalize;
 peak = peak.min(signal.size - 2).max(1);
 times =Array.fill(signal.size - peak - 1, hold / (signal.size - peak - 1));
 enva = Env(rip.asArray, times);
-env = gain*EnvGen.ar(enva,doneAction:2);
-//env = EnvGen.ar(Env.perc(attack,dicay),doneAction:2);
+env = EnvGen.ar(enva,levelScale:gain,gate:Trig.kr(LFPulse.kr(hold.reciprocal,width:0.01),hold));
+//env = EnvGen.ar(Env.perc(attack,dicay,gain),gate:Trig.kr(LFPulse.kr(hold.reciprocal,width:0.01),hold));
 
 ///fund
 expansion=2.pow(c.lag(0.01)/16256);
 fund=(fu*(9/8))*expansion;
 heavy=2.pow(drive.lag(0.01)/16256);
 
-///rot
+///pan
 select=Spherical(~vertices,az,el);
 //rrr=Spherical(pi,0.5pi,0.125pi);
 rrr=Spherical(pi,Select.kr(select.x.abs.round(1),~azth),Select.kr(select.x.abs.round(1),~elth));
-
-r1 = SinOsc.kr(rx.lag(0.01)/20,rrr.x);
-r2 = SinOsc.kr(ry.lag(0.01)/20,rrr.y);
-r3 = SinOsc.kr(rz.lag(0.01)/20,rrr.z);
-
-azpl=SinOsc.kr(azrot/10,rrr.x,pi);
-elpl=SinOsc.kr(elrot/10,rrr.y,0.5pi);
-
-azpls=SinOsc.kr(azrot/10,0,pi);
-elpls=SinOsc.kr(elrot/10,0.5pi,0.5pi);
-
+r1 = SinOsc.kr(rx.lag(0.01),rrr.x,0.57735026918963);
+r2 = SinOsc.kr(ry.lag(0.01),rrr.y,0.57735026918963);
+r3 = SinOsc.kr(rz.lag(0.01),rrr.z,0.57735026918963);
 //pan=LFNoise1.ar(elosc,pi);
 pan=((r1+r2)*r3)/mix.reciprocal/2;
 pan=pan.abs;
@@ -578,8 +570,11 @@ pan22=SinOsc.ar(pan,~el.[1]).range(0.5pi.neg,0.5pi).lag(0.01);
 pan33=SinOsc.ar(pan,~el.[2]).range(0.5pi.neg,0.5pi).lag(0.01);
 pan44=SinOsc.ar(pan,~el.[3]).range(0.5pi.neg,0.5pi).lag(0.01);
 
-aaz=atan2(r1,r2);
-eel=atan2(r3, hypot(r1,r2));
+
+//osc data
+
+//aaz=atan2(r1,r2);
+//eel=atan2(r3, hypot(r1,r2));
 
 ////oscilarot bank select not cpu friendly
 /*xx = (~set * cos(el) * cos(az)).round(1).asInteger.abs;
@@ -591,17 +586,26 @@ pz=Select.kr(zz,~cz);
 azs=atan2(px,py);
 els=atan2(pz, hypot(px,py));*/
 
-th=(az+azpl.lag(0.01)).wrap(pi.neg,pi);
-ph=(el+elpl.lag(0.01)).wrap(0.5pi.neg,0.5pi);
+azpl=azrot.lag(0.01)/10;
+elpl=elrot.lag(0.01)/10;
+azpl1=azrot1.lag(0.01)/10;
+elpl1=elrot1.lag(0.01)/10;
+azpls=azrot.lag(0.01);
+elpls=elrot.lag(0.01);
+azpls1=azrot1.lag(0.01);
+elpls1=elrot1.lag(0.01);
 
-th1=(az1+azpl.lag(0.01)).wrap(pi.neg,pi);
-ph1=(el1+elpl.lag(0.01)).wrap(0.5pi.neg,0.5pi);
+th=(az+azpl).wrap(pi.neg,pi);
+ph=(el+elpl).wrap(0.5pi.neg,0.5pi);
 
-ths=(az+azpls.lag(0.01)).wrap(pi.neg,pi);
-phs=(el+elpls.lag(0.01)).wrap(0.5pi.neg,0.5pi);
+th1=(az1+azpl1).wrap(pi.neg,pi);
+ph1=(el1+elpl1).wrap(0.5pi.neg,0.5pi);
 
-ths1=(az1+azpls.lag(0.01)).wrap(pi.neg,pi);
-phs1=(el1+elpls.lag(0.01)).wrap(0.5pi.neg,0.5pi);
+ths=(az+azpls).wrap(pi.neg,pi);
+phs=(el+elpls).wrap(0.5pi.neg,0.5pi);
+
+ths1=(az1+azpls1).wrap(pi.neg,pi);
+phs1=(el1+elpls1).wrap(0.5pi.neg,0.5pi);
 
 ///cardioid
 /*x = (harm*cos(ph)*cos(th))+(cos(harm*ph)*cos(harm*th));
@@ -665,7 +669,7 @@ key=Select.kr(au,~scale);
 
 b_x=2.pow(mp_x.round(1)/16256);
 b_y=2.pow(mp_y.round(1)/16256);
-b_z=2.pow(mp_z.abs.round(1)/16256);
+b_z=2.pow(mp_z.round(1)/16256);
 
 s_x=2.pow(Select.kr(mps_x.round(1).abs,key).asInteger /12);
 s_y=2.pow(Select.kr(mps_y.round(1).abs,key).asInteger /12);
@@ -673,7 +677,7 @@ s_z=2.pow(Select.kr(mps_z.round(1).abs,key).asInteger /12);
 
 b_x1=2.pow(mp_x1.round(1)/16256);
 b_y1=2.pow(mp_y1.round(1)/16256);
-b_z1=2.pow(mp_z1.abs.round(1)/16256);
+b_z1=2.pow(mp_z1.round(1)/16256);
 
 s_x1=2.pow(Select.kr(mps_x1.round(1).abs,key).asInteger /12);
 s_y1=2.pow(Select.kr(mps_y1.round(1).abs,key).asInteger /12);
@@ -681,19 +685,19 @@ s_z1=2.pow(Select.kr(mps_z1.round(1).abs,key).asInteger /12);
 
 freq1=(fund)*b_x*s_x;
 freq2=(fund)*b_y*s_y;
-freq3=(1)*b_z*s_z;
+freq3=((fund)*b_z*s_z)/rect;
 
 amp1=b_x.reciprocal*expansion.reciprocal*s_x.reciprocal;
 amp2=b_y.reciprocal*expansion.reciprocal*s_y.reciprocal;
-amp3=b_z.reciprocal*1*s_z.reciprocal;
+amp3=freq3;
 
 freq11=(fund)*b_x1*s_x1;
 freq22=(fund)*b_y1*s_y1;
-freq33=(1)*b_z1*s_z1;
+freq33=((fund)*b_z1*s_z1)/rect;
 
 amp11=b_x1.reciprocal*expansion.reciprocal*s_x1.reciprocal;
 amp22=b_y1.reciprocal*expansion.reciprocal*s_y1.reciprocal;
-amp33=b_z1.reciprocal*1*s_z1.reciprocal;
+amp33=freq33;
 
 ///other phase sets
 //phasex=(Complex(1,mod_x).theta*2);
@@ -716,15 +720,15 @@ SinOsc.ar(freq3,phase:phasez)),freq3,heavy,amp3);
 c33=BPF.ar((Osc.ar(~wt.bufnum,freq33,phase:phasez1,mul:1200).abs*
 SinOsc.ar(freq33,phase:phasez1)),freq33,heavy,amp33);
 
-c1=BPF.ar((Osc.ar(~wt.bufnum,freq1,phase:phasex,mul:1200).abs*
-SinOsc.ar(freq1,phase:phasex)),freq1+c3,heavy,amp1);
+c1=BPF.ar((Osc.ar(~wt.bufnum,freq1+c3,phase:phasex,mul:1200).abs*
+SinOsc.ar(freq1+c3,phase:phasex)),freq1+c3,heavy,amp1);
 c2=BPF.ar((Osc.ar(~wt.bufnum,freq2,phase:phasey,mul:1200).abs*
-SinOsc.ar(freq2,phase:phasey)),freq2+c3,heavy,amp2);
+SinOsc.ar(freq2+c3,phase:phasey)),freq2+c3,heavy,amp2);
 
-c11=BPF.ar((Osc.ar(~wt.bufnum,freq11,phase:phasex1,mul:1200).abs*
-SinOsc.ar(freq11,phase:phasex1)),freq11+c33,heavy,amp11);
-c22=BPF.ar((Osc.ar(~wt.bufnum,freq22,phase:phasey1,mul:1200).abs*
-SinOsc.ar(freq22,phase:phasey1)),freq22+c33,heavy,amp22);
+c11=BPF.ar((Osc.ar(~wt.bufnum,freq11+c33,phase:phasex1,mul:1200).abs*
+SinOsc.ar(freq11+c33,phase:phasex1)),freq11+c33,heavy,amp11);
+c22=BPF.ar((Osc.ar(~wt.bufnum,freq22+c33,phase:phasey1,mul:1200).abs*
+SinOsc.ar(freq22+c33,phase:phasey1)),freq22+c33,heavy,amp22);
 
 ////rectifier
 c3a=(SinOsc.ar(freq3*(rect*2),phase:phasez,mul:amp3));
@@ -751,9 +755,9 @@ perspective = view / (view + z + (view/vanish));
 perspective1 = view / (view + z1 + (view/vanish));
 
 sig1=sig1*mp_x.sign*perspective;
-sig2=sig2*mp_y.sign*perspective1;
+sig2=sig2*mp_y.sign*perspective;
 
-sig11=sig11*mp_x.sign*perspective;
+sig11=sig11*mp_x.sign*perspective1;
 sig22=sig22*mp_y.sign*perspective1;
 
 ///spectral compensation
@@ -775,9 +779,9 @@ mag_y1=((Complex(sin(az1*harm),sin(az1*harm)).rho/(2.sqrt))*(Complex(cos(el1),co
 mag_z1=(Complex(sin(el1*harm),sin(el1*harm)).rho/(2.sqrt));
 
 
-p1=(c11+c1)*mag_x;
-p2=(c22+c2)*mag_y;
-p3=(c33+c3)*mag_z;
+p1=((c11+c1)*mag_x)/(2.sqrt);
+p2=((c22+c2)*mag_y)/(2.sqrt);
+p3=((c33+c3)*mag_z)/(2.sqrt);
 
 /////compresion
 threshold=(((343/s_size)/fund).reciprocal.ampdb/2.sqrt).dbamp;
@@ -795,58 +799,59 @@ sig11=FreeVerb.ar(sig11,revm+(mix/5),room,perspective);
 sig22=FreeVerb.ar(sig22,revm+(mix/5),room,perspective);
 
 /////spat
-
+sumaz=(th+th1).wrap(pi.neg,pi);
+sumel=(ph+ph1).wrap(0.5pi.neg,0.5pi);
 (
 g_ch1=
-(p1.abs.range(0.001,1)*cos(ph+pan11)*cos((th+pan1).wrap(pi.neg,pi))*
+(p1.abs.range(0.001,1)*cos(sumel+pan11)*cos((sumaz+pan1).wrap(pi.neg,pi))*
 p1.range(0.001,1)*cos(~el.[0])*cos(~az.[0]))
 +
-(p2.abs.range(0.001,1)*cos(ph+pan11)*sin((th+pan1).wrap(pi.neg,pi))*
+(p2.abs.range(0.001,1)*cos(sumel+pan11)*sin((sumaz+pan1).wrap(pi.neg,pi))*
  p2.range(0.001,1)*cos(~el.[0])*sin(~az.[0]))
 +
-(p3.abs.range(0.001,1)*sin(ph+pan11)*
+(p3.abs.range(0.001,1)*sin(sumel+pan11)*
  p3.range(0.001,1)*sin(~el.[0]));
 
 g_ch2=
-(p1.abs.range(0.001,1)*cos(ph+pan22)*cos((th+pan2).wrap(pi.neg,pi))*
+(p1.abs.range(0.001,1)*cos(sumel+pan22)*cos((sumaz+pan2).wrap(pi.neg,pi))*
  p1.range(0.001,1)*cos(~el.[1])*cos(~az.[1]))
 +
-(p2.abs.range(0.001,1)*cos(ph+pan22)*sin((th+pan2).wrap(pi.neg,pi))*
+(p2.abs.range(0.001,1)*cos(sumel+pan22)*sin((sumaz+pan2).wrap(pi.neg,pi))*
  p2.range(0.001,1)*cos(~el.[1])*sin(~az.[1]))
 +
-(p3.abs.range(0.001,1)*sin(ph+pan22)*
+(p3.abs.range(0.001,1)*sin(sumel+pan22)*
  p3.range(0.001,1)*sin(~el.[1]));
 
 g_ch3=
-(p1.abs.range(0.001,1)*cos(ph+pan33)*cos((th+pan3).wrap(pi.neg,pi))*
+(p1.abs.range(0.001,1)*cos(sumel+pan33)*cos((sumaz+pan3).wrap(pi.neg,pi))*
  p1.range(0.001,1)*cos(~el.[2])*cos(~az.[2]))
 +
-(p2.abs.range(0.001,1)*cos(ph+pan33)*sin((th+pan3).wrap(pi.neg,pi))*
+(p2.abs.range(0.001,1)*cos(sumel+pan33)*sin((sumaz+pan3).wrap(pi.neg,pi))*
  p2.range(0.001,1)*cos(~el.[2])*sin(~az.[2]))
 +
-(p3.abs.range(0.001,1)*sin(ph+pan33)*
+(p3.abs.range(0.001,1)*sin(sumel+pan33)*
  p3.range(0.001,1)*sin(~el.[2]));
 
 g_ch4=
-(p1.abs.range(0.001,1)*cos(ph+pan44)*cos((th+pan4).wrap(pi.neg,pi))*
+(p1.abs.range(0.001,1)*cos(ph+pan44)*cos((sumaz+pan4).wrap(pi.neg,pi))*
  p1.range(0.001,1)*cos(~el.[3])*cos(~az.[3]))
 +
-(p2.abs.range(0.001,1)*cos(ph+pan44)*sin((th+pan4).wrap(pi.neg,pi))*
+(p2.abs.range(0.001,1)*cos(ph+pan44)*sin((sumaz+pan4).wrap(pi.neg,pi))*
  p2.range(0.001,1)*cos(~el.[3])*sin(~az.[3]))
 +
-(p3.abs.range(0.001,1)*sin(ph+pan44)*
+(p3.abs.range(0.001,1)*sin(sumel+pan44)*
  p3.range(0.001,1)*sin(~el.[3]));
 );
 
 ///amp distortion
-synthx=Pulse.ar(220,mix.linexp(0,1,0.999999,0.5),env,env)*sig1;
-synthy=Pulse.ar(220,mix.linexp(0,1,0.999999,0.5),env,env)*sig2;
-synthx1=Pulse.ar(220,mix.linexp(0,1,0.999999,0.5),env,env)*sig11;
-synthy1=Pulse.ar(220,mix.linexp(0,1,0.999999,0.5),env,env)*sig22;
-//synthx=env*sig1;
-//synthy=env*sig2;
-//synthx1=env*sig11;
-//synthy1=env*sig22;
+//synthx=Pulse.ar(220,mix.linexp(0,1,0.999999,0.5),env,env)*sig1;
+//synthy=Pulse.ar(220,mix.linexp(0,1,0.999999,0.5),env,env)*sig2;
+//synthx1=Pulse.ar(220,mix.linexp(0,1,0.999999,0.5),env,env)*sig11;
+//synthy1=Pulse.ar(220,mix.linexp(0,1,0.999999,0.5),env,env)*sig22;
+synthx=sig1;
+synthy=sig2;
+synthx1=sig11;
+synthy1=sig22;
 
 synthx=(synthx).fold2((mrange*mdistance));
 synthy=(synthy).fold2(mrange*mdistance);
@@ -856,30 +861,26 @@ synthy1=(synthy1).fold2(mrange*mdistance);
 //synthy=(synthy*gain.linlin(0,1,0.1,2)).fold2(mrange*mdistance);
 
 ///vca env
-envenv=EnvGen.ar(Env.perc(attack,dicay),gate:LFPulse.kr(erate,width:0.01));
-///vca mod variants
-/*((LPF.ar((Osc.ar(~wt.bufnum,5*m,mul:500.neg).abs*
-SinOsc.ar(5*m)).abs,m*100,1))*(LPF.ar((Osc.ar(~wt.bufnum,5*m,mul:500).abs*
-LFPulse.ar(5*m,width:0.5)),m*100,1)).abs)*/
-//(SinOsc.ar(10*m,mul:1.neg,add:1)*LFPulse.ar(10*m*n,width:1,mul:1). abs)
-//(Saw.ar(10*m,mul:1.neg)*LFPulse.ar(10*m,width:0.5,mul:1)).abs
-//(LFSaw.ar(2,mul:1.neg)*Pulse.ar(2,mul:1).abs)
-//(SinOsc.ar(erate,mul:1.neg,add:1)*LFPulse.ar(erate*1,width:dicay,mul:1).abs)
-
-//sigx=(Osc.ar(~senv.bufnum,erate,mul:1)*LFPulse.ar(erate/2,width:0.5,mul:1))*synthx;
-//sigy=(Osc.ar(~senv.bufnum,erate,mul:1)*LFPulse.ar(erate/2,width:0.5,mul:1))*synthy;
-//sigx1=(Osc.ar(~senv.bufnum,erate,mul:1)*LFPulse.ar(erate/2,width:0.5,mul:1))*synthx1;
-//sigy1=(Osc.ar(~senv.bufnum,erate,mul:1)*LFPulse.ar(erate/2,width:0.5,mul:1))*synthy1;
+signal1 = Signal.sineFill(~signalSizee, ~arraye, [0]);
+signal1 = signal1.rotate(signal1.size div: 2);
+peak1 = signal1.abs.maxIndex.max(1);
+rip1 = Env.perc(0.5,0.5).asSignal(~signalSizee);
+rip1 = rip1 * (1 + (signal1 / tremolo));
+rip1 = rip1.normalize;
+peak1 = peak1.min(signal1.size - 2).max(1);
+times1 =Array.fill(peak1, attack / peak1) ++ Array.fill(signal1.size - peak1 - 1, dicay / (signal1.size - peak1 - 1));
+envb = Env(rip1.asArray, times1);
+envenv = EnvGen.ar(envb,gate:LFPulse.kr(erate,width:0.01));
 
 sigx=synthx*envenv;
 sigy=synthy*envenv;
 sigx1=synthx1*envenv;
 sigy1=synthy1*envenv;
 
-sigx=Limiter.ar(LPF.ar(HPF.ar(sigx,lowend),18000),lim);
-sigy=Limiter.ar(LPF.ar(HPF.ar(sigy, lowend),18000),lim);
-sigx1=Limiter.ar(LPF.ar(HPF.ar(sigx1,lowend),18000),lim);
-sigy1=Limiter.ar(LPF.ar(HPF.ar(sigy1, lowend),18000),lim);
+sigx=Limiter.ar(LPF.ar(HPF.ar(sigx*env,lowend),18000),lim);
+sigy=Limiter.ar(LPF.ar(HPF.ar(sigy*env, lowend),18000),lim);
+sigx1=Limiter.ar(LPF.ar(HPF.ar(sigx1*env,lowend),18000),lim);
+sigy1=Limiter.ar(LPF.ar(HPF.ar(sigy1*env, lowend),18000),lim);
 
 Out.ar(busArray.[0],LeakDC.ar(sigx));
 Out.ar(busArray.[1],LeakDC.ar(sigy));
@@ -910,8 +911,8 @@ Out.kr(~controlBus_3.index,Amplitude.kr((c3),mul:env));
 }).add;
 );
 0.6.wait;
-~erate=1/2;
-
+~erate=1;
+~synths=Synth.new(\synth).register;
 /////////////////////////////////////////////////////////////////////////////////////////////////////////pattern
 ({
 var m1=1.neg, m2=1.neg;
@@ -1054,6 +1055,7 @@ py=~cy.[x];
 pz=~cz.[x];
 px1=~cx.[x1];
 py1=~cy.[x1];
+
 pz1=~cz.[x1];
 ~shape1=(Cartesian(~magx.[x],~magy.[x],~magz.[x]).rho/(2.sqrt));
 ~shape2=(Cartesian(~magx.[x1],~magy.[x1],~magz.[x1]).rho/(2.sqrt));
@@ -1061,15 +1063,14 @@ pz1=~cz.[x1];
 ~elevation=Cartesian(px,py,pz).phi;
 ~azimuth1=Cartesian(px1,py1,pz1).theta;
 ~elevation1=Cartesian(px1,py1,pz1).phi;
-(~timbr_dur).wait; // frame duration
-};
+~synths.set(\azrot,~azimuth,\elrot,~elevation,\azrot1,~azimuth1,\elrot1,~elevation1);
+					(~timbr_dur).wait;}
 }).play;
 }.defer
 );
 
 ~pattern = Pdef(\1,
-Pbind(\instrument, \synth,
-//\dur, Pseq(~dur ,inf),
+Pmono( \synth,
 \dur, Pseq(~dur ,inf),
 \hold,Pseq([~dursum] ,inf),
 \s_size,Pfunc { ~s_size },
@@ -1090,8 +1091,8 @@ Pbind(\instrument, \synth,
 \el,Pfunc{ ~elevation},
 \az1, Pfunc{ ~azimuth1},
 \el1,Pfunc{ ~elevation1},
-\azrot,Pfunc{~incr1},
-\elrot,Pfunc{~incr2},
+//\azrot,Pfunc{~incr1},
+//\elrot,Pfunc{~incr2},
 \harm,Pfunc{ ~harm},
 \rx,Pfunc{~rotationx},
 \ry,Pfunc{ ~rotationy},
@@ -1136,7 +1137,7 @@ value=obj.value.linlin(0,1,1/32,4).round(1/32).postln;
 ~sl2=Knob.new(~vw1, Rect.new(150,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linexp(0,1,0.0001,0.5).postln;
+value=obj.value.linexp(0,1,0.0001,1).postln;
 //~rotation=value;
 ~pan1=obj.value.linlin(0,1,0.000001,0.5);
 ~rotationz=value;
@@ -1229,7 +1230,7 @@ value1=obj.value.linexp(0,1,1,16).postln;
 ~sl10=Knob.new(~vw1, Rect.new(450,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value1,value2,g=((1+5.sqrt)/2),s=(1+2.sqrt);
-value1=obj.value.linexp(0,1,0.0001,0.5).postln;
+value1=obj.value.linexp(0,1,0.0001,1).postln;
 ~incr1=obj.value.linexp(0,1,0.0001,(2pi-(2pi/s)));
 ~rotationx=value1;
 ~log1.(value1.asString);
@@ -1241,7 +1242,7 @@ value1=obj.value.linexp(0,1,0.0001,0.5).postln;
 ~sl11=Knob.new(~vw1, Rect.new(50,(50+sk+50+sk+25+25+50),sk, sk)).background_(Color.black).action_({
 arg obj;
 var value1,value2;
-value2=obj.value.linexp(0,1,0.0001,0.5).postln;
+value2=obj.value.linexp(0,1,0.0001,1).postln;
 ~incr2=obj.value.linexp(0,1,0.0001,(pi-(pi/g)));
 ~rotationy=value2;
 ~log1.(value2.asString);
@@ -1357,7 +1358,7 @@ value=obj.value.linexp(0,1,100.01,0.01).postln;
 
 
 
-
+////midi
 
 
 
