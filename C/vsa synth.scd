@@ -78,9 +78,9 @@ var silver_r=(1+2.sqrt), g=((1+5.sqrt)/2), azimuth, elevation;
 /////sph harm mod
 (
 ~sph=Spherical(pi,0,0.5pi.rand2);
-{Out.kr(~controlBus_x.index,SinOsc.kr(0.05,~sph.x,pi))}.play;
-{Out.kr(~controlBus_y.index,SinOsc.kr(0.05,~sph.y,pi))}.play;
-{Out.kr(~controlBus_z.index,SinOsc.kr(0.05,~sph.z,pi))}.play;
+{Out.kr(~controlBus_x.index,SinOsc.kr(0.01,~sph.x,pi))}.play;
+{Out.kr(~controlBus_y.index,SinOsc.kr(0.01,~sph.y,pi))}.play;
+{Out.kr(~controlBus_z.index,SinOsc.kr(0.01,~sph.z,pi))}.play;
 );
 
 ///sound tensor nest
@@ -461,7 +461,7 @@ wt = signal.asWavetable;
 0.5.wait;
 (
 ~scale1=[0,0,5,7,12,17,19,24,29,31,48,53,55,96];
-~note=13;
+~note=25;
 (
 {
 var nn=1.neg;
@@ -481,7 +481,7 @@ var nn=1.neg,scale1,scale2;
 nn=1.neg;
 ~scale4=~note.collect{nn=nn+1;Scale.majorPentatonic.performDegreeToKey(nn,12)};
 //~scale10=[scale1,scale2];
-~scale=[~scale1,~scale2,~scale3,~scale4,~scale5];
+~scale=[~scale2,~scale2,~scale3,~scale4,~scale5];
 }.value;
 );
 );
@@ -619,21 +619,21 @@ ths1=(az1).wrap(pi.neg,pi);
 phs1=(el1).wrap(0.5pi.neg,0.5pi);
 
 ///xyz
-x = (cos(ph)*cos(th));
-y = (cos(ph)*sin(th));
-z = (sin(ph));
+x = mag1*(cos(ph)*cos(th));
+y = mag1*(cos(ph)*sin(th));
+z = mag1*(sin(ph));
 
-x1 = (cos(ph1)*cos(th1));
-y1 = (cos(ph1)*sin(th1));
-z1 = (sin(ph1));
+x1 = mag2*(cos(ph1)*cos(th1));
+y1 = mag2*(cos(ph1)*sin(th1));
+z1 = mag2*(sin(ph1));
 
-xc = (cos(phs)*cos(ths));
-yc = (cos(phs)*sin(ths));
-zc = (sin(phs));
+xc = mag1*(cos(phs)*cos(ths));
+yc = mag1*(cos(phs)*sin(ths));
+zc = mag1*(sin(phs));
 
-xc1 = (cos(phs1)*cos(ths1));
-yc1 = (cos(phs1)*sin(ths1));
-zc1 = (sin(phs1));
+xc1 = mag2*(cos(phs1)*cos(ths1));
+yc1 = mag2*(cos(phs1)*sin(ths1));
+zc1 = mag2*(sin(phs1));
 
 ////spherical harmonics
 mag_x=((Complex(cos(az*harm),cos(az*harm)).rho/(2.sqrt))*(Complex(cos(el),cos(el)).rho/(2.sqrt)));
@@ -778,19 +778,19 @@ c22br=(SinOsc.ar(freq22fm*(rect),phase:phasey1,mul:amp22fm*(rect)));
 
 c1ar=0;c2ar=0;c3ar=0;c11ar=0;c22ar=0;c33ar=0;c1br=0;c2br=0;c3br=0;c11br=0;c22br=0;c33br=0;
 
-sig1=((((SinOsc.ar(freq1*(rect*2)+c1ar,phase:phasex,mul:amp1)).abs+(amp1))*
-(SinOsc.ar(freq1*(rect)+c1br,phase:phasex,mul:amp1))).abs+(amp1))*c1*5;
-sig2=((((SinOsc.ar(freq2*(rect*2)+c2ar,phase:phasey,mul:amp2)).abs+(amp2))*
-(SinOsc.ar(freq2*(rect)+c2br,phase:phasey,mul:amp2))).abs+(amp2))*c2*5;
-//sig3=((((SinOsc.ar(freq3*(rect*2)+c3ar,phase:phasez,mul:amp3)).abs+(amp3))*
-//(SinOsc.ar(freq3*(rect)+c3br,phase:phasez,mul:amp3))).abs+(amp3))*c3*5;
+sig1=((((SinOsc.ar(freq1*(rect*2)+c1ar,phase:phasex,mul:amp1/(rect*2))).abs+(amp1))*
+(SinOsc.ar(freq1*(rect)+c1br,phase:phasex,mul:amp1/(rect)))).abs+(amp1))*c1*5;
+sig2=((((SinOsc.ar(freq2*(rect*2)+c2ar,phase:phasey,mul:amp2/(rect*2))).abs+(amp2))*
+(SinOsc.ar(freq2*(rect)+c2br,phase:phasey,mul:amp2/(rect)))).abs+(amp2))*c2*5;
+//sig3=((((SinOsc.ar(freq3*(rect*2)+c3ar,phase:phasez,mul:amp3/(rect*2))).abs+(amp3))*
+//(SinOsc.ar(freq3*(rect)+c3br,phase:phasez,mul:amp3/(rect)))).abs+(amp3))*c3*5;
 
-sig11=((((SinOsc.ar(freq11*(rect*2)+c11ar,phase:phasex1,mul:amp11)).abs+(amp11))*
-(SinOsc.ar(freq11*(rect)+c11br,phase:phasex1,mul:amp11))).abs+(amp11))*c11*5;
-sig22=((((SinOsc.ar(freq22*(rect*2)+c22ar,phase:phasey1,mul:amp22)).abs+(amp22))*
-(SinOsc.ar(freq22*(rect)+c22br,phase:phasey1,mul:amp22))).abs+(amp22))*c22*5;
-//sig33=((((SinOsc.ar(freq33*(rect*2)+c33ar,phase:phasez1,mul:amp33)).abs+(amp33))*
-//(SinOsc.ar(freq33*(rect)+c33br,phase:phasez1,mul:amp33))).abs+(amp33))*c33*5;
+sig11=((((SinOsc.ar(freq11*(rect*2)+c11ar,phase:phasex1,mul:amp11/(rect*2))).abs+(amp11))*
+(SinOsc.ar(freq11*(rect)+c11br,phase:phasex1,mul:amp11/(rect)))).abs+(amp11))*c11*5;
+sig22=((((SinOsc.ar(freq22*(rect*2)+c22ar,phase:phasey1,mul:amp22/(rect*2))).abs+(amp22))*
+(SinOsc.ar(freq22*(rect)+c22br,phase:phasey1,mul:amp22/(rect)))).abs+(amp22))*c22*5;
+//sig33=((((SinOsc.ar(freq33*(rect*2)+c33ar,phase:phasez1,mul:amp33/(rect*2))).abs+(amp33))*
+//(SinOsc.ar(freq33*(rect)+c33br,phase:phasez1,mul:amp33/(rect)))).abs+(amp33))*c33*5;
 
 /*sig1=c1;
 sig2=c2;
@@ -913,10 +913,10 @@ g_ch4=
 );*/
 
 ///amp distortion
-synthx=Pulse.ar(220,mix.linexp(0,1,0.999999,0.5),1,1)*sig1;
-synthy=Pulse.ar(220,mix.linexp(0,1,0.999999,0.5),1,1)*sig2;
-synthx1=Pulse.ar(220,mix.linexp(0,1,0.999999,0.5),1,1)*sig11;
-synthy1=Pulse.ar(220,mix.linexp(0,1,0.999999,0.5),1,1)*sig22;
+synthx=Pulse.ar(55,mix.linexp(0,1,0.999999,0.5),1,1)*sig1;
+synthy=Pulse.ar(55,mix.linexp(0,1,0.999999,0.5),1,1)*sig2;
+synthx1=Pulse.ar(55,mix.linexp(0,1,0.999999,0.5),1,1)*sig11;
+synthy1=Pulse.ar(5,mix.linexp(0,1,0.999999,0.5),1,1)*sig22;
 //synthx=sig1;
 //synthy=sig2;
 //synthx1=sig11;
@@ -942,10 +942,10 @@ envb = Env(rip1.asArray, times1);
 envenv = EnvGen.ar(envb,gate:Trig.kr(LFSaw.kr(erate),0.01));*/
 envenv=1;
 
-sigx=Limiter.ar(LPF.ar(HPF.ar(synthx*envenv,lowend),15000),lim);
-sigy=Limiter.ar(LPF.ar(HPF.ar(synthy*envenv, lowend),15000),lim);
-sigx1=Limiter.ar(LPF.ar(HPF.ar(synthx1*envenv,lowend),15000),lim);
-sigy1=Limiter.ar(LPF.ar(HPF.ar(synthy1*envenv, lowend),15000),lim);
+sigx=Limiter.ar(LPF.ar(HPF.ar(synthx*envenv,lowend),18000),lim);
+sigy=Limiter.ar(LPF.ar(HPF.ar(synthy*envenv, lowend),18000),lim);
+sigx1=Limiter.ar(LPF.ar(HPF.ar(synthx1*envenv,lowend),18000),lim);
+sigy1=Limiter.ar(LPF.ar(HPF.ar(synthy1*envenv, lowend),18000),lim);
 
 Out.ar(busArray.[0],LeakDC.ar(sigx));
 Out.ar(busArray.[1],LeakDC.ar(sigy));
@@ -1251,7 +1251,7 @@ value2=obj.value.linexp(0,1,1,16256).round(1).asInteger.postln;
 ~sl5=Knob.new(~vw1, Rect.new(450,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value1,value2;
-value2=obj.value.linlin(0,1,1,4).round(0.00001).postln;
+value2=obj.value.linlin(0,1,1,8).round(0.00001).postln;
 ~rect=value2;
 ~log1.(value2.asString);
 });
