@@ -2,7 +2,7 @@
 (
 (
 s.options.numWireBufs = 1024*16;
-s.options.numOutputBusChannels=9;
+s.options.numOutputBusChannels=13;
 s.options.numInputBusChannels=0;
 s.options.memSize = 8192*256;
 s.options.blockSize = 64;
@@ -23,6 +23,10 @@ s.scope;
 ~controlBus_x = Bus.control(s, 1);
 ~controlBus_y = Bus.control(s, 1);
 ~controlBus_z = Bus.control(s, 1);
+~controlBus_ra1 = Bus.control(s, 1);
+~controlBus_re1 = Bus.control(s, 1);
+~controlBus_ra2 = Bus.control(s, 1);
+~controlBus_re2 = Bus.control(s, 1);
 s.waitForBoot{
 Tdef(\drone, {
 
@@ -543,8 +547,8 @@ rip = rip.normalize;
 peak = peak.min(signal.size - 2).max(1);
 times =Array.fill(signal.size - peak - 1, hold / (signal.size - peak - 1));
 enva = Env(rip.asArray, times);
-env = EnvGen.ar(enva,levelScale:gain,gate:Trig.kr(LFPulse.kr(hold.reciprocal,width:0.01),hold));
-//env = EnvGen.ar(Env.perc(attack,dicay,gain),gate:Trig.kr(LFPulse.kr(hold.reciprocal,width:0.01),hold));
+env = EnvGen.ar(enva,levelScale:gain,doneAction:2);
+//env = EnvGen.ar(Env.perc(attack,dicay,gain),doneAction:2);
 
 ///fund
 expansion=2.pow(c.lag(0.01)/16256);
@@ -586,14 +590,14 @@ pz=Select.kr(zz,~cz);
 azs=atan2(px,py);
 els=atan2(pz, hypot(px,py));*/
 
-azpl=azrot.lag(0.01)/10;
-elpl=elrot.lag(0.01)/10;
-azpl1=azrot1.lag(0.01)/10;
-elpl1=elrot1.lag(0.01)/10;
-azpls=azrot.lag(0.01);
-elpls=elrot.lag(0.01);
-azpls1=azrot1.lag(0.01);
-elpls1=elrot1.lag(0.01);
+azpl=In.kr(~controlBus_ra1.index).lag(0.01)/10;
+elpl=In.kr(~controlBus_re1.index).lag(0.01)/10;
+azpl1=In.kr(~controlBus_ra2.index).lag(0.01)/10;
+elpl1=In.kr(~controlBus_re2.index).lag(0.01)/10;
+azpls=In.kr(~controlBus_ra1.index).lag(0.01);
+elpls=In.kr(~controlBus_re1.index).lag(0.01);
+azpls1=In.kr(~controlBus_ra1.index).lag(0.01);
+elpls1=In.kr(~controlBus_re2.index).lag(0.01);
 
 th=(az+azpl).wrap(pi.neg,pi);
 ph=(el+elpl).wrap(0.5pi.neg,0.5pi);
@@ -721,14 +725,14 @@ c33=BPF.ar((Osc.ar(~wt.bufnum,freq33,phase:phasez1,mul:1200).abs*
 SinOsc.ar(freq33,phase:phasez1)),freq33,heavy,amp33);
 
 c1=BPF.ar((Osc.ar(~wt.bufnum,freq1+c3,phase:phasex,mul:1200).abs*
-SinOsc.ar(freq1+c3,phase:phasex)),freq1+c3,heavy,amp1);
+SinOsc.ar(freq1+c3,phase:phasex)),freq1,heavy,amp1);
 c2=BPF.ar((Osc.ar(~wt.bufnum,freq2,phase:phasey,mul:1200).abs*
-SinOsc.ar(freq2+c3,phase:phasey)),freq2+c3,heavy,amp2);
+SinOsc.ar(freq2+c3,phase:phasey)),freq2,heavy,amp2);
 
 c11=BPF.ar((Osc.ar(~wt.bufnum,freq11+c33,phase:phasex1,mul:1200).abs*
-SinOsc.ar(freq11+c33,phase:phasex1)),freq11+c33,heavy,amp11);
+SinOsc.ar(freq11+c33,phase:phasex1)),freq11,heavy,amp11);
 c22=BPF.ar((Osc.ar(~wt.bufnum,freq22+c33,phase:phasey1,mul:1200).abs*
-SinOsc.ar(freq22+c33,phase:phasey1)),freq22+c33,heavy,amp22);
+SinOsc.ar(freq22+c33,phase:phasey1)),freq22,heavy,amp22);
 
 ////rectifier
 c3a=(SinOsc.ar(freq3*(rect*2),phase:phasez,mul:amp3));
@@ -738,9 +742,9 @@ c33a=(SinOsc.ar(freq33*(rect*2),phase:phasez1,mul:amp33));
 c33b=(SinOsc.ar(freq33*(rect),phase:phasez1,mul:amp33));
 
 sig1=((((SinOsc.ar(freq1*(rect*2)+c3a,phase:phasex,mul:amp1)).abs+(amp1))*
-(SinOsc.ar(freq1*(rect)+c3b,phase:phasex,mul:amp1))).abs+(amp1))*c1*10;
+(SinOsc.ar(freq1*(rect)+c3b,phase:phasex,mul:amp1))).abs+(amp1))*c1*5;
 sig2=((((SinOsc.ar(freq2*(rect*2)+c3a,phase:phasey,mul:amp2)).abs+(amp2))*
-(SinOsc.ar(freq2*(rect)+c3b,phase:phasey,mul:amp2))).abs+(amp2))*c2*10;
+(SinOsc.ar(freq2*(rect)+c3b,phase:phasey,mul:amp2))).abs+(amp2))*c2*5;
 
 
 sig11=((((SinOsc.ar(freq11*(rect*2)+c33a,phase:phasex1,mul:amp11)).abs+(amp11))*
@@ -912,7 +916,6 @@ Out.kr(~controlBus_3.index,Amplitude.kr((c3),mul:env));
 );
 0.6.wait;
 ~erate=1;
-~synths=Synth.new(\synth).register;
 /////////////////////////////////////////////////////////////////////////////////////////////////////////pattern
 ({
 var m1=1.neg, m2=1.neg;
@@ -986,8 +989,8 @@ durz2=[dz.[4]]++durz1.reverse;
 ~dur=~dur++durx++dury++durz;
 }.value);
 
-~intervalt=2;
-~dut=~dur*~intervalt;
+~intervalt=8;
+~dur=~dur*~intervalt;
 
 ({
 var a,b,c,d;
@@ -1017,7 +1020,7 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 ~lseq.postln;
 }.value);
 
-////args
+////args globals
 ~gain=1;~drive=0;~c=0;~attack=0.01;~decay=0.5;~s_size=1;~erate=1;
 ~lowend=20;~room=0;~sscb=26;~pan1=0.001;~pan2=0.001;
 ~gainb=1;~driveb=0;~cb=0;~attackb=0.01;~decayb=1;
@@ -1043,7 +1046,16 @@ Routine({loop{
 }).play(~clock);
 }.defer
 );
-
+(
+SynthDef.new(\run,{
+arg az=0,el=0,az1=0,el1=0;
+Out.kr(~controlBus_ra1.index,DC.kr(az));
+Out.kr(~controlBus_re1.index,DC.kr(el));
+Out.kr(~controlBus_ra2.index,DC.kr(az1));
+Out.kr(~controlBus_re2.index,DC.kr(el1));
+}).add;
+);
+~synths=Synth.new(\run).register;
 (
 {
 var x,y,z,px,py,pz,x1,y1,z1,px1,py1,pz1;
@@ -1063,16 +1075,16 @@ pz1=~cz.[x1];
 ~elevation=Cartesian(px,py,pz).phi;
 ~azimuth1=Cartesian(px1,py1,pz1).theta;
 ~elevation1=Cartesian(px1,py1,pz1).phi;
-~synths.set(\azrot,~azimuth,\elrot,~elevation,\azrot1,~azimuth1,\elrot1,~elevation1);
-					(~timbr_dur).wait;}
+~synths.set(\az,~azimuth,\el,~elevation,\az1,~azimuth1,\el1,~elevation1);
+(~timbr_dur).wait;}
 }).play;
 }.defer
 );
 
 ~pattern = Pdef(\1,
-Pmono( \synth,
+Pbind( \instrument,\synth,
 \dur, Pseq(~dur ,inf),
-\hold,Pseq([~dursum] ,inf),
+\hold,Pseq(~dur ,inf),
 \s_size,Pfunc { ~s_size },
 \lowend,Pfunc { ~lowend },
 \room,Pfunc { ~room },
