@@ -806,10 +806,6 @@ perspective1 = view / (view + z1 + (view/vanish));
 
 revm1=perspective;
 revm2=perspective1;
-sig1=FreeVerb.ar(sig1,revm1+(mix/10),room);
-sig2=FreeVerb.ar(sig2,revm1+(mix/10),room);
-sig11=FreeVerb.ar(sig11,revm2+(mix/10),room);
-sig22=FreeVerb.ar(sig22,revm2+(mix/10),room);
 
 sig1=sig1*mp_x.sign*perspective*env;
 sig2=sig2*mp_y.sign*perspective*env;
@@ -913,10 +909,10 @@ g_ch4=
 );*/
 
 ///amp distortion
-synthx=Pulse.ar(55,mix.linexp(0,1,0.999999,0.5),1,1)*sig1;
-synthy=Pulse.ar(55,mix.linexp(0,1,0.999999,0.5),1,1)*sig2;
-synthx1=Pulse.ar(55,mix.linexp(0,1,0.999999,0.5),1,1)*sig11;
-synthy1=Pulse.ar(5,mix.linexp(0,1,0.999999,0.5),1,1)*sig22;
+synthx=Pulse.ar(fund*expansion,mix.linexp(0,1,0.999999,0.5),1,1)*sig1;
+synthy=Pulse.ar(fund*expansion,mix.linexp(0,1,0.999999,0.5),1,1)*sig2;
+synthx1=Pulse.ar(fund*expansion,mix.linexp(0,1,0.999999,0.5),1,1)*sig11;
+synthy1=Pulse.ar(fund*expansion,mix.linexp(0,1,0.999999,0.5),1,1)*sig22;
 //synthx=sig1;
 //synthy=sig2;
 //synthx1=sig11;
@@ -941,6 +937,10 @@ times1 =Array.fill(peak1, attack / peak1) ++ Array.fill(signal1.size - peak1 - 1
 envb = Env(rip1.asArray, times1);
 envenv = EnvGen.ar(envb,gate:Trig.kr(LFSaw.kr(erate),0.01));*/
 envenv=1;
+sigx=FreeVerb.ar(sigx,revm1+(mix/10),room);
+sigy=FreeVerb.ar(sigy,revm1+(mix/10),room);
+sigx1=FreeVerb.ar(sigx1,revm2+(mix/10),room);
+sigy1=FreeVerb.ar(sigy1,revm2+(mix/10),room);
 
 sigx=Limiter.ar(LPF.ar(HPF.ar(synthx*envenv,lowend),18000),lim);
 sigy=Limiter.ar(LPF.ar(HPF.ar(synthy*envenv, lowend),18000),lim);
@@ -1216,7 +1216,7 @@ value=obj.value.linlin(0,1,1/32,4).round(1/32).postln;
 ~sl2=Knob.new(~vw1, Rect.new(150,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,1/32,1/4).round(0.000001).postln;
+value=obj.value.linexp(0,1,0.000001,1).round(0.000001).postln;
 //~rotation=value;
 ~pan1=obj.value.linlin(0,1,0.000001,0.5);
 ~rotationz=value;
@@ -1309,7 +1309,7 @@ value1=obj.value.linexp(0,1,1,16).postln;
 ~sl10=Knob.new(~vw1, Rect.new(450,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value1,value2,g=((1+5.sqrt)/2),s=(1+2.sqrt);
-value1=obj.value.linlin(0,1,1/32,1/4).round(0.000001).postln;
+value1=obj.value.linexp(0,1,0.000001,1).round(0.000001).postln;
 ~incr1=obj.value.linexp(0,1,0.0001,(2pi-(2pi/s)));
 ~rotationx=value1;
 ~log1.(value1.asString);
@@ -1321,7 +1321,7 @@ value1=obj.value.linlin(0,1,1/32,1/4).round(0.000001).postln;
 ~sl11=Knob.new(~vw1, Rect.new(50,(50+sk+50+sk+25+25+50),sk, sk)).background_(Color.black).action_({
 arg obj;
 var value1,value2;
-value2=obj.value.linlin(0,1,1/32,1/4).round(0.000001).postln;
+value2=obj.value.linexp(0,1,0.000001,1).round(0.000001).postln;
 ~incr2=obj.value.linexp(0,1,0.0001,(pi-(pi/g)));
 ~rotationy=value2;
 ~log1.(value2.asString);
@@ -1401,7 +1401,7 @@ arg obj;
 var value;
 value=obj.value.linexp(0,1,16256,1);
 ~fuse=value;
-~mr1=obj.value.linexp(0,1,1,0.01).postln;
+~mr1=obj.value.linexp(0,1,10,0.01).postln;
 ~log1.(~mr1.asString);
 });
 ~s118=StaticText(~vw1,Rect(250,(50+sk+50+sk+25+25+sk+50+sk+50+sk),sk+20,sk)).string_("mlimit")
