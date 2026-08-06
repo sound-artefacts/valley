@@ -103,7 +103,7 @@ signal=Signal.sineFill(~signalSize,~array,~ph); wt = signal.asWavetable; ~wt.loa
 SynthDef.new(\synth,{
 
 arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,perspective=1,room=0,drive=0,mag=0;
-var level,c,res,distance,revroom,overdrive,x,y,z,magx,magy,magz,tx,ty,tz,trange,busarray2,pan1,pan2,r;
+var level,c,res,distance,revroom,overdrive,x,y,z,magx,magy,magz,tx,ty,tz,trange,busarray2,pan1,pan2;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=32*(9/8),phasex,phasey,phasez,diameter,view=2;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,immersion,n=0,polytope=1,busarray1,harmonic;
 
@@ -126,8 +126,7 @@ eln=el.[n].lag(~frames);
 magx = (harmonic*cos(eln)*cos(azn))+(cos(harmonic*(azn))*cos(harmonic*(azn)));
 magy = (harmonic*cos(eln)*sin(azn))+(cos(harmonic*(azn))*sin(harmonic*(azn)));
 magz = (harmonic*sin(eln))+(sin(harmonic*(eln)));
-//r=Cartesian(magz,magy,magz).rho*(2.sqrt.reciprocal);
-r=1;
+
 ////cartesian
 //x = 2.sqrt.reciprocal*(cos(eln)*cos(azn));
 //y = 2.sqrt.reciprocal*(cos(eln)*sin(azn));
@@ -259,12 +258,12 @@ busarray2=[1,3,6,7];
 
 ///wavefield out
 Out.ar(busarray1.[n],LeakDC.ar(Limiter.ar(sigx)*x.sign,1));
-Out.ar(busarray2.[n],LeakDC.ar(Limiter.ar(sigy)*x.sign,1));
+Out.ar(busarray2.[n],LeakDC.ar(Limiter.ar(sigy)*y.sign,1));
 //Out.ar(busarray1.[n],LeakDC.ar((sigx)*x.sign));
-//Out.ar(busarray2.[n],LeakDC.ar((sigy)*x.sign));
+//Out.ar(busarray2.[n],LeakDC.ar((sigy)*y.sign));
 ///oktaphonic out
-//Out.ar(busarray1.[n],LeakDC.ar((sigx+(sigz))*pan1[n]));
-//Out.ar(busarray2.[n],LeakDC.ar((sigy+(sigz))*pan2[n]));
+//Out.ar(busarray1.[n],LeakDC.ar((sigx+(sigz*x.sign))*pan1[n]));
+//Out.ar(busarray2.[n],LeakDC.ar((sigy+(sigz*y.sign))*pan2[n]));
 
 n=n+1;
 }
