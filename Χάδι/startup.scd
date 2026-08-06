@@ -102,10 +102,10 @@ signal=Signal.sineFill(~signalSize,~array,~ph); wt = signal.asWavetable; ~wt.loa
 (
 SynthDef.new(\synth,{
 
-arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harmonic=1,perspective=0,room=0,drive=0,mag=0;
-var level,c,res,distance,revroom,overdrive,x,y,z,magx,magy,magz,tx,ty,tz,trange,busarray2,pan1,pan2;
-var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=64,phasex,phasey,phasez,diameter,view=2;
-var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,immersion,n=0,polytope=4,busarray1;
+arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,perspective=1,room=0,drive=0,mag=0;
+var level,c,res,distance,revroom,overdrive,x,y,z,magx,magy,magz,tx,ty,tz,trange,busarray2,pan1,pan2,r;
+var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=32*(9/8),phasex,phasey,phasez,diameter,view=2;
+var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,immersion,n=0,polytope=1,busarray1,harmonic;
 
 ///inputs
 busarray1=[0,2,4,5];busarray2=[1,3,6,7];
@@ -113,24 +113,27 @@ busarray1=[0,2,4,5];busarray2=[1,3,6,7];
 level=2.pow(gain.lag(~frames)/16256);
 c=2.pow(fundamental.lag(~frames)/16256);
 res=2.pow(resonanse.lag(~frames)/16256);
-distance=2.pow(perspective.lag(~frames)/16256);
+//distance=2.pow(perspective.lag(~frames)/16256);
+distance=perspective;
 revroom=2.pow(room.lag(~frames)/16256);
-overdrive=2.pow(drive.lag(0.01)/16256);
+overdrive=2.pow(drive.lag(~frames)/16256);
+harmonic=2.pow(harm.lag(~frames)/12);
 trange=mag.lag(~frames);
 
 polytope.do{
 azn=az.[n].lag(~frames);
 eln=el.[n].lag(~frames);
 
-/////spherical harmoniconics
-magx = cos(azn*harmonic)*cos(eln);
-magy = sin(azn*harmonic)*cos(eln);
-magz = sin(eln*harmonic);
+///cardioid
+magx = (harmonic*cos(eln)*cos(azn))+(cos(harmonic*(azn))*cos(harmonic*(azn)));
+magy = (harmonic*cos(eln)*sin(azn))+(cos(harmonic*(azn))*sin(harmonic*(azn)));
+magz = (harmonic*sin(eln))+(sin(harmonic*(eln)));
+r=Cartesian(magz,magy,magz).rho*(2.sqrt.reciprocal);
 
 ////cartesian
-x = magx*(cos(eln)*cos(azn));
-y = magy*(cos(eln)*sin(azn));
-z = magz*(sin(eln));
+x = r*(cos(eln)*cos(azn));
+y = r*(cos(eln)*sin(azn));
+z = r*(sin(eln));
 
 ////temperament
 tx = (trange*x).round(1);
@@ -152,7 +155,7 @@ phasey=(y*2pi);
 phasez=(z*2pi);
 
 ///perspective
-diameter=level/distance;
+diameter=level*distance;
 immersion = diameter / (diameter + z + (diameter/view));
 ampx=ampx*immersion;
 ampy=ampy*immersion;
@@ -164,96 +167,88 @@ c1=BPF.ar((Osc.ar(~wt.bufnum,freqx,phase:phasex,mul:1024).abs*
 SinOsc.ar(freqx,phase:phasex)),freqx,res,ampx);
 c2=BPF.ar((Osc.ar(~wt.bufnum,freqy,phase:phasey,mul:1024).abs*
 SinOsc.ar(freqy,phase:phasey)),freqy,res,ampy);
-//c3=BPF.ar((Osc.ar(~wt.bufnum,freqz,phase:phasez,mul:1024).abs*
-//SinOsc.ar(freqz,phase:phasez)),freqz,res,ampz);
+c3=BPF.ar((Osc.ar(~wt.bufnum,freqz,phase:phasez,mul:1024).abs*
+SinOsc.ar(freqz,phase:phasez)),freqz,res,ampz);
 
 ///distortion
-sigx=FreeVerb.ar((c1).fold2(overdrive),immersion,room);
-sigy=FreeVerb.ar((c2).fold2(overdrive),immersion,room);
-///sigz=(c3).fold2(mrange*1);
+sigx=FreeVerb.ar((c1).fold2(overdrive),immersion.linlin(0,1,1,0),room);
+sigy=FreeVerb.ar((c2).fold2(overdrive),immersion.linlin(0,1,1,0),room);
+sigz=FreeVerb.ar((c3).fold2(overdrive),distance.linlin(0,1,1,0),room);
 
 /////////spat
-///cardioid
-cx = (harmonic*cos(eln)*cos(azn))+(cos(harmonic*(azn))*cos(harmonic*(azn)));
-cy = (harmonic*cos(eln)*sin(azn))+(cos(harmonic*(azn))*sin(harmonic*(azn)));
-cz = (harmonic*sin(eln))+(sin(harmonic*(eln)));
-
-cx=cx*2.sqrt.reciprocal;
-cy=cy*2.sqrt.reciprocal;
-cz=cz*2.sqrt.reciprocal;
 //panners
 (
-g1=((cx.abs.range(0.001,1)*cos(eln)*cos(azn)*
-cx.range(0.001,1)*cos(~elc.[0])*cos(~azc.[0]))
+g1=((cos(eln)*cos(azn*harmonic)*
+cos(~elc.[0])*cos(~azc.[0]))
 +
-(cy.abs.range(0.001,1)*cos(eln)*sin(azn)*
- cy.range(0.001,1)*cos(~elc.[0])*sin(~azc.[0]))
+(cos(eln)*sin(azn*harmonic)*
+ cos(~elc.[0])*sin(~azc.[0]))
 +
-(cz.abs.range(0.001,1)*sin(eln)*
-cz.range(0.001,1)*sin(~elc.[0])));
+(sin(eln*harmonic)*
+sin(~elc.[0])));
 
-g2=((cx.abs.range(0.001,1)*cos(eln)*cos(azn)*
-cx.range(0.001,1)*cos(~elc.[1])*cos(~azc.[1]))
+g2=((cos(eln)*cos(azn*harmonic)*
+cos(~elc.[1])*cos(~azc.[1]))
 +
-(cy.abs.range(0.001,1)*cos(eln)*sin(azn)*
- cy.range(0.001,1)*cos(~elc.[1])*sin(~azc.[1]))
+(cos(eln)*sin(azn*harmonic)*
+ cos(~elc.[1])*sin(~azc.[1]))
 +
-(cz.abs.range(0.001,1)*sin(eln)*
-cz.range(0.001,1)*sin(~elc.[1])));
+(sin(eln*harmonic)*
+sin(~elc.[1])));
 
-g3=((cx.abs.range(0.001,1)*cos(eln)*cos(azn)*
-cx.range(0.001,1)*cos(~elc.[2])*cos(~azc.[2]))
+g3=((cos(eln)*cos(azn*harmonic)*
+cos(~elc.[2])*cos(~azc.[2]))
 +
-(cy.abs.range(0.001,1)*cos(eln)*sin(azn)*
- cy.range(0.001,1)*cos(~elc.[2])*sin(~azc.[2]))
+(cos(eln)*sin(azn*harmonic)*
+ cos(~elc.[2])*sin(~azc.[2]))
 +
-(cz.abs.range(0.001,1)*sin(eln)*
-cz.range(0.001,1)*sin(~elc.[2])));
+(sin(eln*harmonic)*
+sin(~elc.[2])));
 
-g4=((cx.abs.range(0.001,1)*cos(eln)*cos(azn)*
-cx.range(0.001,1)*cos(~elc.[3])*cos(~azc.[3]))
+g4=((cos(eln)*cos(azn*harmonic)*
+cos(~elc.[3])*cos(~azc.[3]))
 +
-(cy.abs.range(0.001,1)*cos(eln)*sin(azn)*
- cy.range(0.001,1)*cos(~elc.[3])*sin(~azc.[3]))
+(cos(eln)*sin(azn*harmonic)*
+ cos(~elc.[3])*sin(~azc.[3]))
 +
-(cz.abs.range(0.001,1)*sin(eln)*
-cz.range(0.001,1)*sin(~elc.[3])));
+(sin(eln*harmonic)*
+sin(~elc.[3])));
 
-g5=((cx.abs.range(0.001,1)*cos(eln)*cos(azn)*
-cx.range(0.001,1)*cos(~elc.[4])*cos(~azc.[4]))
+g5=((cos(eln)*cos(azn*harmonic)*
+cos(~elc.[4])*cos(~azc.[4]))
 +
-(cy.abs.range(0.001,1)*cos(eln)*sin(azn)*
- cy.range(0.001,1)*cos(~elc.[4])*sin(~azc.[4]))
+(cos(eln)*sin(azn*harmonic)*
+ cos(~elc.[4])*sin(~azc.[4]))
 +
-(cz.abs.range(0.001,1)*sin(eln)*
-cz.range(0.001,1)*sin(~elc.[4])));
+(sin(eln*harmonic)*
+sin(~elc.[4])));
 
-g6=((cx.abs.range(0.001,1)*cos(eln)*cos(azn)*
-cx.range(0.001,1)*cos(~elc.[5])*cos(~azc.[5]))
+g6=((cos(eln)*cos(azn*harmonic)*
+cos(~elc.[5])*cos(~azc.[5]))
 +
-(cy.abs.range(0.001,1)*cos(eln)*sin(azn)*
- cy.range(0.001,1)*cos(~elc.[5])*sin(~azc.[5]))
+(cos(eln)*sin(azn*harmonic)*
+ cos(~elc.[5])*sin(~azc.[5]))
 +
-(cz.abs.range(0.001,1)*sin(eln)*
-cz.range(0.001,1)*sin(~elc.[5])));
+(sin(eln*harmonic)*
+sin(~elc.[5])));
 
-g7=((cx.abs.range(0.001,1)*cos(eln)*cos(azn)*
-cx.range(0.001,1)*cos(~elc.[6])*cos(~azc.[6]))
+g7=((cos(eln)*cos(azn*harmonic)*
+cos(~elc.[6])*cos(~azc.[6]))
 +
-(cy.abs.range(0.001,1)*cos(eln)*sin(azn)*
- cy.range(0.001,1)*cos(~elc.[6])*sin(~azc.[6]))
+(cos(eln)*sin(azn*harmonic)*
+ cos(~elc.[6])*sin(~azc.[6]))
 +
-(cz.abs.range(0.001,1)*sin(eln)*
-cz.range(0.001,1)*sin(~elc.[6])));
+(sin(eln*harmonic)*
+sin(~elc.[6])));
 
-g8=((cx.abs.range(0.001,1)*cos(eln)*cos(azn)*
-cx.range(0.001,1)*cos(~elc.[7])*cos(~azc.[7]))
+g8=((cos(eln)*cos(azn*harmonic)*
+cos(~elc.[7])*cos(~azc.[7]))
 +
-(cy.abs.range(0.001,1)*cos(eln)*sin(azn)*
- cy.range(0.001,1)*cos(~elc.[7])*sin(~azc.[7]))
+(cos(eln)*sin(azn*harmonic)*
+ cos(~elc.[7])*sin(~azc.[7]))
 +
-(cz.abs.range(0.001,1)*sin(eln)*
-cz.range(0.001,1)*sin(~elc.[7])));
+(sin(eln*harmonic)*
+sin(~elc.[7])));
 			);
 
 pan1=[g1,g3,g5,g7];
@@ -263,12 +258,12 @@ pan2=[g2,g4,g6,g8];
 ///wavefield out
 //Out.ar(busarray1.[n],LeakDC.ar(Limiter.ar(sigx),2));
 //Out.ar(busarray2.[n],LeakDC.ar(Limiter.ar(sigy),2));
-//Out.ar(busarray1.[n],LeakDC.ar(sigx));
-//Out.ar(busarray2.[n],LeakDC.ar(sigy));
+Out.ar(busarray1.[n],LeakDC.ar((sigx)+(sigz)));
+Out.ar(busarray2.[n],LeakDC.ar((sigy)+(sigz)));
 
 ///oktaphonic out
-Out.ar(busarray1.[n],LeakDC.ar(sigx*pan1[n]));
-Out.ar(busarray2.[n],LeakDC.ar(sigy*pan2[n]));
+//Out.ar(busarray1.[n],LeakDC.ar((sigx+(sigz))*pan1[n]));
+//Out.ar(busarray2.[n],LeakDC.ar((sigy+(sigz))*pan2[n]));
 
 n=n+1;
 }
@@ -372,8 +367,8 @@ value=obj.value.linlin(0,1,(16256*12).neg,16256*3).round(1).postln;
 ~sl6=Knob.new(~vw1, Rect.new(50,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,1,10).round(1).postln;
-~synth.set(\harmonic,value);
+value=obj.value.linlin(0,1,0,12*3).postln;
+~synth.set(\harm,value);
 ~log1.(value.asString);
 });
 ~st6=StaticText(~vw1,Rect(50,(50+sk+50+25+sk),sk+20,sk)).string_("harmonic")
@@ -396,7 +391,7 @@ value=obj.value.linlin(0,1,16256*3,(16256*5).neg).round(1).postln;
 ~sl8=Knob.new(~vw1, Rect.new(250,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,(16256*2).neg,(16256*4)).round(1).postln;
+value=obj.value.linexp(0,1,1.5,0.01).postln;
 ~synth.set(\perspective,value);
 ~log1.(value.asString);
 });
