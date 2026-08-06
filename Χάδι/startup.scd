@@ -54,7 +54,7 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 ///////////inputs
 ~rx=0;~ry=0;~rz=0;~gain=1;~fundament=0;~resonance=0;~harmonic=1;~fold=0;~perspective=0;~room=0;~azs=0;~els=0;
 ~azr=1;~elr=1;
-~rate=2;
+~rate=1;
 //////////rotation
 (
 {var sph,rot,az,el,n,x=0,y=0,z=0;
@@ -109,13 +109,12 @@ var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,immersion,n
 
 ///inputs
 
-level=2.pow(gain.lag(~frames)/~temperament);
-c=2.pow(fundamental.lag(~frames)/~temperament);
-res=2.pow(resonanse.lag(~frames)/~temperament);
-//distance=2.pow(perspective.lag(~frames)/~temperament);
+level=2.pow(gain.lag(~frames)/16256);
+c=2.pow(fundamental.lag(~frames)/16256);
+res=2.pow(resonanse.lag(~frames)/16256);
 distance=perspective;
-revroom=2.pow(room.lag(~frames)/~temperament);
-overdrive=2.pow(drive.lag(~frames)/~temperament);
+revroom=2.pow(room.lag(~frames)/16256);
+overdrive=2.pow(drive.lag(~frames)/16256);
 harmonic=2.pow(harm.lag(~frames)/12);
 trange=mag.lag(~frames);
 
@@ -130,13 +129,13 @@ magz = (harmonic*sin(eln))+(sin(harmonic*(eln)));
 //r=Cartesian(magz,magy,magz).rho*(2.sqrt.reciprocal);
 r=1;
 ////cartesian
-x = 2.sqrt.reciprocal*(cos(eln)*cos(azn));
-y = 2.sqrt.reciprocal*(cos(eln)*sin(azn));
-z = 2.sqrt.reciprocal*(sin(eln));
+//x = 2.sqrt.reciprocal*(cos(eln)*cos(azn));
+//y = 2.sqrt.reciprocal*(cos(eln)*sin(azn));
+//z = 2.sqrt.reciprocal*(sin(eln));
 
-//x = 2.sqrt.reciprocal*magx;
-//y = 2.sqrt.reciprocal*magy;
-//z = 2.sqrt.reciprocal*magz;
+x = 2.sqrt.reciprocal*magx;
+y = 2.sqrt.reciprocal*magy;
+z = 2.sqrt.reciprocal*magz;
 ////temperament
 tx = (trange*x).round(1);
 ty = (trange*y).round(1);
@@ -259,12 +258,10 @@ busarray1=[0,2,4,5];
 busarray2=[1,3,6,7];
 
 ///wavefield out
-//Out.ar(busarray1.[n],LeakDC.ar(Limiter.ar(sigx),2));
-//Out.ar(busarray2.[n],LeakDC.ar(Limiter.ar(sigy),2));
-Out.ar(busarray1.[n],LeakDC.ar((sigx)*x.sign));
-Out.ar(busarray2.[n],LeakDC.ar((sigy)*y.sign));
-//Out.ar(busarray1.[n],LeakDC.ar((sigz*3.sqrt.reciprocal)*z.sign));
-//Out.ar(busarray2.[n],LeakDC.ar((sigz*3.sqrt.reciprocal)*z.sign));
+Out.ar(busarray1.[n],LeakDC.ar(Limiter.ar(sigx)*x.sign,1));
+Out.ar(busarray2.[n],LeakDC.ar(Limiter.ar(sigy)*x.sign,1));
+//Out.ar(busarray1.[n],LeakDC.ar((sigx)*x.sign));
+//Out.ar(busarray2.[n],LeakDC.ar((sigy)*x.sign));
 ///oktaphonic out
 //Out.ar(busarray1.[n],LeakDC.ar((sigx+(sigz))*pan1[n]));
 //Out.ar(busarray2.[n],LeakDC.ar((sigy+(sigz))*pan2[n]));
@@ -334,7 +331,7 @@ value=obj.value.linlin(0,1,0.5pi.neg,0.5pi).postln;
 ~sl3=Knob.new(~vw1, Rect.new(250,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,(~temperament*12).neg,8128*3).round(1).postln;
+value=obj.value.linlin(0,1,(16256*12).neg,8128*3).round(1).postln;
 ~synth.set(\gain,value);
 ~log1.(value.asString);
 });
@@ -346,7 +343,7 @@ value=obj.value.linlin(0,1,(~temperament*12).neg,8128*3).round(1).postln;
 ~sl4=Knob.new(~vw1, Rect.new(350,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,0,~temperament*2).round(1).postln;
+value=obj.value.linlin(0,1,0,16256*2).round(1).postln;
 ~synth.set(\fundamental,value);
 ~log1.(value.asString);
 });
@@ -358,7 +355,7 @@ value=obj.value.linlin(0,1,0,~temperament*2).round(1).postln;
 ~sl5=Knob.new(~vw1, Rect.new(450,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,(~temperament*12).neg,~temperament*3).round(1).postln;
+value=obj.value.linlin(0,1,(16256*12).neg,16256*3).round(1).postln;
 ~synth.set(\resonanse,value);
 ~log1.(value.asString);
 });
@@ -382,7 +379,7 @@ value=obj.value.linlin(0,1,0,12*3).postln;
 ~sl7=Knob.new(~vw1, Rect.new(150,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,~temperament*3,(~temperament*5).neg).round(1).postln;
+value=obj.value.linlin(0,1,16256*3,(16256*5).neg).round(1).postln;
 ~synth.set(\drive,value);
 ~log1.(value.asString);
 });
@@ -406,7 +403,7 @@ value=obj.value.linexp(0,1,10,0.01).postln;
 ~sl9=Knob.new(~vw1, Rect.new(350,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,(~temperament*12).neg,0).round(1).postln;
+value=obj.value.linlin(0,1,(16256*12).neg,0).round(1).postln;
 ~synth.set(\room,value);
 ~log1.(value.asString);
 });
