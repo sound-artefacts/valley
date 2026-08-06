@@ -14,11 +14,11 @@ s.meter;
 s.freqscope;
 s.scope;
 );
-
+~img = Image.open("/Users/rohifes/Documents/Literary/Portfolio/SuperCollider/Χάδι/img.png");
 s.waitForBoot{
 
 Tdef(\drone, {
-
+~temperament=16256;
 ~frames=1/32;
 //////point arrays
 ////l system boolean
@@ -54,7 +54,7 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 ///////////inputs
 ~rx=0;~ry=0;~rz=0;~gain=1;~fundament=0;~resonance=0;~harmonic=1;~fold=0;~perspective=0;~room=0;~azs=0;~els=0;
 ~azr=1;~elr=1;
-~rate=1;
+~rate=2;
 //////////rotation
 (
 {var sph,rot,az,el,n,x=0,y=0,z=0;
@@ -87,7 +87,7 @@ z=(z+rot.z.abs).wrap(0,2pi);
 ////////////osc table
 (
 ~n=1.neg;~array=16256.collect{~n=~n+1;2.pow(~n/16256)};
-~n=(0-(2pi/16256)); ~ph=16256.collect{~n=~n+(2pi/16256);};
+~n=(0-(2pi/~temperament)); ~ph=16256.collect{~n=~n+(2pi/16256);};
 ~bufferSize = 4096*8;~signalSize = 2048*8;
 ~wt= Buffer.alloc(s,~bufferSize);
 {
@@ -108,15 +108,14 @@ var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=32*(9/8),phasex,phas
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,immersion,n=0,polytope=1,busarray1,harmonic;
 
 ///inputs
-busarray1=[0,2,4,5];busarray2=[1,3,6,7];
 
-level=2.pow(gain.lag(~frames)/16256);
-c=2.pow(fundamental.lag(~frames)/16256);
-res=2.pow(resonanse.lag(~frames)/16256);
-//distance=2.pow(perspective.lag(~frames)/16256);
+level=2.pow(gain.lag(~frames)/~temperament);
+c=2.pow(fundamental.lag(~frames)/~temperament);
+res=2.pow(resonanse.lag(~frames)/~temperament);
+//distance=2.pow(perspective.lag(~frames)/~temperament);
 distance=perspective;
-revroom=2.pow(room.lag(~frames)/16256);
-overdrive=2.pow(drive.lag(~frames)/16256);
+revroom=2.pow(room.lag(~frames)/~temperament);
+overdrive=2.pow(drive.lag(~frames)/~temperament);
 harmonic=2.pow(harm.lag(~frames)/12);
 trange=mag.lag(~frames);
 
@@ -128,28 +127,31 @@ eln=el.[n].lag(~frames);
 magx = (harmonic*cos(eln)*cos(azn))+(cos(harmonic*(azn))*cos(harmonic*(azn)));
 magy = (harmonic*cos(eln)*sin(azn))+(cos(harmonic*(azn))*sin(harmonic*(azn)));
 magz = (harmonic*sin(eln))+(sin(harmonic*(eln)));
-r=Cartesian(magz,magy,magz).rho*(2.sqrt.reciprocal);
-
+//r=Cartesian(magz,magy,magz).rho*(2.sqrt.reciprocal);
+r=1;
 ////cartesian
-x = r*(cos(eln)*cos(azn));
-y = r*(cos(eln)*sin(azn));
-z = r*(sin(eln));
+x = 2.sqrt.reciprocal*(cos(eln)*cos(azn));
+y = 2.sqrt.reciprocal*(cos(eln)*sin(azn));
+z = 2.sqrt.reciprocal*(sin(eln));
 
+//x = 2.sqrt.reciprocal*magx;
+//y = 2.sqrt.reciprocal*magy;
+//z = 2.sqrt.reciprocal*magz;
 ////temperament
 tx = (trange*x).round(1);
 ty = (trange*y).round(1);
 tz = (trange*z).round(1);
-tonex=2.pow(tx/16256);
-toney=2.pow(ty/16256);
-tonez=2.pow(tz/16256);
+tonex=2.pow(tx/~temperament);
+toney=2.pow(ty/~temperament);
+tonez=2.pow(tz/~temperament);
 
 ////osc data
 freqx=c*tune*tonex;
 freqy=c*tune*toney;
 freqz=c*tune*tonez;
-ampx=c.reciprocal*tonex.reciprocal*level*x.sign;
-ampy=c.reciprocal*toney.reciprocal*level*y.sign;
-ampz=c.reciprocal*tonez.reciprocal*level*z.sign;
+ampx=c.reciprocal*tonex.reciprocal*level;
+ampy=c.reciprocal*toney.reciprocal*level;
+ampz=c.reciprocal*tonez.reciprocal*level;
 phasex=(x*2pi);
 phasey=(y*2pi);
 phasez=(z*2pi);
@@ -253,14 +255,16 @@ sin(~elc.[7])));
 
 pan1=[g1,g3,g5,g7];
 pan2=[g2,g4,g6,g8];
-
+busarray1=[0,2,4,5];
+busarray2=[1,3,6,7];
 
 ///wavefield out
 //Out.ar(busarray1.[n],LeakDC.ar(Limiter.ar(sigx),2));
 //Out.ar(busarray2.[n],LeakDC.ar(Limiter.ar(sigy),2));
-Out.ar(busarray1.[n],LeakDC.ar((sigx)+(sigz)));
-Out.ar(busarray2.[n],LeakDC.ar((sigy)+(sigz)));
-
+Out.ar(busarray1.[n],LeakDC.ar((sigx)*x.sign));
+Out.ar(busarray2.[n],LeakDC.ar((sigy)*y.sign));
+//Out.ar(busarray1.[n],LeakDC.ar((sigz*3.sqrt.reciprocal)*z.sign));
+//Out.ar(busarray2.[n],LeakDC.ar((sigz*3.sqrt.reciprocal)*z.sign));
 ///oktaphonic out
 //Out.ar(busarray1.[n],LeakDC.ar((sigx+(sigz))*pan1[n]));
 //Out.ar(busarray2.[n],LeakDC.ar((sigy+(sigz))*pan2[n]));
@@ -294,11 +298,10 @@ var size=550,sk=(size/12),w,rol=0,sz=0.5,wd=3.5,shift=1;
 var s=(1+2.sqrt),g=((1+5.sqrt)/2);
 
 w = Window("tws", Rect(50, 50, size, size/2)).front;
-~vw1 = UserView(w, Rect(0,0,size,size/2)).background_(Color.black);
-~logView1 = ListView( ~vw1, Rect(0, 0, size, size/2))
-.background_(Color.black).stringColor_(Color.white)
-.font_(Font('Arial', 18))
-.items_([]);
+~vw1 = UserView(w, Rect(0,0,size,size/2)).drawFunc_({ ~img.drawInRect(~vw1.bounds)});//.background_(Color.black);
+~logView1 = ListView( ~vw1, Rect(0, 0, size/4, size/2)).background_(Color.black)
+.stringColor_(Color.white).font_(Font('Arial', 18)).items_([]);
+
 ~logItems1 = List.new;
 ~log1 = { |msg| {~logItems1.add(msg); if(~logItems1.size > 200) { ~logItems1.removeAt(0);  };
  ~logView1.items_(~logItems1.asArray); ~logView1.value_(~logItems1.size - 1); }.defer;};
@@ -331,7 +334,7 @@ value=obj.value.linlin(0,1,0.5pi.neg,0.5pi).postln;
 ~sl3=Knob.new(~vw1, Rect.new(250,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,(16256*12).neg,8128*3).round(1).postln;
+value=obj.value.linlin(0,1,(~temperament*12).neg,8128*3).round(1).postln;
 ~synth.set(\gain,value);
 ~log1.(value.asString);
 });
@@ -343,7 +346,7 @@ value=obj.value.linlin(0,1,(16256*12).neg,8128*3).round(1).postln;
 ~sl4=Knob.new(~vw1, Rect.new(350,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,0,16256*2).round(1).postln;
+value=obj.value.linlin(0,1,0,~temperament*2).round(1).postln;
 ~synth.set(\fundamental,value);
 ~log1.(value.asString);
 });
@@ -355,7 +358,7 @@ value=obj.value.linlin(0,1,0,16256*2).round(1).postln;
 ~sl5=Knob.new(~vw1, Rect.new(450,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,(16256*12).neg,16256*3).round(1).postln;
+value=obj.value.linlin(0,1,(~temperament*12).neg,~temperament*3).round(1).postln;
 ~synth.set(\resonanse,value);
 ~log1.(value.asString);
 });
@@ -379,7 +382,7 @@ value=obj.value.linlin(0,1,0,12*3).postln;
 ~sl7=Knob.new(~vw1, Rect.new(150,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,16256*3,(16256*5).neg).round(1).postln;
+value=obj.value.linlin(0,1,~temperament*3,(~temperament*5).neg).round(1).postln;
 ~synth.set(\drive,value);
 ~log1.(value.asString);
 });
@@ -391,7 +394,7 @@ value=obj.value.linlin(0,1,16256*3,(16256*5).neg).round(1).postln;
 ~sl8=Knob.new(~vw1, Rect.new(250,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linexp(0,1,1.5,0.01).postln;
+value=obj.value.linexp(0,1,10,0.01).postln;
 ~synth.set(\perspective,value);
 ~log1.(value.asString);
 });
@@ -403,7 +406,7 @@ value=obj.value.linexp(0,1,1.5,0.01).postln;
 ~sl9=Knob.new(~vw1, Rect.new(350,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,(16256*12).neg,0).round(1).postln;
+value=obj.value.linlin(0,1,(~temperament*12).neg,0).round(1).postln;
 ~synth.set(\room,value);
 ~log1.(value.asString);
 });
@@ -415,7 +418,7 @@ value=obj.value.linlin(0,1,(16256*12).neg,0).round(1).postln;
 ~sl10=Knob.new(~vw1, Rect.new(450,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,0,16256).round(1).postln;
+value=obj.value.linlin(0,1,0,~temperament).round(1).postln;
 ~synth.set(\mag,value);
 ~log1.(value.asString);
 });
