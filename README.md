@@ -1,3 +1,3 @@
 an archive of algorithmic scenes
 
-a synth of merit
+a synth oscillator of merit
