@@ -152,22 +152,20 @@ Pmono( \tone,
 
 
 ///fixed set control
-(
-~syntht=Synth.new(\tone).register;
-~seqtn=Pseq([3/2,2,1,4/3],inf).asStream;
-		)
 
-		(
-		~dur=~dur*1;
-	~seq=Pseq(~dur,inf).asStream;
+(
+~seqtn=Pseq([3/2,2,1,4/3],inf).asStream;
+~dur=~dur*1;
+~seq=Pseq(~dur,inf).asStream;
 ~attack=0.01;
 ~decay=2;
-		)
+)
+~syntht=Synth.new(\tone).register;
 (
 {var rot;
 Routine({loop{
 ~syntht.set(\attack,~attack,\attack,~decay,\tone,~seqtn.next,\rate,~seq.next);
-(0.1).wait;
+(~seq.next).wait;
 };
 }).play;
 }.defer
