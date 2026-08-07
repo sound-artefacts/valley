@@ -20,6 +20,7 @@ s.waitForBoot{
 Tdef(\drone, {
 ~temperament=16256;
 ~frames=1/32;
+~lagtime=1/8;
 //////point arrays
 ////l system boolean
 ({
@@ -54,29 +55,35 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 ///////////inputs
 ~rx=0;~ry=0;~rz=0;~gain=1;~fundament=0;~resonance=0;~harmonic=1;~fold=0;~perspective=0;~room=0;~azs=0;~els=0;
 ~azr=1;~elr=1;
-~rate=1;
+~rate=0.01;
 //////////rotation
 (
-{var sph,rot,az,el,n,x=0,y=0,z=0;
+{var sph,az,el,n;
 Routine({loop{
 n=0;~az=[];~el=[];
-
+~x=0;~y=0;~z=0;
 4.do{
 az=~azimuth.[n];
 el=~elevation.[n];
 n=n+1;
 sph=Spherical(1,az,el);
 //sph=sph.rotateYZ(0.5pi).asSpherical;
-sph=sph.rotateYZ(x).rotateXZ(y).rotateXY(z);
+sph=sph.rotateYZ(~x.lag2(~rate)).rotateXZ(~y.lag2(~rate)).rotateXY(~z.lag2(~rate));
 ~az=~az++[sph.theta];
 ~el=~el++[sph.phi];
 };
-
-rot=Spherical(0.01*~rate,~azr,~elr);
-x=(x+rot.x.abs).wrap(0,2pi);
-y=(y+rot.y.abs).wrap(0,2pi);
-z=(z+rot.z.abs).wrap(0,2pi);
-
+(~frames).wait;
+};
+}).play;
+}.defer
+);
+(
+{var rot;
+Routine({loop{
+rot=Spherical(~rate,~azr,~elr);
+~x=(~x+rot.x.wrap2(~rate).abs).wrap(0,2pi);
+~y=(~y+rot.y.wrap2(~rate).abs).wrap(0,2pi);
+~z=(~z+rot.z.wrap2(~rate).abs).wrap(0,2pi);
 (~frames).wait;
 };
 }).play;
@@ -88,7 +95,7 @@ z=(z+rot.z.abs).wrap(0,2pi);
 (
 ~n=1.neg;~array=16256.collect{~n=~n+1;2.pow(~n/16256)};
 ~n=(0-(2pi/~temperament)); ~ph=16256.collect{~n=~n+(2pi/16256);};
-~bufferSize = 4096*8;~signalSize = 2048*8;
+~bufferSize = 2048*8;~signalSize = 1024*8;
 ~wt= Buffer.alloc(s,~bufferSize);
 {
 var signal,wt;
@@ -97,48 +104,43 @@ signal=Signal.sineFill(~signalSize,~array,~ph); wt = signal.asWavetable; ~wt.loa
 }.value
 );
 0.5.wait;
-
 ///synth
 (
 SynthDef.new(\synth,{
 
 arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,perspective=1,room=0,drive=0,mag=0;
-var level,c,res,distance,revroom,overdrive,x,y,z,magx,magy,magz,tx,ty,tz,trange,busarray2,pan1,pan2;
+var level,c,res,distance,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,senv;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=32*(9/8),phasex,phasey,phasez,diameter,view=2;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,immersion,n=0,polytope=1,busarray1,harmonic;
 
 ///inputs
-
-level=2.pow(gain.lag(~frames)/16256);
-c=2.pow(fundamental.lag(~frames)/16256);
-res=2.pow(resonanse.lag(~frames)/16256);
+level=2.pow(gain.lag2(~lagtime)/16256);
+c=2.pow(fundamental.lag2(~lagtime)/16256);
+res=2.pow(resonanse.lag2(~lagtime)/16256);
+revroom=2.pow(room.lag2(~lagtime)/16256);
+overdrive=2.pow(drive.lag2(~lagtime)/16256);
+harmonic=2.pow(harm.lag2(~lagtime)/12);
+trange=mag.lag2(~lagtime);
 distance=perspective;
-revroom=2.pow(room.lag(~frames)/16256);
-overdrive=2.pow(drive.lag(~frames)/16256);
-harmonic=2.pow(harm.lag(~frames)/12);
-trange=mag.lag(~frames);
 
 polytope.do{
-azn=az.[n].lag(~frames);
-eln=el.[n].lag(~frames);
+azn=az.[n].lag2(~lagtime);
+eln=el.[n].lag2(~lagtime);
 
 ///cardioid
-magx = (harmonic*cos(eln)*cos(azn))+(cos(harmonic*(azn))*cos(harmonic*(azn)));
-magy = (harmonic*cos(eln)*sin(azn))+(cos(harmonic*(azn))*sin(harmonic*(azn)));
-magz = (harmonic*sin(eln))+(sin(harmonic*(eln)));
+x = (harmonic*cos(eln)*cos(azn))+(cos(harmonic*(azn))*cos(harmonic*(azn)));
+y = (harmonic*cos(eln)*sin(azn))+(cos(harmonic*(azn))*sin(harmonic*(azn)));
+z = (harmonic*sin(eln))+(sin(harmonic*(eln)));
 
 ////cartesian
-//magx = (cos(eln)*cos(azn));
-//magy = (cos(eln)*sin(azn));
-//magz = (sin(eln));
+//x = (cos(eln)*cos(azn));
+//y = (cos(eln)*sin(azn));
+//z = (sin(eln));
 
-x = 2.sqrt.reciprocal*magx;
-y = 2.sqrt.reciprocal*magy;
-z = 2.sqrt.reciprocal*magz;
 ////temperament
-tx = (trange*x).round(1);
-ty = (trange*y).round(1);
-tz = (trange*z).round(1);
+tx = (trange*x);
+ty = (trange*y);
+tz = (trange*z);
 tonex=2.pow(tx/~temperament);
 toney=2.pow(ty/~temperament);
 tonez=2.pow(tz/~temperament);
@@ -150,13 +152,19 @@ freqz=c*tune*tonez;
 ampx=c.reciprocal*tonex.reciprocal*level;
 ampy=c.reciprocal*toney.reciprocal*level;
 ampz=c.reciprocal*tonez.reciprocal*level;
+//phasex=(Complex(1,x).theta*2);
+//phasey=(Complex(1,y).theta*2);
+//phasez=(Complex(1,z).theta*2);
+//phasex=atan2(x,y);
+//phasey=atan2(y,z);
+//phasez=atan2(z,x);
 phasex=(x*2pi);
 phasey=(y*2pi);
 phasez=(z*2pi);
 
 ///perspective
 diameter=level*distance;
-immersion = diameter / (diameter + z + (diameter/view));
+immersion = diameter / (diameter + z.abs + (diameter/view));
 ampx=ampx*immersion;
 ampy=ampy*immersion;
 phasex=(phasex*immersion).wrap(2pi.neg,2pi);
@@ -164,11 +172,16 @@ phasey=(phasey*immersion).wrap(2pi.neg,2pi);
 
 /////////osc
 c1=BPF.ar((Osc.ar(~wt.bufnum,freqx,phase:phasex,mul:1024).abs*
-SinOsc.ar(freqx,phase:phasex)),freqx,res,ampx);
+SinOsc.ar(freqx,phase:phasex)),freqx,res,ampx*x.sign);
 c2=BPF.ar((Osc.ar(~wt.bufnum,freqy,phase:phasey,mul:1024).abs*
-SinOsc.ar(freqy,phase:phasey)),freqy,res,ampy);
+SinOsc.ar(freqy,phase:phasey)),freqy,res,ampy*y.sign);
 c3=BPF.ar((Osc.ar(~wt.bufnum,freqz,phase:phasez,mul:1024).abs*
-SinOsc.ar(freqz,phase:phasez)),freqz,res,ampz);
+SinOsc.ar(freqz,phase:phasez)),freqz,res,ampz*z.sign);
+
+////volts
+c1=c1.lag2(~signalSize.reciprocal)*(BrownNoise.ar(ampx,0).fold(0.025)+ampx);
+c2=c2.lag2(~signalSize.reciprocal)*(BrownNoise.ar(ampy,0).fold(0.025)+ampy);
+c3=c3.lag2(~signalSize.reciprocal)*(BrownNoise.ar(ampz,0).fold(0.025)+ampz);
 
 ///distortion
 sigx=FreeVerb.ar((c1).fold2(overdrive),immersion.linlin(0,1,1,0),room);
@@ -251,20 +264,17 @@ cos(~elc.[7])*cos(~azc.[7]))
 sin(~elc.[7])));
 			);
 
-//propagation
 pan1=[g1,g3,g5,g7];
 pan2=[g2,g4,g6,g8];
 
 busarray1=[0,2,4,5];
 busarray2=[1,3,6,7];
 
-sigx=sigx*x.sign;
-sigy=sigy*y.sign;
-//sigz=sigz*z.sign;
-
 ///stereo wavefield out
 Out.ar(busarray1.[n],LeakDC.ar((sigx)*(sigz.fold2(0.5)+ampz)).softclip(1));
 Out.ar(busarray2.[n],LeakDC.ar((sigy)*(sigz.fold2(0.5)+ampz)).softclip(1));
+//Out.ar(busarray1.[n],LeakDC.ar((sigx)).softclip(1));
+//Out.ar(busarray2.[n],LeakDC.ar((sigy)).softclip(1));
 ///oktaphonic out
 //Out.ar(busarray1.[n],LeakDC.ar(((sigx)*pan1[n]).softclip(1)));
 //Out.ar(busarray2.[n],LeakDC.ar(((sigy)*pan2[n]).softclip(1)));
@@ -285,12 +295,12 @@ TempoClock.default.tempo_(1);
 {
 Routine({loop{
 ~synth.set(\az,[~az.[0],~az.[1],~az.[2],~az.[3]],\el,[~el.[0],~el.[1],~el.[2],~el.[3]]);
-(~frames).wait
+(~frames/2).wait
 }
 }).play;
 }.defer
 );
-
+~rate=0.01;
 ////////////////////////gui
 (
 {
@@ -334,7 +344,7 @@ value=obj.value.linlin(0,1,0.5pi.neg,0.5pi).postln;
 ~sl3=Knob.new(~vw1, Rect.new(250,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,(16256*12).neg,16256).round(1).postln;
+value=obj.value.linlin(0,1,(16256*12).neg,16256*2).round(1).postln;
 ~synth.set(\gain,value);
 ~log1.(value.asString);
 });
@@ -382,7 +392,7 @@ value=obj.value.linlin(0,1,0,12*3).postln;
 ~sl7=Knob.new(~vw1, Rect.new(150,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,16256*2,(16256*5).neg).round(1).postln;
+value=obj.value.linlin(0,1,16256*3,(16256*5).neg).round(1).postln;
 ~synth.set(\drive,value);
 ~log1.(value.asString);
 });
