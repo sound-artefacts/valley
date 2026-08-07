@@ -110,7 +110,7 @@ SynthDef.new(\synth,{
 arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,perspective=1,room=0,drive=0,mag=0;
 var level,c,res,distance,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,senv;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=32*(9/8),phasex,phasey,phasez,diameter,view=2;
-var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,immersion,n=0,polytope=1,busarray1,harmonic;
+var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,immersion,n=0,polytope=4,busarray1,harmonic;
 
 ///inputs
 level=2.pow(gain.lag2(~lagtime)/16256);
@@ -269,12 +269,12 @@ pan2=[g2,g4,g6,g8];
 busarray1=[0,2,4,5];
 busarray2=[1,3,6,7];
 
-///stereo wavefield out
-Out.ar(busarray1.[n],LeakDC.ar((sigx)*(sigz.fold2(0.5)+ampz)).softclip(1));
-Out.ar(busarray2.[n],LeakDC.ar((sigy)*(sigz.fold2(0.5)+ampz)).softclip(1));
+///wavefield out
+Out.ar(busarray1.[n.postln],LeakDC.ar((sigx)*(sigz.fold2(0.5)+ampz)).softclip(1));
+//Out.ar(busarray2.[n],LeakDC.ar((sigy)*(sigz.fold2(0.5)+ampz)).softclip(1));
 //Out.ar(busarray1.[n],LeakDC.ar((sigx)).softclip(1));
 //Out.ar(busarray2.[n],LeakDC.ar((sigy)).softclip(1));
-///oktaphonic out
+///pann out
 //Out.ar(busarray1.[n],LeakDC.ar(((sigx)*pan1[n]).softclip(1)));
 //Out.ar(busarray2.[n],LeakDC.ar(((sigy)*pan2[n]).softclip(1)));
 
