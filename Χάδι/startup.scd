@@ -55,20 +55,19 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 ///////////inputs
 ~rx=0;~ry=0;~rz=0;~gain=1;~fundament=0;~resonance=0;~harmonic=1;~fold=0;~perspective=0;~room=0;~azs=0;~els=0;
 ~azr=1;~elr=1;
-~rate=0.01;
+~rate=0.01;~x=0;~y=0;~z=0;
 //////////rotation
 (
 {var sph,az,el,n;
 Routine({loop{
 n=0;~az=[];~el=[];
-~x=0;~y=0;~z=0;
 4.do{
 az=~azimuth.[n];
 el=~elevation.[n];
 n=n+1;
 sph=Spherical(1,az,el);
 //sph=sph.rotateYZ(0.5pi).asSpherical;
-sph=sph.rotateYZ(~x.lag2(~rate)).rotateXZ(~y.lag2(~rate)).rotateXY(~z.lag2(~rate));
+sph=sph.rotateYZ(~x.lag2(~frames)).rotateXZ(~y.lag2(~frames)).rotateXY(~z.lag2(~frames));
 ~az=~az++[sph.theta];
 ~el=~el++[sph.phi];
 };
@@ -141,9 +140,9 @@ z = (harmonic*sin(eln))+(sin(harmonic*(eln)));
 tx = (trange*x);
 ty = (trange*y);
 tz = (trange*z);
-tonex=2.pow(tx/~temperament);
-toney=2.pow(ty/~temperament);
-tonez=2.pow(tz/~temperament);
+tonex=2.pow(tx.round(1)/~temperament);
+toney=2.pow(ty.round(1)/~temperament);
+tonez=2.pow(tz.round(1)/~temperament);
 
 ////osc data
 freqx=c*tune*tonex;
@@ -179,9 +178,9 @@ c3=BPF.ar((Osc.ar(~wt.bufnum,freqz,phase:phasez,mul:1024).abs*
 SinOsc.ar(freqz,phase:phasez)),freqz,res,ampz*z.sign);
 
 ////volts
-c1=c1.lag2(~signalSize.reciprocal)*(BrownNoise.ar(ampx,0).fold(0.025)+ampx);
-c2=c2.lag2(~signalSize.reciprocal)*(BrownNoise.ar(ampy,0).fold(0.025)+ampy);
-c3=c3.lag2(~signalSize.reciprocal)*(BrownNoise.ar(ampz,0).fold(0.025)+ampz);
+c1=c1.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampx).fold(LFNoise1.kr(ampx,0.05,0.05))+ampx);
+c2=c2.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampy).fold(LFNoise1.kr(ampy,0.05,0.05))+ampy);
+c3=c3.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampz).fold(LFNoise1.kr(ampz,0.05,0.05))+ampz);
 
 ///distortion
 sigx=FreeVerb.ar((c1).fold2(overdrive),immersion.linlin(0,1,1,0),room);
@@ -289,7 +288,7 @@ n=n+1;
 TempoClock.default.tempo_(1);
 ~synth=Synth.new(\synth).register;
 0.5.wait;
-
+~rate=0.001;
 ///////////////////feed
 (
 {
@@ -300,7 +299,6 @@ Routine({loop{
 }).play;
 }.defer
 );
-~rate=0.01;
 ////////////////////////gui
 (
 {

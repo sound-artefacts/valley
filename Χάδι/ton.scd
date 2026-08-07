@@ -1,21 +1,9 @@
 
 (
-
-~controlBus_1 = Bus.control(s, 1);
-~controlBus_2 = Bus.control(s, 1);
-~controlBus_3 = Bus.control(s, 1);
-~controlBus_4 = Bus.control(s, 1);
-~controlBus_5 = Bus.control(s, 1);
-~controlBus_6 = Bus.control(s, 1);
-~controlBus_x = Bus.control(s, 1);
-~controlBus_y = Bus.control(s, 1);
-~controlBus_z = Bus.control(s, 1);
-
 s.waitForBoot{
 Tdef(\drone, {
 //clock
 ~clock = TempoClock(1);
-~erate=1;
 
 0.1.wait;
 ////envelope sig
@@ -30,6 +18,24 @@ Tdef(\drone, {
 ~bufferSize = 4096*8;
 ~signalSize = 2048*8;
 );
+~senv=Buffer.alloc(s,2048);
+({
+var  signal,peak,rip,attack=1,dicay=1,env,enva,times,tremolo=32,wt;
+signal = Signal.sineFill(1024, ~arraye, [0]);
+signal = signal.rotate(signal.size div: 2);
+peak = signal.abs.maxIndex.max(1);
+rip = Env([0,1,0.8,0,0],[0.1,0.5,0.5],[4.neg,4.neg,4.neg,0]).asSignal(1024);
+rip = rip * (1 + (signal / tremolo));
+rip = rip.normalize;
+peak = peak.min(signal.size - 2).max(1);
+times =Array.fill(peak, attack / peak) ++ Array.fill(signal.size - peak - 1, dicay / (signal.size - peak - 1));
+enva = Env(rip.asArray, times);
+wt = enva.asSignal(1024).asWavetable;
+~senv.loadCollection(wt);
+//enva.plot;
+		}.value;
+);
+
 (
 ~wt= Buffer.alloc(s,~bufferSize);
 {
@@ -84,33 +90,20 @@ nn=1.neg;
 );
 0.5.wait;
 
-///amp env
-~senv=Buffer.alloc(s,2048);
-({
-var  signal,peak,rip,attack=1,dicay=1,env,enva,times,tremolo=32,wt;
-signal = Signal.sineFill(1024, ~arraye, [0]);
-signal = signal.rotate(signal.size div: 2);
-peak = signal.abs.maxIndex.max(1);
-rip = Env([0,1,0.8,0,0],[0.1,0.5,0.5],[4.neg,4.neg,4.neg,0]).asSignal(1024);
-rip = rip * (1 + (signal / tremolo));
-rip = rip.normalize;
-peak = peak.min(signal.size - 2).max(1);
-times =Array.fill(peak, attack / peak) ++ Array.fill(signal.size - peak - 1, dicay / (signal.size - peak - 1));
-enva = Env(rip.asArray, times);
-wt = enva.asSignal(1024).asWavetable;
-~senv.loadCollection(wt);
-//enva.plot;
-		}.value;
-);
-0.3.wait;
 /////////////////////////////////////////////////////////////////////////////////////////////////////sound
 (
 SynthDef.new(\synth,{
+arg attack,decay,tone
+var sig,env;
+
+sig=Saw.ar(220*tone,tone.reciprocal);
+
+Out.ar(0,sig*nv);
 
 }).add;
 );
 0.6.wait;
-~erate=1;
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////pattern
 ({
 var m1=1.neg, m2=1.neg;
@@ -121,12 +114,6 @@ var dx=[],dy=[],dz=[],bx,by,bz,durx2,dury2,durz2;
 (
 ~azrth=[45.degrad,135.neg.degrad,45.neg.degrad,135.degrad];
 ~elrth=[35.264390.neg.degrad,35.264390.neg.degrad,35.264390.degrad,35.264390.degrad];
-);
-
-(
-~kol=~vertices.rand;~kol1=~vertices.rand;~kol2=~vertices.rand;~kol3=~vertices.rand;
-~azrth=[~azth.[~kol],~azth.[~kol1],~azth.[~kol2],~azth.[~kol3]];
-~elrth=[~elth.[~kol],~elth.[~kol1],~elth.[~kol2],~elth.[~kol3]];
 );
 
 ~dur=[];
@@ -184,130 +171,30 @@ durz2=[dz.[4]]++durz1.reverse;
 ~dur=~dur++durx++dury++durz;
 }.value);
 
-({
-var a,b,c,d;
-a=[~dur.[0]+~dur.[1]+~dur.[2]];
-b=[~dur.[3]+~dur.[4]+~dur.[5]];
-c=[~dur.[6]+~dur.[7]+~dur.[8]];
-d=[~dur.[9]+~dur.[10]+~dur.[11]];
-~durt=a++b++c++d;
-}.value);
-~seqt= Pseq(~durt ,inf).asStream;
-~seqt= Pseq(~dur ,inf).asStream;
 
-~intervalt=4;
-~dur=~dur*~intervalt;
-~dursum=~dur.sum;
+//~seq= Pseq(~dur ,inf).asStream;
 
-////l system boolean
-({
-var dict = IdentityDictionary[\A -> "AB", \B -> "A"];
-var word = "A";
-var string_temp = "";
-var iter = 5;
-var dictnotes = IdentityDictionary[\A ->0, \B -> 1];
- ~lseq=[];
-iter.do({
-word.asArray.do({|i|string_temp = string_temp ++ dict[i.asSymbol];});
-word = string_temp;string_temp = "";});
-word.postln;
-word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
-~lseq.postln;
-}.value);
+//~intervalt=1;
+//~dur=~dur*~intervalt;
+//~dursum=~dur.sum;
 
-////args globals
-~gain=1;~drive=0;~c=0;~attack=0.01;~decay=0.5;~s_size=1;
-~lowend=20;~room=0;~sscb=26;~pan1=0.001;~pan2=0.001;
-~gainb=1;~driveb=0;~cb=0;~attackb=0.01;~decayb=1;
-~s_sizeb=1;~lowendb=20;~roomb=0;~scb=1;~lim1=1;~lim2=1;
-~incr1=0;~incr2=0;~sc=1;~gold=((1+5.sqrt)/2);
-~silver=(1+2.sqrt);~mixb=0;~rectb=16;~dist1=1;~dist2=1;~mr1=1;~mr2=1;
-~incr=0;~ssc=26;~mix=0;~rect=16;~s=0;~azimuth=1;~elevation=1;~azimuth1=1;~elevation1=1;
-~alternating=[0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1];
-~hor=0;~lat=0;~shape1=1;~shape2=1;
-~tempo=1;
+
 TempoClock.default.tempo_(1);
-
-///feed
-
-/*(
-{
-Routine({loop{
-~nn=~set.rand;
-~nnn=~set.rand;
-(~dursum).wait; // frame duration
-};
-}).play(~clock);
-}.defer
-);*/
-~nn=~set.rand;
-~nnn=~set.rand;
-
-0.1.wait;
+~attack=0.1;
+~decay=1;
 
 (
-{
-var x,y,z,px,py,pz,x1,y1,z1,px1,py1,pz1;
-Routine({loop{
-x=~nn;
-x1=~nnn;
-px=~cx.[x];
-py=~cy.[x];
-pz=~cz.[x];
-px1=~cx.[x1];
-py1=~cy.[x1];
-
-pz1=~cz.[x1];
-~shape1=(Cartesian(~magx.[x],~magy.[x],~magz.[x]).rho/(2.sqrt));
-~shape2=(Cartesian(~magx.[x1],~magy.[x1],~magz.[x1]).rho/(2.sqrt));
-~azimuth=Cartesian(px,py,pz).theta;
-~elevation=Cartesian(px,py,pz).phi;
-~azimuth1=Cartesian(px1,py1,pz1).theta;
-~elevation1=Cartesian(px1,py1,pz1).phi;
-//~synths.set(\az,~azimuth,\el,~elevation,\az1,~azimuth1,\el1,~elevation1);
-(~timbr_dur).wait;}
-}).play;
-}.defer
-);
-
 ~pattern = Pdef(\1,
 //Pbind( \instrument,\synth,
 Pmono( \synth,
 //\dur, Pseq(~dur ,inf),
 \dur,~timbr_dur,
-\hold,Pseq(~dur ,inf),
-\s_size,Pfunc { ~s_size },
-\lowend,Pfunc { ~lowend },
-\room,Pfunc { ~room },
-\gain,Pfunc { ~gain },
-\au,Pseq([2],inf),
-\sc, Pfunc { ~sc },
-\ssc, Pfunc{~ssc},
-\c, Pfunc { ~c },
-\drive, Pfunc { ~drive },
-\dist, Pfunc { ~dist1 },
-\rect,Pfunc{~rect},
-\mrange,Pfunc{ ~mr1},
-\lim,Pfunc{ ~lim1},
-\mix, Pfunc{~mix},
-\az, Pfunc{ ~azimuth},
-\el,Pfunc{ ~elevation},
-\az1, Pfunc{ ~azimuth1},
-\el1,Pfunc{ ~elevation1},
-//\azrot,Pfunc{~incr1},
-//\elrot,Pfunc{~incr2},
-\harm,Pfunc{ ~harm},
-\rx,Pfunc{~rotationx},
-\ry,Pfunc{ ~rotationy},
-\rz,Pfunc{ ~rotationz},
-//\s1,Pfunc{(~vertices-1).rand.round(1).asInteger},\s2,Pfunc{(~vertices-1).rand.round(1).asInteger}
-//,\s3,Pfunc{(~vertices-1).rand.round(1).asInteger},\s4,Pfunc{(~vertices-1).rand.round(1).asInteger},
-\attack,  Pfunc { ~attack },
-\dicay, Pfunc { ~decay },
-\erate,	Pfunc { ~erate },
-\sb,Pseq(~alternating,inf),\mag1,Pfunc{~shape1},\mag2,Pfunc{~shape2},\elosc, Pfunc { ~pan1 };
+				\hold,Pseq([3/2,2,1,4/3],inf),
+					\attack,Pfunc{~attack},
+				\decay,Pfunc{~decay},
 ));
-~pattern.play(~clock);
+		);
+~pattern.play;
 
 }); Tdef(\drone).play;
 }
