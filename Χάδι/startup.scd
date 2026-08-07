@@ -1,4 +1,4 @@
-///Quarks.install("MathLib");
+ ///Quarks.install("MathLib");
 (
 (
 s.options.numWireBufs = 1024*16;
@@ -128,9 +128,9 @@ magy = (harmonic*cos(eln)*sin(azn))+(cos(harmonic*(azn))*sin(harmonic*(azn)));
 magz = (harmonic*sin(eln))+(sin(harmonic*(eln)));
 
 ////cartesian
-//x = 2.sqrt.reciprocal*(cos(eln)*cos(azn));
-//y = 2.sqrt.reciprocal*(cos(eln)*sin(azn));
-//z = 2.sqrt.reciprocal*(sin(eln));
+//magx = (cos(eln)*cos(azn));
+//magy = (cos(eln)*sin(azn));
+//magz = (sin(eln));
 
 x = 2.sqrt.reciprocal*magx;
 y = 2.sqrt.reciprocal*magy;
@@ -159,8 +159,8 @@ diameter=level*distance;
 immersion = diameter / (diameter + z + (diameter/view));
 ampx=ampx*immersion;
 ampy=ampy*immersion;
-phasex=(phasex+(immersion*2pi)).wrap(2pi.neg,2pi);
-phasey=(phasey+(immersion*2pi)).wrap(2pi.neg,2pi);
+phasex=(phasex*immersion).wrap(2pi.neg,2pi);
+phasey=(phasey*immersion).wrap(2pi.neg,2pi);
 
 /////////osc
 c1=BPF.ar((Osc.ar(~wt.bufnum,freqx,phase:phasex,mul:1024).abs*
@@ -251,19 +251,23 @@ cos(~elc.[7])*cos(~azc.[7]))
 sin(~elc.[7])));
 			);
 
+//propagation
 pan1=[g1,g3,g5,g7];
 pan2=[g2,g4,g6,g8];
+
 busarray1=[0,2,4,5];
 busarray2=[1,3,6,7];
 
-///wavefield out
-Out.ar(busarray1.[n],LeakDC.ar(Limiter.ar(sigx)*x.sign,1));
-Out.ar(busarray2.[n],LeakDC.ar(Limiter.ar(sigy)*y.sign,1));
-//Out.ar(busarray1.[n],LeakDC.ar((sigx)*x.sign));
-//Out.ar(busarray2.[n],LeakDC.ar((sigy)*y.sign));
+sigx=sigx*x.sign;
+sigy=sigy*y.sign;
+//sigz=sigz*z.sign;
+
+///stereo wavefield out
+Out.ar(busarray1.[n],LeakDC.ar((sigx)*(sigz.fold2(0.5)+ampz)).softclip(1));
+Out.ar(busarray2.[n],LeakDC.ar((sigy)*(sigz.fold2(0.5)+ampz)).softclip(1));
 ///oktaphonic out
-//Out.ar(busarray1.[n],LeakDC.ar((sigx+(sigz*x.sign))*pan1[n]));
-//Out.ar(busarray2.[n],LeakDC.ar((sigy+(sigz*y.sign))*pan2[n]));
+//Out.ar(busarray1.[n],LeakDC.ar(((sigx)*pan1[n]).softclip(1)));
+//Out.ar(busarray2.[n],LeakDC.ar(((sigy)*pan2[n]).softclip(1)));
 
 n=n+1;
 }
@@ -330,7 +334,7 @@ value=obj.value.linlin(0,1,0.5pi.neg,0.5pi).postln;
 ~sl3=Knob.new(~vw1, Rect.new(250,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,(16256*12).neg,8128*3).round(1).postln;
+value=obj.value.linlin(0,1,(16256*12).neg,16256).round(1).postln;
 ~synth.set(\gain,value);
 ~log1.(value.asString);
 });
@@ -378,7 +382,7 @@ value=obj.value.linlin(0,1,0,12*3).postln;
 ~sl7=Knob.new(~vw1, Rect.new(150,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,16256*3,(16256*5).neg).round(1).postln;
+value=obj.value.linlin(0,1,16256*2,(16256*5).neg).round(1).postln;
 ~synth.set(\drive,value);
 ~log1.(value.asString);
 });
