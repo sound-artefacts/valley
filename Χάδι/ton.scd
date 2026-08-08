@@ -69,98 +69,38 @@ Out.ar(1,sig);
 );
 0.6.wait;
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////pattern
-({var m1=1.neg, m2=1.neg;
-var m3=1.neg,n=0,bank=4,rhythm=4,time=32.reciprocal,beat=1;
-var durx=[],dury=[],durz=[],durx1=[],dury1=[],durz1=[];
-var dx=[],dy=[],dz=[],bx,by,bz,durx2,dury2,durz2;
-(~azrth=[45.degrad,135.neg.degrad,45.neg.degrad,135.degrad];
-~elrth=[35.264390.neg.degrad,35.264390.neg.degrad,35.264390.degrad,35.264390.degrad]);
-~dur=[];
-bank.do{m1=m1+1;m2=m2+1;m3=m3+1;
-bx=1.collect{
-var az, el, x, y, z;
-az = ~azrth.[m1];
-el = ~elrth.[m1];
-x = beat * cos(el) * cos(az);
-y = beat * cos(el) * sin(az);
-z = beat * sin(el);
-2.pow(x).round(time)};
-
-by=1.collect{
-var az, el, x, y, z;
-az = ~azrth.[m2];
-el = ~elrth.[m2];
-x = beat * cos(el) * cos(az);
-y = beat * cos(el) * sin(az);
-z = beat * sin(el);
-2.pow(y).round(time)};
-
-bz=1.collect{
-var az, el, x, y, z;
-az = ~azrth.[m3];
-el = ~elrth.[m3];
-x = beat * cos(el) * cos(az);
-y = beat * cos(el) * sin(az);
-z = beat * sin(el);
-2.pow(z).round(time)};
-
-// m1=1.neg; m2=1.neg; m3=1.neg;
-dx=dx++bx; dy=dy++by;dz=dz++bz;
-// bx=[]; by=[]; bz=[];};
-~dur=~dur++bx++by++bz;
-};
-//n=0;
-//rhythm.do{ durx=durx++dx.[n]; n=n+1;}; n=0;
-//rhythm.do{ dury=dury++dy.[n]; n=n+1;}; n=0;
-//rhythm.do{ durz=durz++dz.[n]; n=n+1;}; n=1;
-//(rhythm-1).do{ durx1=durx1++dx.[n]; n=n+1;}; n=1;
-//(rhythm-1).do{ dury1=dury1++dy.[n]; n=n+1;}; n=1;
-//(rhythm-1).do{ durz1=durz1++dz.[n]; n=n+1;}; n=0;
-//durx2=[dx.[4]]++durx1.reverse;
-//dury2=[dy.[4]]++dury1.reverse;
-//durz2=[dz.[4]]++durz1.reverse;
-//~dur=~dur++durx++dury++durz++durx2++dury2++durz2;
-//=~dur++durx++dury++durz;
-}.value);
 
 
-//~seq= Pseq(~dur ,inf).asStream;
+///fixed set control rhythm
 
-//~intervalt=1;
-//~dur=~dur*~intervalt;
-//~dursum=~dur.sum;
+(~az=[45.degrad,135.neg.degrad,45.neg.degrad,135.degrad];
+~el=[35.264390.neg.degrad,35.264390.neg.degrad,35.264390.degrad,35.264390.degrad])
 
-
-TempoClock.default.tempo_(1);
-
-
-
-///randomness p control
-
+TempoClock.default.tempo_(8);
 (
-~pattern = Pdef(\1,
-//Pbind( \instrument,\synth,
-Pmono( \tone,
-\dur,Pfunc{~dur.choose},
-\tone,Pseq([3/2,2,1,4/3],inf),
-\attack,Pfunc{~attack},
-\decay,Pfunc{~decay},
-\rate,Pfunc{~dur.choose}
-)););
-~pattern.play;
-
-
-///fixed set control
-
 (
 ~seqtn=Pseq([3/2,2,1,4/3],inf).asStream;
-~dur=~dur*1;
-~seq=Pseq(~dur,inf).asStream;
 ~attack=0.01;
-~decay=2;
-)
+~decay=4;
+);
 ~syntht=Synth.new(\tone).register;
+(
+{var x,y,z,beat=4,bx,by,bz,time=32.reciprocal;
+Routine({loop{
+~dur=[];
+x=beat*cos(~el.[0])*cos(~az.[0]);
+y=beat*cos(~el.[0])*sin(~az.[0]);
+z=beat*sin(~el.[0]);
+bx=2.pow(x).round(time);
+by=2.pow(y).round(time);
+bz=2.pow(z).round(time);
+~dur=~dur++bx++by++bz;
+~seq=Pseq(~dur,inf).asStream;
+(0.0001).wait;
+};
+}).play;
+}.defer
+);
 (
 {var rot;
 Routine({loop{
@@ -170,10 +110,8 @@ Routine({loop{
 }).play;
 }.defer
 )
+)
 
 }); Tdef(\drone).play;
 }
 )
-
-
-
