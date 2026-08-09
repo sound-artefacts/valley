@@ -108,7 +108,7 @@ signal=Signal.sineFill(~signalSize,~array,~ph); wt = signal.asWavetable; ~wt.loa
 0.5.wait;
 
 (//scales
-(~note=25;
+(~note=15;
 ~scale1=[0,5,7,12,17,19,24,29,31,48,53,55,96,55,53,48,31,29,24,19,17,12,7,5,0];
 ({var nn=1.neg;
 ~scale2=~note.collect{nn=nn+1;Scale.dorian.performDegreeToKey(nn,12)}}.value);
@@ -144,8 +144,8 @@ trange=mag.lag2(~lagtime);
 distance=perspective;
 
 pitch=exp(Complex(0,1)*tone);
-pitchx=2.pow(Select.kr((pitch.real*tone).abs,~scale4)/12);
-pitchy=2.pow(Select.kr((pitch.imag*tone).abs,~scale4)/12);
+pitchx=2.pow(Select.kr((pitch.real*note).abs,~scale4)/12);
+pitchy=2.pow(Select.kr((pitch.imag*note).abs,~scale4)/12);
 
 //env
 //trig=Trig.kr(LFSaw.kr(rate.reciprocal),0.01);
@@ -394,8 +394,8 @@ value=obj.value.linlin(0,1,pi.neg,pi).postln;
 ~sl2=Knob.new(~vw1, Rect.new(150,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-//value=obj.value.linlin(0,1,0.5pi.neg,0.5pi).postln;
-value=obj.value.linlin(0,1,0,~note).round(1).postln;
+value=obj.value.linlin(0,1,pi.neg,pi).postln;
+//value=obj.value.linlin(0,1,0,~note).round(1).postln;
 //~elr=value;
 //~nset=value;
 //~synth.set(\tone,value);
