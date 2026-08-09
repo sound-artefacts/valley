@@ -14,7 +14,7 @@ s.meter;
 s.freqscope;
 s.scope;
 );
-~img = Image.open("/Users/rohifes/Documents/Literary/Portfolio/SuperCollider/Χάδι/img.png");
+~img = Image.open("/Users/rohifes/Documents/Literary/Portfolio/SuperCollider/2026/Χάδι/img.png");
 s.waitForBoot{
 ~clock=TempoClock.default.tempo_(2);
 Tdef(\drone, {
@@ -144,8 +144,8 @@ trange=mag.lag2(~lagtime);
 distance=perspective;
 
 pitch=exp(Complex(0,1)*tone);
-pitchx=2.pow(Select.kr((pitch.real*note).abs,~scale4)/12);
-pitchy=2.pow(Select.kr((pitch.imag*note).abs,~scale4)/12);
+pitchx=2.pow(Select.kr((pitch.real*~note).abs,~scale4)/12);
+pitchy=2.pow(Select.kr((pitch.imag*~note).abs,~scale4)/12);
 
 //env
 //trig=Trig.kr(LFSaw.kr(rate.reciprocal),0.01);
