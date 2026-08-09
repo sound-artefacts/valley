@@ -16,13 +16,10 @@ s.scope;
 );
 ~img = Image.open("/Users/rohifes/Documents/Literary/Portfolio/SuperCollider/Χάδι/img.png");
 s.waitForBoot{
-
+~clock=TempoClock.default.tempo_(2);
 Tdef(\drone, {
-~temperament=16256;
-~frames=1/32;
-~lagtime=1/8;
 //////point arrays
-////l system boolean
+/*////l system boolean
 ({
 var dict = IdentityDictionary[\A -> "AB", \B -> "A"];
 var word = "A";
@@ -37,7 +34,7 @@ word.postln;
 word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 ~lseq.postln;
 }.value);
-0.1.wait;
+0.1.wait;*/
 
 ///////tetrahedron
 (
@@ -55,7 +52,13 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 ///////////inputs
 ~rx=0;~ry=0;~rz=0;~gain=1;~fundament=0;~resonance=0;~harmonic=1;~fold=0;~perspective=0;~room=0;~azs=0;~els=0;
 ~azr=1;~elr=1;
-~rate=0.01;~x=0;~y=0;~z=0;
+~temperament=16256;
+~lagtime=1/8;
+~rate=2048.reciprocal;
+~x=0;~y=0;~z=0;
+~frames=~rate;
+~window=100;
+~dur=~frames*~window;
 //////////rotation
 (
 {var sph,az,el,n;
@@ -67,11 +70,11 @@ el=~elevation.[n];
 n=n+1;
 sph=Spherical(1,az,el);
 //sph=sph.rotateYZ(0.5pi).asSpherical;
-sph=sph.rotateYZ(~x.lag2(~frames)).rotateXZ(~y.lag2(~frames)).rotateXY(~z.lag2(~frames));
+sph=sph.rotateYZ(~x.lag2(~lagtime)).rotateXZ(~y.lag2(~lagtime)).rotateXY(~z.lag2(~lagtime));
 ~az=~az++[sph.theta];
 ~el=~el++[sph.phi];
 };
-(~frames).wait;
+(~dur).wait;
 };
 }).play;
 }.defer
@@ -80,10 +83,10 @@ sph=sph.rotateYZ(~x.lag2(~frames)).rotateXZ(~y.lag2(~frames)).rotateXY(~z.lag2(~
 {var rot;
 Routine({loop{
 rot=Spherical(~rate,~azr,~elr);
-~x=(~x+rot.x.wrap2(~rate).abs).wrap(0,2pi);
-~y=(~y+rot.y.wrap2(~rate).abs).wrap(0,2pi);
-~z=(~z+rot.z.wrap2(~rate).abs).wrap(0,2pi);
-(~frames).wait;
+~x=(~x+rot.x.abs).wrap(0,2pi);
+~y=(~y+rot.y.abs).wrap(0,2pi);
+~z=(~z+rot.z.abs).wrap(0,2pi);
+(~frames*~window).wait;
 };
 }).play;
 }.defer
@@ -103,14 +106,32 @@ signal=Signal.sineFill(~signalSize,~array,~ph); wt = signal.asWavetable; ~wt.loa
 }.value
 );
 0.5.wait;
+
+(//scales
+(~note=25;
+~scale1=[0,5,7,12,17,19,24,29,31,48,53,55,96,55,53,48,31,29,24,19,17,12,7,5,0];
+({var nn=1.neg;
+~scale2=~note.collect{nn=nn+1;Scale.dorian.performDegreeToKey(nn,12)}}.value);
+({var nn=1.neg;
+~scale3=~note.collect{nn=nn+1;Scale.ionian.performDegreeToKey(nn,12)}}.value);
+({var nn=1.neg;
+~scale4=~note.collect{nn=nn+1;Scale.phrygian.performDegreeToKey(nn,12)}}.value);
+({
+var nn=1.neg,scale1,scale2;
+~scale5=~note.collect{nn=nn+1;Scale.minorPentatonic.performDegreeToKey(nn,12)};
+nn=1.neg;
+~scale6=~note.collect{nn=nn+1;Scale.majorPentatonic.performDegreeToKey(nn,12)};
+}.value));
+~scale=[~scale1,~scale2,~scale3,~scale4,~scale5,~scale6]);
 ///synth
 (
 SynthDef.new(\synth,{
 
-arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,perspective=1,room=0,drive=0,mag=0;
-var level,c,res,distance,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,senv;
+arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,perspective=1,
+	room=0,drive=0,mag=0,attack=0.1,decay=1,rate=1,tone=1;
+var level,c,res,distance,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,trig,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=32*(9/8),phasex,phasey,phasez,diameter,view=2;
-var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,immersion,n=0,polytope=4,busarray1,harmonic;
+var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,immersion,n=0,polytope=1,busarray1,harmonic;
 
 ///inputs
 level=2.pow(gain.lag2(~lagtime)/16256);
@@ -122,6 +143,14 @@ harmonic=2.pow(harm.lag2(~lagtime)/12);
 trange=mag.lag2(~lagtime);
 distance=perspective;
 
+pitch=exp(Complex(0,1)*tone);
+pitchx=2.pow(Select.kr((pitch.real*tone).abs,~scale4)/12);
+pitchy=2.pow(Select.kr((pitch.imag*tone).abs,~scale4)/12);
+
+//env
+//trig=Trig.kr(LFSaw.kr(rate.reciprocal),0.01);
+//env=EnvGen.ar(Env.perc(attack,decay),gate:1,doneAction:2);
+env=EnvGen.ar(Env.sine(decay),gate:1,doneAction:2);
 polytope.do{
 azn=az.[n].lag2(~lagtime);
 eln=el.[n].lag2(~lagtime);
@@ -145,11 +174,11 @@ toney=2.pow(ty.round(1)/~temperament);
 tonez=2.pow(tz.round(1)/~temperament);
 
 ////osc data
-freqx=c*tune*tonex;
-freqy=c*tune*toney;
-freqz=c*tune*tonez;
-ampx=c.reciprocal*tonex.reciprocal*level;
-ampy=c.reciprocal*toney.reciprocal*level;
+freqx=c*(tune*pitchx)*tonex;
+freqy=c*(tune*pitchy)*toney;
+freqz=c*(tune)*tonez;
+ampx=c.reciprocal*tonex.reciprocal*level;//*pitch.reciprocal;
+ampy=c.reciprocal*toney.reciprocal*level;//*pitch.reciprocal;
 ampz=c.reciprocal*tonez.reciprocal*level;
 //phasex=(Complex(1,x).theta*2);
 //phasey=(Complex(1,y).theta*2);
@@ -178,9 +207,9 @@ c3=BPF.ar((Osc.ar(~wt.bufnum,freqz,phase:phasez,mul:1024).abs*
 SinOsc.ar(freqz,phase:phasez)),freqz,res,ampz*z.sign);
 
 ////volts
-c1=c1.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampx).fold(LFNoise1.kr(ampx,0.05,0.05))+ampx);
-c2=c2.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampy).fold(LFNoise1.kr(ampy,0.05,0.05))+ampy);
-c3=c3.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampz).fold(LFNoise1.kr(ampz,0.05,0.05))+ampz);
+c1=c1.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampx).fold(LFNoise1.kr(ampx,0.05,0.05))+(ampx*overdrive.reciprocal));
+c2=c2.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampy).fold(LFNoise1.kr(ampx,0.05,0.05))+(ampy*overdrive.reciprocal));
+c3=c3.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampz).fold(LFNoise1.kr(ampx,0.05,0.05))+(ampz*overdrive.reciprocal));
 
 ///distortion
 sigx=FreeVerb.ar((c1).fold2(overdrive),immersion.linlin(0,1,1,0),room);
@@ -270,13 +299,15 @@ busarray1=[0,2,4,5];
 busarray2=[1,3,6,7];
 
 ///wavefield out
-Out.ar(busarray1.[n.postln],LeakDC.ar((sigx)*(sigz.fold2(0.5)+ampz)).softclip(1));
-//Out.ar(busarray2.[n],LeakDC.ar((sigy)*(sigz.fold2(0.5)+ampz)).softclip(1));
+Out.ar(busarray1.[n],
+(LeakDC.ar((sigx)*(sigz.fold2(overdrive.reciprocal*0.5)+(ampz*overdrive.reciprocal)))*env).softclip(1));
+Out.ar(busarray2.[n],
+(LeakDC.ar((sigy)*(sigz.fold2(overdrive.reciprocal*0.5)+(ampz*overdrive.reciprocal)))*env).softclip(1));
 //Out.ar(busarray1.[n],LeakDC.ar((sigx)).softclip(1));
 //Out.ar(busarray2.[n],LeakDC.ar((sigy)).softclip(1));
 ///pann out
-//Out.ar(busarray1.[n],LeakDC.ar(((sigx)*pan1[n]).softclip(1)));
-//Out.ar(busarray2.[n],LeakDC.ar(((sigy)*pan2[n]).softclip(1)));
+//Out.ar(busarray1.[n],((LeakDC.ar((sigx)*(sigz.fold2(0.5)+ampz))*env)*pan1[n]).softclip(1));
+//Out.ar(busarray2.[n],((LeakDC.ar((sigy)*(sigz.fold2(0.5)+ampz))*env)*pan2[n]).softclip(1));
 
 n=n+1;
 }
@@ -285,20 +316,50 @@ n=n+1;
 1.wait;
 
 ////////////////run
-TempoClock.default.tempo_(1);
-~synth=Synth.new(\synth).register;
+//~synth=Synth.new(\synth).register;
 0.5.wait;
 ~rate=0.001;
 ///////////////////feed
+~clock = TempoClock(1);
 (
 {
 Routine({loop{
-~synth.set(\az,[~az.[0],~az.[1],~az.[2],~az.[3]],\el,[~el.[0],~el.[1],~el.[2],~el.[3]]);
-(~frames/2).wait
+//~synth.set(\az,[~az.[0],~az.[1],~az.[2],~az.[3]],\el,[~el.[0],~el.[1],~el.[2],~el.[3]]);
+~azset=~az;
+~elset=~el;
+(~frames).wait
 }
 }).play;
 }.defer
 );
+(
+~nset=25;
+~attack=0.1;
+~decay=~dur*5;
+);
+
+///pattern
+0.1.wait;
+~fundamental=0;~tone=0;~gain=1;~resonanse=1;~harm=1;~drive=0;~perspective=1;~room=0;~mag=0;~tone=1;
+(~pattern = Pdef(\1,
+Pbind(\instrument, \synth,
+\dur, Pfunc{~dur},
+\gain,Pfunc{~gain},
+\fundamental,Pfunc{~fundamental},
+\tone,Pfunc{~tone},
+\resonanse,	Pfunc{~resonanse},
+\harm,Pfunc{~harm},
+\drive,Pfunc{~drive},
+\perspective,Pfunc{~perspective},
+\room,Pfunc{~room},
+\mag,Pfunc{~mag},
+\az,Pfunc{Ref([~azset.[0],~azset.[1],~azset.[2],~azset.[3]])},
+\el,Pfunc{Ref([~elset.[0],~elset.[1],~elset.[2],~elset.[3]])},
+\attack,Pfunc{~attack},
+\decay, Pfunc{~decay},
+)));
+~pattern.play(~clock);
+
 ////////////////////////gui
 (
 {
@@ -312,17 +373,20 @@ w = Window("tws", Rect(50, 50, size, size/2)).front;
 
 ~logItems1 = List.new;
 ~log1 = { |msg| {~logItems1.add(msg); if(~logItems1.size > 200) { ~logItems1.removeAt(0);  };
- ~logView1.items_(~logItems1.asArray); ~logView1.value_(~logItems1.size - 1); }.defer;};
+~logView1.items_(~logItems1.asArray); ~logView1.value_(~logItems1.size - 1); }.defer;};
 
 (
 ~sl1=Knob.new(~vw1, Rect.new(50,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
 value=obj.value.linlin(0,1,pi.neg,pi).postln;
+//value=obj.value.linlin(0,1,1/4,4).round(1/16).postln;
 ~azr=value;
+~elr=value/2;
+//~clock.tempo_(value);
 ~log1.(value.asString);
 });
-~st1=StaticText(~vw1,Rect(50,50+sk,sk+20,sk)).string_("az")
+~st1=StaticText(~vw1,Rect(50,50+sk,sk+20,sk)).string_("r_tune")
 .stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
 );
 
@@ -330,11 +394,15 @@ value=obj.value.linlin(0,1,pi.neg,pi).postln;
 ~sl2=Knob.new(~vw1, Rect.new(150,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,0.5pi.neg,0.5pi).postln;
-~elr=value;
+//value=obj.value.linlin(0,1,0.5pi.neg,0.5pi).postln;
+value=obj.value.linlin(0,1,0,~note).round(1).postln;
+//~elr=value;
+//~nset=value;
+//~synth.set(\tone,value);
+~tone=value;
 ~log1.(value.asString);
 });
-~st2=StaticText(~vw1,Rect(150,50+sk,sk+20,sk)).string_("el")
+~st2=StaticText(~vw1,Rect(150,50+sk,sk+20,sk)).string_("scale")
 .stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
 );
 
@@ -342,8 +410,9 @@ value=obj.value.linlin(0,1,0.5pi.neg,0.5pi).postln;
 ~sl3=Knob.new(~vw1, Rect.new(250,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,(16256*12).neg,16256*2).round(1).postln;
-~synth.set(\gain,value);
+value=obj.value.linlin(0,1,(16256*2).neg,16256*2).round(1).postln;
+//~synth.set(\gain,value);
+~gain=value;
 ~log1.(value.asString);
 });
 ~st3=StaticText(~vw1,Rect(250,50+sk,sk+20,sk)).string_("gain")
@@ -355,7 +424,8 @@ value=obj.value.linlin(0,1,(16256*12).neg,16256*2).round(1).postln;
 arg obj;
 var value;
 value=obj.value.linlin(0,1,0,16256*2).round(1).postln;
-~synth.set(\fundamental,value);
+//~synth.set(\fundamental,value);
+~fundamental=value;
 ~log1.(value.asString);
 });
 ~st4=StaticText(~vw1,Rect(350,50+sk,sk+20,sk)).string_("fundamental")
@@ -367,7 +437,8 @@ value=obj.value.linlin(0,1,0,16256*2).round(1).postln;
 arg obj;
 var value;
 value=obj.value.linlin(0,1,(16256*12).neg,16256*3).round(1).postln;
-~synth.set(\resonanse,value);
+//~synth.set(\resonanse,value);
+~resonanse=value;
 ~log1.(value.asString);
 });
 ~st5=StaticText(~vw1,Rect(450,50+sk,sk+20,sk)).string_("resonance")
@@ -379,7 +450,8 @@ value=obj.value.linlin(0,1,(16256*12).neg,16256*3).round(1).postln;
 arg obj;
 var value;
 value=obj.value.linlin(0,1,0,12*3).postln;
-~synth.set(\harm,value);
+//~synth.set(\harm,value);
+~harm=value;
 ~log1.(value.asString);
 });
 ~st6=StaticText(~vw1,Rect(50,(50+sk+50+25+sk),sk+20,sk)).string_("harmonic")
@@ -391,7 +463,8 @@ value=obj.value.linlin(0,1,0,12*3).postln;
 arg obj;
 var value;
 value=obj.value.linlin(0,1,16256*3,(16256*5).neg).round(1).postln;
-~synth.set(\drive,value);
+//~synth.set(\drive,value);
+~drive=value;
 ~log1.(value.asString);
 });
 ~st7=StaticText(~vw1,Rect(150,(50+sk+50+25+sk),sk+20,sk)).string_("overdrive")
@@ -403,7 +476,8 @@ value=obj.value.linlin(0,1,16256*3,(16256*5).neg).round(1).postln;
 arg obj;
 var value;
 value=obj.value.linexp(0,1,10,0.01).postln;
-~synth.set(\perspective,value);
+//~synth.set(\perspective,value);
+~perspective=value;
 ~log1.(value.asString);
 });
 ~st8=StaticText(~vw1,Rect(250,(50+sk+50+25+sk),sk+20,sk)).string_("perspective")
@@ -415,7 +489,8 @@ value=obj.value.linexp(0,1,10,0.01).postln;
 arg obj;
 var value;
 value=obj.value.linlin(0,1,(16256*12).neg,0).round(1).postln;
-~synth.set(\room,value);
+//~synth.set(\room,value);
+~room=value;
 ~log1.(value.asString);
 });
 ~st9=StaticText(~vw1,Rect(350,(50+sk+50+25+sk),sk+20,sk)).string_("room")
@@ -427,7 +502,8 @@ value=obj.value.linlin(0,1,(16256*12).neg,0).round(1).postln;
 arg obj;
 var value;
 value=obj.value.linlin(0,1,0,~temperament).round(1).postln;
-~synth.set(\mag,value);
+//~synth.set(\mag,value);
+~mag=value;
 ~log1.(value.asString);
 });
 ~st10=StaticText(~vw1,Rect(450,(50+sk+50+25+sk),sk+20,sk)).string_("magnitude")
@@ -449,6 +525,90 @@ value=obj.value.linlin(0,1,0,~temperament).round(1).postln;
 
 
 
+////envelope sig
+//(~ne=1.neg;~arraye=56.collect{~ne=~ne+1;2.pow(~ne/56)};
+//~signalSizee = 2048*1);
+//////////pbind stack env
+/*signal = Signal.sineFill(~signalSizee, ~arraye, [0]);
+signal = signal.rotate(signal.size div: 2);
+peak = signal.abs.maxIndex.max(1);
+rip = Env([0,1,1,0],[1,1,1],[4.neg,0,4]).asSignal(~signalSizee);
+rip = rip * (1 + (signal / tremolo));
+rip = rip.normalize;
+peak = peak.min(signal.size - 2).max(1);
+times =Array.fill(signal.size - peak - 1, hold / (signal.size - peak - 1));
+enva = Env(rip.asArray, times);
+env = EnvGen.ar(enva,levelScale:gain,doneAction:2);*/
+///vca env///dont burn out, vca and env can ba applied via eurorack modular external
+/*signal1 = Signal.sineFill(~signalSizee, ~arraye, [0]);
+signal1 = signal1.rotate(signal1.size div: 2);
+peak1 = signal1.abs.maxIndex.max(1);
+rip1 = Env.perc(0.5,0.5).asSignal(~signalSizee);
+rip1 = rip1 * (1 + (signal1 / tremolo));
+rip1 = rip1.normalize;
+peak1 = peak1.min(signal1.size - 2).max(1);
+times1 =Array.fill(peak1, attack / peak1) ++ Array.fill(signal1.size - peak1 - 1, dicay / (signal1.size - peak1 - 1));
+envb = Env(rip1.asArray, times1);
+envenv = EnvGen.ar(envb,gate:Trig.kr(LFSaw.kr(erate),0.01));*/
+
+
+
+/*({var x,y,z,n=0,time=32.reciprocal,bx,by,bz,beat=4;~dursum=0;
+beat.do{
+x=beat*cos(~elevation.[n])*cos(~azimuth.[n]);
+y=beat*cos(~elevation.[n])*sin(~azimuth.[n]);
+z=beat*sin(~elevation.[n]);
+bx=2.pow(x).round(time);
+by=2.pow(y).round(time);
+bz=2.pow(z).round(time);
+~dursum=~dursum+bx+by+bz;
+n=n+1};
+}.value
+);	*/
+//0.1.wait;
+/*(
+{var rrot,n=0,beats=4,r=0;
+Routine({loop{
+~azry=[];~elry=[];n=0;
+beats.do{
+rrot=Spherical(~rate,~azimuth.[n],~elevation.[n]).rotateXY(r.lag2(~frames));
+r=(r+128.reciprocal).wrap(0,2pi);
+~azry=~azry++rrot.theta;
+~elry=~elry++rrot.phi;
+n=n+1};
+(15).wait;
+};
+}).play;
+}.defer
+);*/
+/*(
+{var x,y,z,beat=4,bx,by,bz,time=32.reciprocal,n=0;
+Routine({loop{
+~dur=[];n=0;
+beat.do{
+x=beat*cos(~elry.[n])*cos(~azry.[n]);
+y=beat*cos(~elry.[n])*sin(~azry.[n]);
+z=beat*sin(~elry.[n]);
+bx=2.pow(x).round(time);
+by=2.pow(y).round(time);
+bz=2.pow(z).round(time);
+~dur=~dur++bx++by++bz;
+n=n+1};
+~dur=~dur/8;
+~seq=Pseq(~dur,inf).asStream;
+(~frames).wait;
+};
+}).play;
+}.defer
+);*/
+/*(
+{var rot;
+Routine({loop{
+~synth.set(\attack,~attack,\decay,~decay,\rate,~seq.next);
+(~seq.next).wait;
+};
+}).play;
+}.defer);*/
 
 
 /////other arrays
