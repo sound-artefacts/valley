@@ -53,7 +53,7 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 ~rx=0;~ry=0;~rz=0;~gain=1;~fundament=0;~resonance=0;~harmonic=1;~fold=0;~perspective=0;~room=0;~azs=0;~els=0;
 ~azr=1;~elr=1;
 ~temperament=16256;
-~lagtime=1/8;
+~lagtime=1/64;
 ~rate=2048.reciprocal;
 ~x=0;~y=0;~z=0;
 ~frames=~rate;
@@ -82,7 +82,7 @@ sph=sph.rotateYZ(~x.lag2(~lagtime)).rotateXZ(~y.lag2(~lagtime)).rotateXY(~z.lag2
 (
 {var rot;
 Routine({loop{
-rot=Spherical(~rate,~azr,~elr);
+rot=Spherical(~rate*10,~azr,~elr);
 ~x=(~x+rot.x.abs).wrap(0,2pi);
 ~y=(~y+rot.y.abs).wrap(0,2pi);
 ~z=(~z+rot.z.abs).wrap(0,2pi);
@@ -127,12 +127,12 @@ nn=1.neg;
 (
 SynthDef.new(\synth,{
 
-arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,perspective=1,
-	room=0,drive=0,mag=0,attack=0.1,decay=1,trig=0,tone=1,key=0,hold=0.1;
+arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,attack=0.1,
+	decay=1,trig=0,tone=1,key=0,hold=0.1;
 var level,c,res,distance,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=32*(9/8),phasex,phasey,phasez,diameter,view=2,envp;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8;
-var immersion,n=0,polytope=1,busarray1,harmonic,note,fund,mix;
+var immersion,n=0,polytope=1,busarray1,harmonic,note,fund,mix,perspective=1;
 
 ///inputs
 level=2.pow(gain.lag2(~lagtime)/16256);
@@ -179,9 +179,9 @@ tonez=2.pow(tz.round(1)/~temperament);
 freqx=(fund*pitchx)*tonex;
 freqy=(fund*pitchy)*toney;
 freqz=fund*tonez;
-ampx=c.reciprocal*tonex.reciprocal*pitchx.reciprocal*note.reciprocal*level;//*pitch.reciprocal;
-ampy=c.reciprocal*toney.reciprocal*pitchy.reciprocal*note.reciprocal*level;//*pitch.reciprocal;
-ampz=c.reciprocal*tonez.reciprocal*note.reciprocal*level;
+ampx=c.reciprocal*tonex.reciprocal*level;//*pitch.reciprocal;
+ampy=c.reciprocal*toney.reciprocal*level;//*pitch.reciprocal;
+ampz=c.reciprocal*tonez.reciprocal*level;
 //phasex=(Complex(1,x).theta*2);
 //phasey=(Complex(1,y).theta*2);
 //phasez=(Complex(1,z).theta*2);
@@ -210,15 +210,15 @@ c3=BPF.ar((Osc.ar(~wt.bufnum,freqz,phase:phasez,mul:1024).abs*
 SinOsc.ar(freqz,phase:phasez)),freqz,res,ampz*z.sign);
 
 ////volts
-c1=c1.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampx).fold(overdrive.reciprocal)+(ampx));
-c2=c2.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampy).fold(overdrive.reciprocal)+(ampy));
-c3=c3.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampz).fold(overdrive.reciprocal)+(ampz));
+c1=c1.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampx).fold2(overdrive)+(ampx));
+c2=c2.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampy).fold2(overdrive)+(ampy));
+c3=c3.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampz).fold2(overdrive)+(ampz));
 
 ///distortion
 mix=(overdrive.reciprocal).clip(0.7)+immersion.clip(0.4);
-sigx=FreeVerb.ar((c1).fold2(overdrive),mix,room);
-sigy=FreeVerb.ar((c2).fold2(overdrive),mix,room);
-sigz=FreeVerb.ar((c3).fold2(overdrive),mix,room);
+sigx=FreeVerb.ar((c1).fold2(overdrive*5),mix,room);
+sigy=FreeVerb.ar((c2).fold2(overdrive*5),mix,room);
+sigz=FreeVerb.ar((c3).fold2(overdrive*5),mix,room);
 
 /////////spat
 //panners
@@ -307,14 +307,14 @@ envp=EnvGen.ar(Env.perc(attack,decay),gate:trig,doneAction:2);
 
 ///wavefield out
 Out.ar(busarray1.[n],
-(LeakDC.ar((sigx)*(sigz.fold2(overdrive.reciprocal)+(ampz)))*env).softclip(1)*envp);
+(LeakDC.ar((sigx)*(sigz.fold2(overdrive)+(ampz)))*env).softclip(1)*envp);
 Out.ar(busarray2.[n],
-(LeakDC.ar((sigy)*(sigz.fold2(overdrive.reciprocal)+(ampz)))*env).softclip(1)*envp);
+(LeakDC.ar((sigy)*(sigz.fold2(overdrive)+(ampz)))*env).softclip(1)*envp);
 
 Out.ar(busarray1.[n],
-(LeakDC.ar((sigx)*(sigz.fold2(overdrive.reciprocal)+(ampz)))*env).softclip(1)*0.1);
+(LeakDC.ar((sigx)*(sigz.fold2(overdrive)+(ampz)))*env).softclip(1)*0.5);
 Out.ar(busarray2.[n],
-(LeakDC.ar((sigy)*(sigz.fold2(overdrive.reciprocal)+(ampz)))*env).softclip(1)*0.1);
+(LeakDC.ar((sigy)*(sigz.fold2(overdrive)+(ampz)))*env).softclip(1)*0.5);
 
 ///pann out
 //Out.ar(busarray1.[n],((LeakDC.ar((sigx)*(sigz.fold2(0.5)+ampz))*env)*pan1[n]).softclip(1));
@@ -329,7 +329,6 @@ n=n+1;
 ////////////////run
 //~synth=Synth.new(\synth).register;
 0.5.wait;
-~rate=0.001;
 ///////////////////feed
 ~clock = TempoClock(1);
 (
@@ -346,12 +345,14 @@ Routine({loop{
 
 ///trigger
 ~trig=Pseq([1,0],inf).asStream;
-~rhythm=2;
+~sn=Pseq([7,10,8,9,11,12],inf).asStream;
+~rhythm=8;
 (
 {
 Routine({loop{
 //~synth.set(\az,[~az.[0],~az.[1],~az.[2],~az.[3]],\el,[~el.[0],~el.[1],~el.[2],~el.[3]]);
 ~gate=~trig.next;
+~setnote=7;
 (~rhythm).wait
 }
 }).play;
@@ -360,15 +361,23 @@ Routine({loop{
 
 ///data
 (
-~nset=25;
-~attack=0.1;
-~decay=2;
-~hold=~dur*5;
+~attack=0.01;
+~decay=4;
+~hold=~dur*3;
+~fundamental=0;
+~tone=0;
+~gain=1;
+~resonanse=1;
+~harm=1;
+~drive=0;
+~perspective=1;
+~room=0;
+~mag=0;
+~tone=1;
 );
 
 ///pattern
 0.1.wait;
-~fundamental=0;~tone=0;~gain=1;~resonanse=1;~harm=1;~drive=0;~perspective=1;~room=0;~mag=0;~tone=1;
 (~pattern = Pdef(\1,
 Pbind(\instrument, \synth,
 \dur, Pfunc{~dur},
@@ -378,7 +387,6 @@ Pbind(\instrument, \synth,
 \resonanse,	Pfunc{~resonanse},
 \harm,Pfunc{~harm},
 \drive,Pfunc{~drive},
-\perspective,Pfunc{~perspective},
 \room,Pfunc{~room},
 \mag,Pfunc{~mag},
 \az,Pfunc{Ref([~azset.[0],~azset.[1],~azset.[2],~azset.[3]])},
@@ -387,7 +395,7 @@ Pbind(\instrument, \synth,
 \hold,Pfunc{~hold},
 \decay,Pfunc{~decay},
 \trig,Pfunc{~gate},
-\note,Pseq([7,10,8,9,11,12],inf),
+\note,Pfunc{~setnote},
 )));
 ~pattern.play(~clock);
 
@@ -506,12 +514,12 @@ value=obj.value.linlin(0,1,0,(16256*5).neg).round(1).postln;
 ~sl8=Knob.new(~vw1, Rect.new(250,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linexp(0,1,0.01,1).postln;
+value=obj.value.linexp(0,1,0.01,8).postln;
 //~synth.set(\perspective,value);
-~attack=value;
+~decay=value;
 ~log1.(value.asString);
 });
-~st8=StaticText(~vw1,Rect(250,(50+sk+50+25+sk),sk+20,sk)).string_("attack")
+~st8=StaticText(~vw1,Rect(250,(50+sk+50+25+sk),sk+20,sk)).string_("decay")
 .stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
 );
 
