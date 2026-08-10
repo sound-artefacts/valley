@@ -59,6 +59,11 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 ~frames=~rate;
 ~window=100;
 ~dur=~frames*~window;
+
+//angle compensatiom
+~s=(1+2.sqrt);
+~g=((1+5.sqrt)/2);
+
 //////////rotation
 (
 {var sph,az,el,n;
@@ -69,8 +74,8 @@ az=~azimuth.[n];
 el=~elevation.[n];
 n=n+1;
 sph=Spherical(1,az,el);
-//sph=sph.rotateYZ(0.5pi).asSpherical;
-sph=sph.rotateYZ(~x.lag2(~lagtime)).rotateXZ(~y.lag2(~lagtime)).rotateXY(~z.lag2(~lagtime));
+sph=sph.rotateXY(~z.lag2(~lagtime)).asSpherical;///static z interferance
+//sph=sph.rotateYZ(~x.lag2(~lagtime)).rotateXZ(~y.lag2(~lagtime)).rotateXY(~z.lag2(~lagtime));//orchestral
 ~az=~az++[sph.theta];
 ~el=~el++[sph.phi];
 };
@@ -82,10 +87,11 @@ sph=sph.rotateYZ(~x.lag2(~lagtime)).rotateXZ(~y.lag2(~lagtime)).rotateXY(~z.lag2
 (
 {var rot;
 Routine({loop{
-rot=Spherical(~rate*10,~azr,~elr);
-~x=(~x+rot.x.abs).wrap(0,2pi);
-~y=(~y+rot.y.abs).wrap(0,2pi);
-~z=(~z+rot.z.abs).wrap(0,2pi);
+//rot=Spherical(~rate*10,~azr,~elr);
+//~x=(~x+rot.x.abs).wrap(0,2pi);
+//~y=(~y+rot.y.abs).wrap(0,2pi);
+//~z=(~z+rot.z.abs).wrap(0,2pi);
+~z=(~z+(~azr*((2pi-(2pi/~g))*~rate))).wrap(0,2pi);
 (~frames*~window).wait;
 };
 }).play;
@@ -124,16 +130,16 @@ nn=1.neg;
 }.value));
 ~scale=[~scale1,~scale2,~scale3,~scale4,~scale5,~scale6]);
 ///synth
-~fuselim=(16256*5).neg;
+~fuselim=(16256*16).neg;
 (
 SynthDef.new(\synth,{
 
 arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,attack=0.1,
 	decay=1,trig=0,tone=1,key=0,hold=0.1;
-var level,c,res,distance,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
-var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=32*(9/8),phasex,phasey,phasez,diameter,view=2,envp;
-var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8;
-var immersion,n=0,polytope=1,busarray1,harmonic,note,fund,mix,perspective=1;
+var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
+var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=16*(9/8),phasex,phasey,phasez;
+var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,interferance;
+var n=0,polytope=1,busarray1,harmonic,note,fund,mix,perspective=1;
 
 ///inputs
 level=2.pow(gain.lag2(~lagtime)/16256);
@@ -143,17 +149,17 @@ revroom=2.pow(room.lag2(~lagtime)/16256);
 overdrive=2.pow(drive.lag2(~lagtime)/16256);
 harmonic=2.pow(harm.lag2(~lagtime)/12);
 trange=mag.lag2(~lagtime);
-distance=perspective;
+//distance=perspective;
 note=2.pow(key.lag2(~lagtime)/12);
 
-fund=c*note*tune;
+fund=c*tune;
 
 pitch=exp(Complex(0,1)*tone);
 pitchx=2.pow(Select.kr((pitch.real*~note).abs,~scale4)/12);
 pitchy=2.pow(Select.kr((pitch.imag*~note).abs,~scale4)/12);
 
 //env fft
-env=EnvGen.ar(Env.sine(hold),gate:1,doneAction:2);
+env=EnvGen.ar(Env.sine(hold),gate:1,levelScale:1/64,doneAction:2);
 polytope.do{
 azn=az.[n].lag2(~lagtime);
 eln=el.[n].lag2(~lagtime);
@@ -177,30 +183,30 @@ toney=2.pow(ty.round(1)/~temperament);
 tonez=2.pow(tz.round(1)/~temperament);
 
 ////osc data
-freqx=(fund*pitchx)*tonex;
-freqy=(fund*pitchy)*toney;
-freqz=fund*tonez;
-ampx=c.reciprocal*tonex.reciprocal*level;//*pitch.reciprocal;
-ampy=c.reciprocal*toney.reciprocal*level;//*pitch.reciprocal;
-ampz=c.reciprocal*tonez.reciprocal*level;
+freqx=(fund*pitchx)*tonex*note;
+freqy=(fund*pitchy)*toney*note;
+freqz=fund*tonez*note;
+ampx=c.reciprocal*tonex.reciprocal*level*note.reciprocal;//*pitch.reciprocal;
+ampy=c.reciprocal*toney.reciprocal*level*note.reciprocal;//*pitch.reciprocal;
+ampz=c.reciprocal*tonez.reciprocal*level*note.reciprocal;
 //phasex=(Complex(1,x).theta*2);
 //phasey=(Complex(1,y).theta*2);
 //phasez=(Complex(1,z).theta*2);
 //phasex=atan2(x,y);
 //phasey=atan2(y,z);
 //phasez=atan2(z,x);
-phasex=(x*2pi);
-phasey=(y*2pi);
-phasez=(z*2pi);
+phasex=(x*pi);
+phasey=(y*pi);
+phasez=(z*pi);
 
-///perspective
-diameter=level*distance;
+//////perspective
+//diameter=level*distance;
 //immersion = diameter / (diameter + z.abs + (diameter/view));
-immersion=z.abs;
-ampx=ampx*immersion;
-ampy=ampy*immersion;
-phasex=(phasex*immersion).wrap(2pi.neg,2pi);
-phasey=(phasey*immersion).wrap(2pi.neg,2pi);
+//immersion=z.abs;
+//ampx=ampx*immersion;
+//ampy=ampy*immersion;
+//phasex=(phasex*immersion).wrap(2pi.neg,2pi);
+//phasey=(phasey*immersion).wrap(2pi.neg,2pi);
 
 /////////osc
 c1=BPF.ar((Osc.ar(~wt.bufnum,freqx,phase:phasex,mul:1024).abs*
@@ -210,16 +216,19 @@ SinOsc.ar(freqy,phase:phasey)),freqy,res,ampy*y.sign);
 c3=BPF.ar((Osc.ar(~wt.bufnum,freqz,phase:phasez,mul:1024).abs*
 SinOsc.ar(freqz,phase:phasez)),freqz,res,ampz*z.sign);
 
-////volts
-c1=c1.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampx).fold2(overdrive*0.25)+(ampx));
-c2=c2.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampy).fold2(overdrive*0.25)+(ampy));
-c3=c3.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampz).fold2(overdrive*0.25)+(ampz));
+////volts rect
+c1=c1.lag2(~signalSize.reciprocal)*
+(LPF.ar(Saw.ar(tune,(ampx/4)),tune*64*overdrive).fold2(overdrive*0.25)+((ampx/4)));
+c2=c2.lag2(~signalSize.reciprocal)*
+(LPF.ar(Saw.ar(tune,(ampy/4)),tune*64*overdrive).fold2(overdrive*0.25)+((ampy/4)));
+c3=c3.lag2(~signalSize.reciprocal)*
+(LPF.ar(Saw.ar(tune,(ampz/4)),tune*64*overdrive).fold2(overdrive*0.25)+((ampz/4)));
 
 ///distortion
-mix=(overdrive.linlin(1,~fuselim,~fuselim,1).clip(0.8)+immersion.clip(0.2));
-sigx=FreeVerb.ar((c1).fold2(overdrive*5),mix,room);
-sigy=FreeVerb.ar((c2).fold2(overdrive*5),mix,room);
-sigz=FreeVerb.ar((c3).fold2(overdrive*5),mix,room);
+mix=(overdrive.linlin(1,~fuselim,~fuselim,1).clip(1));
+sigx=FreeVerb.ar((c1).fold2(overdrive*2),mix,room);
+sigy=FreeVerb.ar((c2).fold2(overdrive*2),mix,room);
+sigz=FreeVerb.ar((c3).fold2(2),mix,room);
 
 /////////spat
 //panners
@@ -303,6 +312,7 @@ pan2=[g2,g4,g6,g8];
 busarray1=[0,2,4,5];
 busarray2=[1,3,6,7];
 
+interferance=overdrive.linlin(1,~fuselim,~fuselim,2);
 //env vca
 //envp=EnvGen.ar(Env.perc(attack,decay),gate:trig,doneAction:2);
 
@@ -312,8 +322,8 @@ busarray2=[1,3,6,7];
 //Out.ar(busarray2.[n],
 //(LeakDC.ar((sigy)*(sigz.fold2(overdrive)+(ampz)))*env).softclip(1)*envp);
 
-Out.ar(busarray1.[n],(LeakDC.ar((sigx)*(sigz.fold2(overdrive*0.25)+(ampz)))*env).softclip(1));
-Out.ar(busarray2.[n],(LeakDC.ar((sigy)*(sigz.fold2(overdrive*0.25)+(ampz)))*env).softclip(1));
+Out.ar(busarray1.[n],(LeakDC.ar((sigx)*(sigz.fold2(interferance*0.25)+(ampz)))*env).softclip(1));
+Out.ar(busarray2.[n],(LeakDC.ar((sigy)*(sigz.fold2(interferance*0.25)+(ampz)))*env).softclip(1));
 
 ///pann out
 //Out.ar(busarray1.[n],((LeakDC.ar((sigx)*(sigz.fold2(0.5)+ampz))*env)*pan1[n]).softclip(1));
@@ -345,13 +355,13 @@ Routine({loop{
 ///trigger
 ~trig=Pseq([1,0],inf).asStream;
 ~sn=Pseq([7,10,8,9,11,12],inf).asStream;
-~rhythm=8;
+~rhythm=1;
 (
 {
 Routine({loop{
 //~synth.set(\az,[~az.[0],~az.[1],~az.[2],~az.[3]],\el,[~el.[0],~el.[1],~el.[2],~el.[3]]);
 ~gate=~trig.next;
-~setnote=7;
+~setnote=~sn.next;
 (~rhythm).wait
 }
 }).play;
@@ -394,7 +404,7 @@ Pbind(\instrument, \synth,
 \hold,Pfunc{~hold},
 //\decay,Pfunc{~decay},
 //\trig,Pfunc{~gate},
-\note,Pfunc{~setnote},
+\key,Pfunc{~setnote},
 )));
 ~pattern.play(~clock);
 
@@ -402,7 +412,6 @@ Pbind(\instrument, \synth,
 (
 {
 var size=550,sk=(size/12),w,rol=0,sz=0.5,wd=3.5,shift=1;
-var s=(1+2.sqrt),g=((1+5.sqrt)/2);
 
 w = Window("tws", Rect(50, 50, size, size/2)).front;
 ~vw1 = UserView(w, Rect(0,0,size,size/2)).drawFunc_({ ~img.drawInRect(~vw1.bounds)});//.background_(Color.black);
@@ -448,7 +457,7 @@ value=obj.value.linlin(0,1,pi.neg,pi).postln;
 ~sl3=Knob.new(~vw1, Rect.new(250,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,(16256*2).neg,16256*2).round(1).postln;
+value=obj.value.linlin(0,1,(16256*12).neg,0).round(1).postln;
 //~synth.set(\gain,value);
 ~gain=value;
 ~log1.(value.asString);
@@ -474,11 +483,12 @@ value=obj.value.linlin(0,1,0,16256*2).round(1).postln;
 ~sl5=Knob.new(~vw1, Rect.new(450,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,(16256*12).neg,16256*3).round(1).postln;
+value=obj.value.linlin(0,1,(16256*8).neg,16256*4).round(1).postln;
 //~synth.set(\resonanse,value);
 ~resonanse=value;
 ~log1.(value.asString);
 });
+
 ~st5=StaticText(~vw1,Rect(450,50+sk,sk+20,sk)).string_("resonance")
 .stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
 );
@@ -505,7 +515,7 @@ value=obj.value.linlin(0,1,0,~fuselim).round(1).postln;
 ~drive=value;
 ~log1.(value.asString);
 });
-~st7=StaticText(~vw1,Rect(150,(50+sk+50+25+sk),sk+20,sk)).string_("overdrive")
+~st7=StaticText(~vw1,Rect(150,(50+sk+50+25+sk),sk+20,sk)).string_("fusion")
 .stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
 );
 
