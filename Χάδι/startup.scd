@@ -124,6 +124,7 @@ nn=1.neg;
 }.value));
 ~scale=[~scale1,~scale2,~scale3,~scale4,~scale5,~scale6]);
 ///synth
+~fuselim=(16256*5).neg;
 (
 SynthDef.new(\synth,{
 
@@ -210,12 +211,12 @@ c3=BPF.ar((Osc.ar(~wt.bufnum,freqz,phase:phasez,mul:1024).abs*
 SinOsc.ar(freqz,phase:phasez)),freqz,res,ampz*z.sign);
 
 ////volts
-c1=c1.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampx).fold2(overdrive)+(ampx));
-c2=c2.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampy).fold2(overdrive)+(ampy));
-c3=c3.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampz).fold2(overdrive)+(ampz));
+c1=c1.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampx).fold2(overdrive*0.25)+(ampx));
+c2=c2.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampy).fold2(overdrive*0.25)+(ampy));
+c3=c3.lag2(~signalSize.reciprocal)*(Saw.ar(55,ampz).fold2(overdrive*0.25)+(ampz));
 
 ///distortion
-mix=(overdrive.reciprocal).clip(0.7)+immersion.clip(0.4);
+mix=(overdrive.linlin(1,~fuselim,~fuselim,1).clip(0.8)+immersion.clip(0.2));
 sigx=FreeVerb.ar((c1).fold2(overdrive*5),mix,room);
 sigy=FreeVerb.ar((c2).fold2(overdrive*5),mix,room);
 sigz=FreeVerb.ar((c3).fold2(overdrive*5),mix,room);
@@ -303,18 +304,16 @@ busarray1=[0,2,4,5];
 busarray2=[1,3,6,7];
 
 //env vca
-envp=EnvGen.ar(Env.perc(attack,decay),gate:trig,doneAction:2);
+//envp=EnvGen.ar(Env.perc(attack,decay),gate:trig,doneAction:2);
 
 ///wavefield out
-Out.ar(busarray1.[n],
-(LeakDC.ar((sigx)*(sigz.fold2(overdrive)+(ampz)))*env).softclip(1)*envp);
-Out.ar(busarray2.[n],
-(LeakDC.ar((sigy)*(sigz.fold2(overdrive)+(ampz)))*env).softclip(1)*envp);
+//Out.ar(busarray1.[n],
+//(LeakDC.ar((sigx)*(sigz.fold2(overdrive)+(ampz)))*env).softclip(1)*envp);
+//Out.ar(busarray2.[n],
+//(LeakDC.ar((sigy)*(sigz.fold2(overdrive)+(ampz)))*env).softclip(1)*envp);
 
-Out.ar(busarray1.[n],
-(LeakDC.ar((sigx)*(sigz.fold2(overdrive)+(ampz)))*env).softclip(1)*0.5);
-Out.ar(busarray2.[n],
-(LeakDC.ar((sigy)*(sigz.fold2(overdrive)+(ampz)))*env).softclip(1)*0.5);
+Out.ar(busarray1.[n],(LeakDC.ar((sigx)*(sigz.fold2(overdrive*0.25)+(ampz)))*env).softclip(1));
+Out.ar(busarray2.[n],(LeakDC.ar((sigy)*(sigz.fold2(overdrive*0.25)+(ampz)))*env).softclip(1));
 
 ///pann out
 //Out.ar(busarray1.[n],((LeakDC.ar((sigx)*(sigz.fold2(0.5)+ampz))*env)*pan1[n]).softclip(1));
@@ -391,10 +390,10 @@ Pbind(\instrument, \synth,
 \mag,Pfunc{~mag},
 \az,Pfunc{Ref([~azset.[0],~azset.[1],~azset.[2],~azset.[3]])},
 \el,Pfunc{Ref([~elset.[0],~elset.[1],~elset.[2],~elset.[3]])},
-\attack,Pfunc{~attack},
+//\attack,Pfunc{~attack},
 \hold,Pfunc{~hold},
-\decay,Pfunc{~decay},
-\trig,Pfunc{~gate},
+//\decay,Pfunc{~decay},
+//\trig,Pfunc{~gate},
 \note,Pfunc{~setnote},
 )));
 ~pattern.play(~clock);
@@ -501,7 +500,7 @@ value=obj.value.linlin(0,1,0,12*3).postln;
 ~sl7=Knob.new(~vw1, Rect.new(150,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,0,(16256*5).neg).round(1).postln;
+value=obj.value.linlin(0,1,0,~fuselim).round(1).postln;
 //~synth.set(\drive,value);
 ~drive=value;
 ~log1.(value.asString);
