@@ -133,7 +133,7 @@ nn=1.neg;
 ~scale=[~scale2,~scale3,~scale4,~scale5,~scale6]);
 
 ///synth
-~fuselim=(16256*7).neg;
+~fuselim=(16256*5).neg;
 ~comp=5;
 (
 SynthDef.new(\synth,{
@@ -462,7 +462,7 @@ value=obj.value.linlin(0,1,(16256*4).neg,16256).round(1).postln;
 ~sl4=Knob.new(~vw1, Rect.new(350,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,0,16256*2).round(1).postln;
+value=obj.value.linlin(0,1,16256*3.neg,16256*2).round(1).postln;
 //~synth.set(\fundamental,value);
 ~fundamental=value;
 ~log1.(value.asString);
@@ -567,7 +567,7 @@ gain.postln;
 (
 MIDIdef.cc(\midi_pot2,{ |val, num, chan, src|
 var fund;
-fund=val.linlin(0,127,0,16256*2).round(1);
+fund=val.linlin(0,127,16256*3.neg,16256*2).round(1);
 fund.postln;
 ~fundamental=fund;
 },2);
