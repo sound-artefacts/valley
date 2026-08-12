@@ -53,11 +53,12 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 ~rx=0;~ry=0;~rz=0;~gain=1;~fundament=0;~resonance=0;~harmonic=1;~fold=0;~perspective=0;~room=0;~azs=0;~els=0;
 ~azr=1;~elr=1;
 ~temperament=16256;
-~lagtime=1/64;
+~lagtime=1/128;
 ~rate=2048.reciprocal;
 ~x=0;~y=0;~z=0;
 ~frames=~rate;
-~window=100;
+~window=128;
+~ffreq=16;
 ~dur=~frames*~window;
 
 //angle compensatiom
@@ -84,15 +85,16 @@ sph=sph.rotateXY(~z.lag2(~lagtime)).asSpherical;///static z interferance
 }).play;
 }.defer
 );
+
 (
 {var rot;
 Routine({loop{
-//rot=Spherical(~rate*10,~azr,~elr);
+//rot=Spherical(~dur,~azr,~elr);
 //~x=(~x+rot.x.abs).wrap(0,2pi);
 //~y=(~y+rot.y.abs).wrap(0,2pi);
 //~z=(~z+rot.z.abs).wrap(0,2pi);
-~z=(~z+(~azr*((2pi-(2pi/~g))*~rate))).wrap(0,2pi);
-(~frames*~window).wait;
+~z=(~z+(~azr*((2pi-(2pi/~g))*~rate*~ffreq))).wrap(0,2pi);
+(~rate).wait;
 };
 }).play;
 }.defer
@@ -128,16 +130,16 @@ var nn=1.neg,scale1,scale2;
 nn=1.neg;
 ~scale6=~note.collect{nn=nn+1;Scale.majorPentatonic.performDegreeToKey(nn,12)};
 }.value));
-~scale=[~scale1,~scale2,~scale3,~scale4,~scale5,~scale6]);
+~scale=[~scale2,~scale3,~scale4,~scale5,~scale6]);
 ///synth
-~fuselim=(16256*16).neg;
+~fuselim=(16256*18).neg;
 (
 SynthDef.new(\synth,{
 
 arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,attack=0.1,
-	decay=1,trig=0,tone=1,key=0,hold=0.1;
+	decay=1,trig=0,tone=1,key=0,hold=0.1,scselect=0;
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
-var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=16*(9/8),phasex,phasey,phasez;
+var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq*(9/8),phasex,phasey,phasez;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,interferance;
 var n=0,polytope=1,busarray1,harmonic,note,fund,mix,perspective=1;
 
@@ -155,8 +157,8 @@ note=2.pow(key.lag2(~lagtime)/12);
 fund=c*tune;
 
 pitch=exp(Complex(0,1)*tone);
-pitchx=2.pow(Select.kr((pitch.real*~note).abs,~scale4)/12);
-pitchy=2.pow(Select.kr((pitch.imag*~note).abs,~scale4)/12);
+pitchx=2.pow(Select.kr((pitch.real*~note).abs,Select.kr(scselect,[~scale])/12);
+pitchy=2.pow(Select.kr((pitch.imag*~note).abs,Select.kr(scselect,[~scale]))/12);
 
 //env fft
 env=EnvGen.ar(Env.sine(hold),gate:1,levelScale:1/64,doneAction:2);
@@ -218,11 +220,11 @@ SinOsc.ar(freqz,phase:phasez)),freqz,res,ampz*z.sign);
 
 ////volts rect
 c1=c1.lag2(~signalSize.reciprocal)*
-(LPF.ar(Saw.ar(tune,(ampx/4)),tune*64*overdrive).fold2(overdrive*0.25)+((ampx/4)));
+(LPF.ar(Saw.ar(tune,(ampx/3)),tune*64*overdrive).fold2(overdrive*0.25)+((ampx/3)));
 c2=c2.lag2(~signalSize.reciprocal)*
-(LPF.ar(Saw.ar(tune,(ampy/4)),tune*64*overdrive).fold2(overdrive*0.25)+((ampy/4)));
+(LPF.ar(Saw.ar(tune,(ampy/3)),tune*64*overdrive).fold2(overdrive*0.25)+((ampy/3)));
 c3=c3.lag2(~signalSize.reciprocal)*
-(LPF.ar(Saw.ar(tune,(ampz/4)),tune*64*overdrive).fold2(overdrive*0.25)+((ampz/4)));
+(LPF.ar(Saw.ar(tune,(ampz/3)),tune*64*overdrive).fold2(overdrive*0.25)+((ampz/3)));
 
 ///distortion
 mix=(overdrive.linlin(1,~fuselim,~fuselim,1).clip(1));
@@ -383,6 +385,7 @@ Routine({loop{
 ~room=0;
 ~mag=0;
 ~tone=1;
+~scaleselect=0;
 );
 
 ///pattern
@@ -405,6 +408,7 @@ Pbind(\instrument, \synth,
 //\decay,Pfunc{~decay},
 //\trig,Pfunc{~gate},
 \key,Pfunc{~setnote},
+\scselect,Pfunc{~scaleselect}
 )));
 ~pattern.play(~clock);
 
@@ -567,7 +571,138 @@ value=obj.value.linlin(0,1,0,~temperament).round(1).postln;
 
 
 ////midi
+(
+MIDIClient.init;
+MIDIIn.connectAll;
 
+(
+(
+MIDIdef.cc(\midi_pot1,{ |val, num, chan, src|
+var az;
+az=val.linlin(0,127,pi.neg,pi).round(0.0001);
+az.postln;
+},1);
+);
+(
+MIDIdef.cc(\midi_pot2,{ |val, num, chan, src|
+
+},2);
+);
+(
+MIDIdef.cc(\midi_pot3,{ |val, num, chan, src|
+
+},3);
+);
+(
+MIDIdef.cc(\midi_pot4,{ |val, num, chan, src|
+
+},4);
+);
+(
+MIDIdef.cc(\midi_pot5,{ |val, num, chan, src|
+
+},5);
+);
+(
+MIDIdef.cc(\midi_pot6,{ |val, num, chan, src|
+
+},6);
+);
+(
+MIDIdef.cc(\midi_pot7,{ |val, num, chan, src|
+
+},7);
+);
+(
+MIDIdef.cc(\midi_pot8,{ |val, num, chan, src|
+
+},8);
+);
+(
+MIDIdef.cc(\midi_pot9,{ |val, num, chan, src|
+
+},9);
+);
+(
+MIDIdef.cc(\midi_pot10,{ |val, num, chan, src|
+
+},10);
+);
+(
+MIDIdef.cc(\midi_switch1,{ |val, num, chan, src|
+var a;
+if(val>0,a=1);
+a.postln;
+},11);
+);
+(
+MIDIdef.cc(\midi_switch1,{ |val, num, chan, src|
+},12);
+);
+(
+MIDIdef.cc(\midi_switch1,{ |val, num, chan, src|
+},13);
+);
+(
+MIDIdef.cc(\midi_switch1,{ |val, num, chan, src|
+},14);
+);
+(
+MIDIdef.cc(\midi_switch1,{ |val, num, chan, src|
+},15);
+);
+(
+MIDIdef.cc(\midi_slider1,{ |val, num, chan, src|
+},21);
+);
+(
+MIDIdef.cc(\midi_slider2,{ |val, num, chan, src|
+},22);
+);
+(
+MIDIdef.cc(\midi_slider3,{ |val, num, chan, src|
+},23);
+);
+(
+MIDIdef.cc(\midi_slider4,{ |val, num, chan, src|
+},24);
+);
+(
+MIDIdef.cc(\midi_slider5,{ |val, num, chan, src|
+},25);
+);
+(
+MIDIdef.cc(\midi_slider6,{ |val, num, chan, src|
+},26);
+);
+(
+MIDIdef.cc(\midi_slider7,{ |val, num, chan, src|
+},27);
+);
+(
+MIDIdef.cc(\midi_slider8,{ |val, num, chan, src|
+},28);
+);
+(
+MIDIdef.cc(\midi_slider9,{ |val, num, chan, src|
+},29);
+);
+(
+MIDIdef.cc(\midi_filterpot1,{ |val, num, chan, src|
+
+},30);
+);
+(
+MIDIdef.cc(\midi_filterpot2,{ |val, num, chan, src|
+
+},31);
+);
+(
+MIDIdef.cc(\midi_filterpot3,{ |val, num, chan, src|
+
+},32);
+);
+)
 
 
 
