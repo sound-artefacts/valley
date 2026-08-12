@@ -143,7 +143,7 @@ arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,room=0,d
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq*(9/8),phasex,phasey,phasez;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,form1a,form2a,form3a;
-var n=0,polytope=1,busarray1,harmonic,note,fund,mix,perspective=3,a,b,immersion;
+var n=0,polytope=4,busarray1,harmonic,note,fund,mix,a,b,immersion;
 
 ///inputs
 level=2.pow(gain.lag2(~lagtime)/16256)*10;
@@ -153,9 +153,8 @@ revroom=2.pow(room.lag2(~lagtime)/16256);
 overdrive=2.pow(drive.lag2(~lagtime)/16256);
 harmonic=2.pow(harm.lag2(~lagtime)/12);
 trange=mag.lag2(~lagtime);
-//distance=perspective;
-note=2.pow(key.lag2(~lagtime)/12);
 
+note=2.pow(key.lag2(~lagtime)/12);
 fund=c*tune;
 
 pitch=exp(Complex(0,1)*tone);
@@ -203,7 +202,6 @@ phasex=(x*pi);
 phasey=(y*pi);
 phasez=(z*pi);
 
-mix=overdrive.linlin(1,2.pow(~fuselim/16256),2.pow(~fuselim/16256),1);
 /////////osc
 c1=BPF.ar((Osc.ar(~wt.bufnum,freqx,phase:phasex,mul:1024).abs*
 SinOsc.ar(freqx,phase:phasex)),freqx,res,ampx*x.sign);
@@ -213,6 +211,8 @@ c3=BPF.ar((Osc.ar(~wt.bufnum,freqz,phase:phasez,mul:1024).abs*
 SinOsc.ar(freqz,phase:phasez)),freqz,res,ampz*z.sign);
 
 ////volts rect
+mix=overdrive.linlin(1,2.pow(~fuselim/16256),2.pow(~fuselim/16256),1);
+
 c1=c1.lag2(~signalSize.reciprocal)*
 (LPF.ar(Saw.ar(tune,(ampz)),tune*64*overdrive).fold2(mix*0.05)+((ampz)));
 c2=c2.lag2(~signalSize.reciprocal)*
@@ -310,8 +310,8 @@ immersion = (level/2) / ((level/2) + z + ((level/2)/2));
 
 a=(LeakDC.ar((sigx)*((sigz*immersion).fold2(overdrive*0.1)+(ampz*immersion.abs)))*env).softclip(2.dbamp);
 b=(LeakDC.ar((sigy)*((sigz*immersion).fold2(overdrive*0.1)+(ampz*immersion.abs)))*env).softclip(2.dbamp);
-//a=(a*pan1[n]).softclip(2.dbamp)
-//b=(b*pan2[n]).softclip(2.dbamp)
+a=(a*pan1[n]).softclip(2.dbamp);
+b=(b*pan2[n]).softclip(2.dbamp);
 
 ///out
 busarray1=[0,2,4,5];
@@ -396,7 +396,7 @@ Pbind(\instrument, \synth,
 \az,Pfunc{Ref([~azset.[0],~azset.[1],~azset.[2],~azset.[3]])},
 \el,Pfunc{Ref([~elset.[0],~elset.[1],~elset.[2],~elset.[3]])},
 \hold,Pfunc{~hold},
-\key,Pfunc{0},
+\key,Pfunc{~setnote},
 \scselect,Pfunc{~scaleselect},
 )));
 ~pattern.play(~clock);
@@ -450,7 +450,7 @@ value=obj.value.linlin(0,1,pi.neg,pi).postln;
 ~sl3=Knob.new(~vw1, Rect.new(250,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,(16256*5).neg,0).round(1).postln;
+value=obj.value.linlin(0,1,(16256*4).neg,16256).round(1).postln;
 //~synth.set(\gain,value);
 ~gain=value;
 ~log1.(value.asString);
@@ -516,7 +516,7 @@ value=obj.value.linlin(0,1,0,~fuselim).round(1).postln;
 ~sl8=Knob.new(~vw1, Rect.new(250,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,(~temperament*2).neg,~temperament*3).round(1).postln;
+value=obj.value.linlin(0,1,(~temperament*2).neg,~temperament*2).round(1).postln;
 //~synth.set(\perspective,value);
 ~holdm=2.pow(value/~temperament);
 ~log1.(value.asString);
@@ -552,92 +552,129 @@ value=obj.value.linlin(0,1,0,~temperament).round(1).postln;
 );
 
 }.defer
-)
-}); Tdef(\drone).play;
-}
-)
-
-///rot speed,tone,gain,fund,res,harm,drive,hold,mag,room,tempo,window,scsellect,melody
-
+);
 ////midi
 (
 MIDIClient.init;
 MIDIIn.connectAll;
-
-(
 (
 MIDIdef.cc(\midi_pot1,{ |val, num, chan, src|
-var az;
-az=val.linlin(0,127,pi.neg,pi).round(0.0001);
-az.postln;
+var gain;
+gain=val.linlin(0,127,(16256*4).neg,16256).round(1);
+gain.postln;
+~gain=gain;
 },1);
 );
 (
 MIDIdef.cc(\midi_pot2,{ |val, num, chan, src|
-
+var fund;
+fund=val.linlin(0,127,0,16256*2).round(1);
+fund.postln;
+~fundamental=fund;
 },2);
 );
 (
 MIDIdef.cc(\midi_pot3,{ |val, num, chan, src|
-
+var res;
+res=val.linlin(0,127,(16256*8).neg,16256*4).round(1);
+res.postln;
+~resonanse=res;
 },3);
 );
 (
 MIDIdef.cc(\midi_pot4,{ |val, num, chan, src|
-
+var drive;
+drive=val.linlin(0,127,0,~fuselim).round(1);
+drive.postln;
+~drive=drive;
 },4);
 );
 (
 MIDIdef.cc(\midi_pot5,{ |val, num, chan, src|
-
+var harm;
+harm=val.linlin(0,127,0,12*2);
+harm.postln;
+~harm=harm;
 },5);
 );
 (
 MIDIdef.cc(\midi_pot6,{ |val, num, chan, src|
-
+var hold;
+hold=val.linlin(0,127,(~temperament*2).neg,~temperament*2).round(1);
+hold.postln;
+~holdm=2.pow(hold/~temperament);
 },6);
 );
 (
 MIDIdef.cc(\midi_pot7,{ |val, num, chan, src|
-
+var r;
+r=val.linlin(0,127,2pi.neg,2pi);
+~azr=r;
+r.postln;
 },7);
 );
 (
 MIDIdef.cc(\midi_pot8,{ |val, num, chan, src|
-
+var tone;
+tone=val.linlin(0,127,pi.neg,pi);
+tone.postln;
+~tone=tone;
 },8);
 );
 (
 MIDIdef.cc(\midi_pot9,{ |val, num, chan, src|
-
+var room;
+room=val.linlin(0,127,(16256*12).neg,0).round(1);
+room.postln;
+~room=room;
 },9);
 );
 (
 MIDIdef.cc(\midi_pot10,{ |val, num, chan, src|
-
+var mag;
+mag=val.linlin(0,127,0,~temperament).round(1);
+mag.postln;
+~mag=mag;
 },10);
 );
 (
 MIDIdef.cc(\midi_switch1,{ |val, num, chan, src|
-var a;
-if(val>0,a=1);
-a.postln;
+var sc;
+if(val>0,sc=0);
+sc.postln;
+~scaleselect=sc;
 },11);
 );
 (
-MIDIdef.cc(\midi_switch1,{ |val, num, chan, src|
+MIDIdef.cc(\midi_switch2,{ |val, num, chan, src|
+var sc;
+if(val>0,sc=1);
+sc.postln;
+~scaleselect=sc;
 },12);
 );
 (
-MIDIdef.cc(\midi_switch1,{ |val, num, chan, src|
+MIDIdef.cc(\midi_switch3,{ |val, num, chan, src|
+var sc;
+if(val>0,sc=2);
+sc.postln;
+~scaleselect=sc;
 },13);
 );
 (
-MIDIdef.cc(\midi_switch1,{ |val, num, chan, src|
+MIDIdef.cc(\midi_switch4,{ |val, num, chan, src|
+var sc;
+if(val>0,sc=3);
+sc.postln;
+~scaleselect=sc;
 },14);
 );
 (
-MIDIdef.cc(\midi_switch1,{ |val, num, chan, src|
+MIDIdef.cc(\midi_switch5,{ |val, num, chan, src|
+var sc;
+if(val>0,sc=4);
+sc.postln;
+~scaleselect=sc;
 },15);
 );
 (
@@ -674,6 +711,10 @@ MIDIdef.cc(\midi_slider8,{ |val, num, chan, src|
 );
 (
 MIDIdef.cc(\midi_slider9,{ |val, num, chan, src|
+var tempo;
+tempo=val.linlin(0,127,1/4,4).round(1/4);
+tempo.postln;
+~clock.tempo_(tempo);
 },29);
 );
 (
@@ -691,7 +732,14 @@ MIDIdef.cc(\midi_filterpot3,{ |val, num, chan, src|
 
 },32);
 );
+);
+}); Tdef(\drone).play;
+}
 )
+
+
+
+
 
 
 
