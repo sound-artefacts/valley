@@ -58,7 +58,7 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 ~x=0;~y=0;~z=0;
 ~frames=~rate;
 ~ffreq=12;
-~window=110;
+~window=220;
 ~dur=~frames*~window;
 
 //angle compensatiom
@@ -711,21 +711,11 @@ peak = peak.min(signal.size - 2).max(1);
 times =Array.fill(signal.size - peak - 1, hold / (signal.size - peak - 1));
 enva = Env(rip.asArray, times);
 env = EnvGen.ar(enva,levelScale:gain,doneAction:2);*/
-///vca env///dont burn out, vca and env can ba applied via eurorack modular external
-/*signal1 = Signal.sineFill(~signalSizee, ~arraye, [0]);
-signal1 = signal1.rotate(signal1.size div: 2);
-peak1 = signal1.abs.maxIndex.max(1);
-rip1 = Env.perc(0.5,0.5).asSignal(~signalSizee);
-rip1 = rip1 * (1 + (signal1 / tremolo));
-rip1 = rip1.normalize;
-peak1 = peak1.min(signal1.size - 2).max(1);
-times1 =Array.fill(peak1, attack / peak1) ++ Array.fill(signal1.size - peak1 - 1, dicay / (signal1.size - peak1 - 1));
-envb = Env(rip1.asArray, times1);
-envenv = EnvGen.ar(envb,gate:Trig.kr(LFSaw.kr(erate),0.01));*/
 
 
 
-/*({var x,y,z,n=0,time=32.reciprocal,bx,by,bz,beat=4;~dursum=0;
+/*///rhythm
+({var x,y,z,n=0,time=32.reciprocal,bx,by,bz,beat=4;~dursum=0;
 beat.do{
 x=beat*cos(~elevation.[n])*cos(~azimuth.[n]);
 y=beat*cos(~elevation.[n])*sin(~azimuth.[n]);
