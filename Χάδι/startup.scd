@@ -310,15 +310,14 @@ immersion = (level/2) / ((level/2) + z + ((level/2)/2));
 
 a=(LeakDC.ar((sigx)*((sigz*immersion).fold2(overdrive*0.1)+(ampz*immersion.abs)))*env).softclip(2.dbamp);
 b=(LeakDC.ar((sigy)*((sigz*immersion).fold2(overdrive*0.1)+(ampz*immersion.abs)))*env).softclip(2.dbamp);
-a=(a*pan1[n]).softclip(2.dbamp);
-b=(b*pan2[n]).softclip(2.dbamp);
+//a=(a*pan1[n]).softclip(2.dbamp);
+//b=(b*pan2[n]).softclip(2.dbamp);
 
 ///out
 busarray1=[0,2,4,5];
 busarray2=[1,3,6,7];
 Out.ar(busarray1.[n],a);
 Out.ar(busarray2.[n],b);
-
 
 n=n+1;
 }
@@ -637,7 +636,7 @@ mag.postln;
 ~mag=mag;
 },10);
 );
-(
+/*(
 MIDIdef.cc(\midi_switch1,{ |val, num, chan, src|
 var sc;
 if(val>0,sc=0);
@@ -676,9 +675,13 @@ if(val>0,sc=4);
 sc.postln;
 ~scaleselect=sc;
 },15);
-);
+);*/
 (
 MIDIdef.cc(\midi_slider1,{ |val, num, chan, src|
+var sc;
+sc=val.linlin(0,127,0,4).round(1);
+sc.postln;
+~scaleselect=sc;
 },21);
 );
 (
