@@ -57,7 +57,7 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 ~rate=2048.reciprocal;
 ~x=0;~y=0;~z=0;
 ~frames=~rate;
-~ffreq=16;
+~ffreq=12;
 ~window=110;
 ~dur=~frames*~window;
 
@@ -133,17 +133,17 @@ nn=1.neg;
 ~scale=[~scale2,~scale3,~scale4,~scale5,~scale6]);
 
 ///synth
-~fuselim=(16256*9).neg;
-~comp=0.5;
+~fuselim=(16256*7).neg;
+~comp=5;
 (
 SynthDef.new(\synth,{
 
-arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,attack=0.1,
-	decay=1,trig=0,tone=1,key=0,hold=0.1,scselect=0;
+arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,
+	tone=1,key=0,hold=0.1,scselect=0;
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq*(9/8),phasex,phasey,phasez;
-var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8;
-var n=0,polytope=1,busarray1,harmonic,note,fund,mix,perspective=3;
+var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,form1a,form2a,form3a;
+var n=0,polytope=1,busarray1,harmonic,note,fund,mix,perspective=3,a,b,immersion;
 
 ///inputs
 level=2.pow(gain.lag2(~lagtime)/16256)*10;
@@ -203,15 +203,6 @@ phasex=(x*pi);
 phasey=(y*pi);
 phasez=(z*pi);
 
-//////perspective
-//diameter=level*distance;
-//immersion = diameter / (diameter + z.abs + (diameter/view));
-//immersion=z.abs;
-//ampx=ampx*immersion;
-//ampy=ampy*immersion;
-//phasex=(phasex*immersion).wrap(2pi.neg,2pi);
-//phasey=(phasey*immersion).wrap(2pi.neg,2pi);
-
 mix=overdrive.linlin(1,2.pow(~fuselim/16256),2.pow(~fuselim/16256),1);
 /////////osc
 c1=BPF.ar((Osc.ar(~wt.bufnum,freqx,phase:phasex,mul:1024).abs*
@@ -231,9 +222,9 @@ c2=c2.lag2(~signalSize.reciprocal)*
 
 ///distortion
 
-sigx=FreeVerb.ar((c1).fold2(overdrive*5),overdrive,room);
-sigy=FreeVerb.ar((c2).fold2(overdrive*5),overdrive,room);
-sigz=FreeVerb.ar((c3),overdrive,room);
+sigx=FreeVerb.ar((c1).fold2(overdrive*~comp),overdrive,room);
+sigy=FreeVerb.ar((c2).fold2(overdrive*~comp),overdrive,room);
+sigz=FreeVerb.ar((c3).fold2(~comp),overdrive,room);
 
 /////////spat
 //panners
@@ -314,20 +305,21 @@ sin(~elc.[7])));
 pan1=[g1,g3,g5,g7];
 pan2=[g2,g4,g6,g8];
 
+//////perspective
+immersion = (level/2) / ((level/2) + z + ((level/2)/2));
+
+a=(LeakDC.ar((sigx)*((sigz*immersion).fold2(overdrive*0.1)+(ampz*immersion.abs)))*env).softclip(2.dbamp);
+b=(LeakDC.ar((sigy)*((sigz*immersion).fold2(overdrive*0.1)+(ampz*immersion.abs)))*env).softclip(2.dbamp);
+//a=(a*pan1[n]).softclip(2.dbamp)
+//b=(b*pan2[n]).softclip(2.dbamp)
+
+///out
 busarray1=[0,2,4,5];
 busarray2=[1,3,6,7];
+Out.ar(busarray1.[n],a);
+Out.ar(busarray2.[n],b);
 
-//env vca
-//envp=EnvGen.ar(Env.perc(attack,decay),gate:trig,doneAction:2);
 
-///wavefield out
-
-Out.ar(busarray1.[n],(LeakDC.ar((sigx)*(sigz.fold2(overdrive*0.1)+(ampz)))*env).softclip(1));
-Out.ar(busarray2.[n],(LeakDC.ar((sigy)*(sigz.fold2(overdrive*0.1)+(ampz)))*env).softclip(1));
-
-///pann out
-//Out.ar(busarray1.[n],(LeakDC.ar((sigx)*(sigz.fold2(overdrive*0.5)+(ampz)))*env*pan1[n]).softclip(1));
-//Out.ar(busarray2.[n],(LeakDC.ar((sigy)*(sigz.fold2(overdrive*0.5)+(ampz)))*env*pan2[n])).softclip(1));
 n=n+1;
 }
 }).add;
@@ -339,12 +331,14 @@ n=n+1;
 0.5.wait;
 ///////////////////feed
 ~clock = TempoClock(1);
+~holdm=1;
 (
 {
 Routine({loop{
 //~synth.set(\az,[~az.[0],~az.[1],~az.[2],~az.[3]],\el,[~el.[0],~el.[1],~el.[2],~el.[3]]);
 ~azset=~az;
 ~elset=~el;
+~hold=~dur*~ffreq*~holdm;
 (~frames).wait
 }
 }).play;
@@ -363,15 +357,13 @@ Routine({loop{
 ~setnote=~sn.next;
 (~rhythm).wait
 }
-}).play;
+}).play(~clock);
 }.defer
 );
 
 ///data
 (
-~attack=0.01;
-~decay=4;
-~hold=~dur*~ffreq;
+~hold=~dur*~ffreq*~holdm;
 ~fundamental=0;
 ~tone=0;
 ~gain=1;
@@ -383,6 +375,9 @@ Routine({loop{
 ~mag=0;
 ~tone=1;
 ~scaleselect=0;
+~f1=10;
+~f2=10;
+~f3=10;
 );
 
 ///pattern
@@ -400,12 +395,9 @@ Pbind(\instrument, \synth,
 \mag,Pfunc{~mag},
 \az,Pfunc{Ref([~azset.[0],~azset.[1],~azset.[2],~azset.[3]])},
 \el,Pfunc{Ref([~elset.[0],~elset.[1],~elset.[2],~elset.[3]])},
-//\attack,Pfunc{~attack},
 \hold,Pfunc{~hold},
-//\decay,Pfunc{~decay},
-//\trig,Pfunc{~gate},
 \key,Pfunc{0},
-\scselect,Pfunc{~scaleselect}
+\scselect,Pfunc{~scaleselect},
 )));
 ~pattern.play(~clock);
 
@@ -427,7 +419,7 @@ w = Window("tws", Rect(50, 50, size, size/2)).front;
 ~sl1=Knob.new(~vw1, Rect.new(50,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,pi.neg,pi).postln;
+value=obj.value.linlin(0,1,2pi.neg,2pi).postln;
 //value=obj.value.linlin(0,1,1/4,4).round(1/16).postln;
 ~azr=value;
 ~elr=value/2;
@@ -458,7 +450,7 @@ value=obj.value.linlin(0,1,pi.neg,pi).postln;
 ~sl3=Knob.new(~vw1, Rect.new(250,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,(16256*12).neg,0).round(1).postln;
+value=obj.value.linlin(0,1,(16256*5).neg,0).round(1).postln;
 //~synth.set(\gain,value);
 ~gain=value;
 ~log1.(value.asString);
@@ -498,7 +490,7 @@ value=obj.value.linlin(0,1,(16256*8).neg,16256*4).round(1).postln;
 ~sl6=Knob.new(~vw1, Rect.new(50,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,0,12*3).postln;
+value=obj.value.linlin(0,1,0,12*2).postln;
 //~synth.set(\harm,value);
 ~harm=value;
 ~log1.(value.asString);
@@ -524,12 +516,12 @@ value=obj.value.linlin(0,1,0,~fuselim).round(1).postln;
 ~sl8=Knob.new(~vw1, Rect.new(250,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linexp(0,1,0.01,8).postln;
+value=obj.value.linlin(0,1,(~temperament*2).neg,~temperament*3).round(1).postln;
 //~synth.set(\perspective,value);
-~decay=value;
+~holdm=2.pow(value/~temperament);
 ~log1.(value.asString);
 });
-~st8=StaticText(~vw1,Rect(250,(50+sk+50+25+sk),sk+20,sk)).string_("decay")
+~st8=StaticText(~vw1,Rect(250,(50+sk+50+25+sk),sk+20,sk)).string_("hold")
 .stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
 );
 
@@ -565,7 +557,7 @@ value=obj.value.linlin(0,1,0,~temperament).round(1).postln;
 }
 )
 
-
+///rot speed,tone,gain,fund,res,harm,drive,hold,mag,room,tempo,window,scsellect,melody
 
 ////midi
 (
