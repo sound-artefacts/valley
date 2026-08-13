@@ -14,15 +14,15 @@ s.meter;
 s.freqscope;
 s.scope;
 );
-~img = Image.open("/Users/rohifes/Documents/Literary/Portfolio/SuperCollider/2026/Χάδι/img.png");
+~img = Image.open("");
 s.waitForBoot{
 ~clock=TempoClock.default.tempo_(2);
 Tdef(\drone, {
 ///samplein
-/*(
-~k1 = Buffer.readChannel(s,"/Users/rohifes/Music/324984__arctis__hitech-bassline-with-hats-loop.wav",channels:0 );
-~k2 = Buffer.readChannel(s,"/Users/rohifes/Music/324984__arctis__hitech-bassline-with-hats-loop.wav",channels:1 );
-)*/
+(
+~k1 = Buffer.readChannel(s,"",channels:0 );
+~k2 = Buffer.readChannel(s,"",channels:1 );
+);
 0.1.wait;
 //////point arrays
 /*////l system boolean
@@ -149,7 +149,7 @@ arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,room=0,d
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq*(9/8),phasex,phasey,phasez;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,form1a,form2a,form3a;
-var n=0,polytope=3,busarray1,harmonic,note,fund,mix,a,b,immersion;
+var n=0,polytope=2,busarray1,harmonic,note,fund,mix,a,b,immersion,busarray;
 
 ///inputs
 level=2.pow(gain.lag2(~lagtime)/16256);
@@ -324,8 +324,9 @@ b=(LeakDC.ar((sigy)*((sigz*immersion).fold2(overdrive*0.1)+(ampz*immersion.abs))
 ///out
 busarray1=[0,2,4,5];
 busarray2=[1,3,6,7];
-Out.ar(busarray1.[n],a);
-Out.ar(busarray1.[n],b);
+busarray=[0,1,2,3];
+Out.ar(busarray.[n],a);
+Out.ar(busarray.[n],b);
 
 n=n+1;
 }
@@ -369,13 +370,13 @@ Routine({loop{
 }.defer
 );
 
-/*///kicker
+///kicker
 (
 {Out.ar(0,HPF.ar(LPF.ar(PlayBuf.ar(1, ~k1.bufnum, BufRateScale.kr(~k1), loop: 1,doneAction:2),
 MouseX.kr(20,20000),1.3),MouseY.kr(1,10000)))}.play;
 {Out.ar(1,HPF.ar(LPF.ar(PlayBuf.ar(1, ~k2.bufnum, BufRateScale.kr(~k2), loop: 1,doneAction:2),
 MouseX.kr(20,20000),1.3),MouseY.kr(1,10000)))}.play;
-);*/
+);
 ///data
 
 (
