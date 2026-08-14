@@ -1,4 +1,4 @@
- ///Quarks.install("MathLib");
+  ///Quarks.install("MathLib");
 (
 (
 s.options.numWireBufs = 1024*16;
@@ -14,15 +14,10 @@ s.meter;
 s.freqscope;
 s.scope;
 );
-~img = Image.open("/Users/rohifes/Documents/Literary/Portfolio/SuperCollider/2026/Χάδι/img.png");
 s.waitForBoot{
-~clock=TempoClock.default.tempo_(2);
 Tdef(\drone, {
 ///samplein
-(
-~k1 = Buffer.readChannel(s,"/Users/rohifes/Desktop/vv.wav",channels:0 );
-~k2 = Buffer.readChannel(s,"/Users/rohifes/Desktop/vv.wav",channels:1 );
-);
+
 0.1.wait;
 //////point arrays
 /*////l system boolean
@@ -121,6 +116,21 @@ signal=Signal.sineFill(~signalSize,~array,~ph); wt = signal.asWavetable; ~wt.loa
 );
 0.5.wait;
 
+////wave table
+(
+~wavec=992;
+~nc=1.neg;~arrayc=16256.collect{~nc=~nc+1;2.pow(~nc/~wavec)};
+~nc=(0-(2pi/~wavec)); ~phc=~wavec.collect{~nc=~nc+(2pi/~wavec);};
+~bufferSizec = 2048*1;~signalSizec = 1024*1;
+~wtc= Buffer.alloc(s,~bufferSizec);
+{
+var signal,wt;
+signal=Signal.sineFill(~signalSizec,~arrayc,~phc); wt = signal.asWavetable; ~wtc.loadCollection(wt);
+//signal.plot;
+}.value
+);
+
+
 (//scales
 (~note=25;
 ~scale1=[0,5,7,12,17,19,24,29,31,48,53,55,96,55,53,48,31,29,24,19,17,12,7,5,0];
@@ -145,11 +155,11 @@ nn=1.neg;
 SynthDef.new(\synth,{
 
 arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,
-	tone=1,key=0,hold=0.1,scselect=0;
+	tone=1,hold=0.1,scselect=0,rate=1,attack=0.01,curve=4.neg;
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq*(9/8),phasex,phasey,phasez;
-var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,form1a,form2a,form3a;
-var n=0,polytope=2,busarray1,harmonic,note,fund,mix,a,b,immersion,busarray;
+var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8;
+var n=0,polytope=2,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gatex,gatey;
 
 ///inputs
 level=2.pow(gain.lag2(~lagtime)/16256);
@@ -160,7 +170,6 @@ overdrive=2.pow(drive.lag2(~lagtime)/16256);
 harmonic=2.pow(harm.lag2(~lagtime)/12);
 trange=mag.lag2(~lagtime);
 
-note=2.pow(key.lag2(~lagtime)/12);
 fund=c*tune;
 
 pitch=exp(Complex(0,1)*tone);
@@ -168,7 +177,9 @@ pitchx=2.pow(Select.kr((pitch.real*~note).abs,Select.kr(scselect,~scale))/12);
 pitchy=2.pow(Select.kr((pitch.imag*~note).abs,Select.kr(scselect,~scale))/12);
 
 //env fft
-env=EnvGen.ar(Env.sine(hold),gate:1,levelScale:1/2,doneAction:2);
+env=EnvGen.ar(Env.new([1,0,1,0,1,0,1,0],
+[rate/3,attack,rate/3,attack,rate/3,attack,rate/3],[curve]),
+gate:1,levelScale:1,doneAction:2);
 //env=1;
 
 polytope.do{
@@ -194,9 +205,9 @@ toney=2.pow(ty.round(1)/~temperament);
 tonez=2.pow(tz.round(1)/~temperament);
 
 ////osc data
-freqx=(fund*pitchx)*tonex*note;
-freqy=(fund*pitchy)*toney*note;
-freqz=fund*tonez*note;
+freqx=(fund*pitchx)*tonex;
+freqy=(fund*pitchy)*toney;
+freqz=fund*tonez;
 ampx=c.reciprocal*tonex.reciprocal*level;
 ampy=c.reciprocal*toney.reciprocal*level;
 ampz=c.reciprocal*tonez.reciprocal*level;
@@ -316,17 +327,20 @@ pan2=[g2,g4,g6,g8];
 //////perspective
 immersion = (level/1.5) / ((level/1.5) + z + ((level/1.5)/2));
 
-a=(LeakDC.ar((sigx)*((sigz*immersion).fold2(overdrive*0.1)+(ampz*immersion.abs)))*env).softclip(2.dbamp);
-b=(LeakDC.ar((sigy)*((sigz*immersion).fold2(overdrive*0.1)+(ampz*immersion.abs)))*env).softclip(2.dbamp);
+a=(LeakDC.ar((sigx)*((sigz*immersion).fold2(overdrive*0.1)+(ampz*immersion.abs)))).softclip(2.dbamp);
+b=(LeakDC.ar((sigy)*((sigz*immersion).fold2(overdrive*0.1)+(ampz*immersion.abs)))).softclip(2.dbamp);
 //a=(a*pan1[n]).softclip(2.dbamp);
 //b=(b*pan2[n]).softclip(2.dbamp);
-
+gatex=Osc.ar(~wtc.bufnum,(rate/3),mul:level*3).fold2(overdrive*~comp*10)*(a.fold2(overdrive*0.1)+level);
+gatey=Osc.ar(~wtc.bufnum,(rate/3),mul:level*3).fold2(overdrive*~comp*10)*(a.fold2(overdrive*0.1)+level);
 ///out
 busarray1=[0,2,4,5];
 busarray2=[1,3,6,7];
-busarray=[0,1,2,3];
-Out.ar(busarray1.[n],a);
-Out.ar(busarray2.[n],b);
+//busarray=[0,1,2,3];
+Out.ar(busarray1.[n],gatex);
+Out.ar(busarray2.[n],gatey);
+Out.ar(busarray1.[n],a*env);
+Out.ar(busarray2.[n],b*env);
 
 n=n+1;
 }
@@ -338,49 +352,23 @@ n=n+1;
 //~synth=Synth.new(\synth).register;
 0.5.wait;
 ///////////////////feed
-~clock = TempoClock(1);
-~holdm=1;
 (
 {
 Routine({loop{
 //~synth.set(\az,[~az.[0],~az.[1],~az.[2],~az.[3]],\el,[~el.[0],~el.[1],~el.[2],~el.[3]]);
 ~azset=~az;
 ~elset=~el;
-~hold=~dur*~ffreq*~holdm;
 (~frames).wait
 }
 }).play;
 }.defer
 );
-~setnote=0;
-///trigger
-//~sn=Pseq([7,10,8,9,11,12],inf).asStream;
-//~sn=Pseq([8,10,14],inf).asStream;
-//~sn=Prand([0,5,7,12,17,19,24],inf).asStream;
-~rhythm=1;
-
-(
-{
-Routine({loop{
-//~synth.set(\az,[~az.[0],~az.[1],~az.[2],~az.[3]],\el,[~el.[0],~el.[1],~el.[2],~el.[3]]);
-//~setnote=~sn.next;
-(~rhythm).wait
-}
-}).play(~clock);
-}.defer
-);
-
-///kicker
-(
-{Out.ar(0,HPF.ar(LPF.ar(PlayBuf.ar(1, ~k1.bufnum, BufRateScale.kr(~k1), loop: 1,doneAction:2),
-MouseX.kr(20,20000),1),MouseY.kr(1,10000)))}.play;
-{Out.ar(1,HPF.ar(LPF.ar(PlayBuf.ar(1, ~k2.bufnum, BufRateScale.kr(~k2), loop: 1,doneAction:2),
-MouseX.kr(20,20000),1),MouseY.kr(1,10000)))}.play;
-);
+0.1.wait;
 ///data
 
 (
-~hold=~dur*~ffreq*~holdm;
+~time=2;
+~clock=TempoClock.default.tempo_(~time);
 ~fundamental=0;
 ~tone=0;
 ~gain=1;
@@ -391,18 +379,18 @@ MouseX.kr(20,20000),1),MouseY.kr(1,10000)))}.play;
 ~room=0;
 ~mag=0;
 ~tone=1;
-~scaleselect=0;
-~f1=10;
-~f2=10;
-~f3=10;
+~scaleselect=2;
+~rrate=1;
+~attack=0.01/~time;
+~curve=4.neg;
 );
 
+
 ///pattern
-0.1.wait;
 (~pattern = Pdef(\1,
 Pbind(\instrument, \synth,
 //Pmono( \synth,
-\dur, Pfunc{~dur},
+\dur,~rrate,
 \gain,Pfunc{~gain},
 \fundamental,Pfunc{~fundamental},
 \tone,Pfunc{~tone},
@@ -413,9 +401,10 @@ Pbind(\instrument, \synth,
 \mag,Pfunc{~mag},
 \az,Pfunc{Ref([~azset.[0],~azset.[1],~azset.[2],~azset.[3]])},
 \el,Pfunc{Ref([~elset.[0],~elset.[1],~elset.[2],~elset.[3]])},
-\hold,Pfunc{~hold},
-\key,Pfunc{~setnote},
 \scselect,Pfunc{~scaleselect},
+\rate,Pfunc{~rrate},
+\attack,Pfunc{~attack},
+\curve,Pfunc{~curve}
 )));
 ~pattern.play;
 
@@ -425,7 +414,7 @@ Pbind(\instrument, \synth,
 var size=550,sk=(size/12),w,rol=0,sz=0.5,wd=3.5,shift=1;
 
 w = Window("tws", Rect(50, 50, size, size/2)).front;
-~vw1 = UserView(w, Rect(0,0,size,size/2)).drawFunc_({ ~img.drawInRect(~vw1.bounds)});//.background_(Color.black);
+~vw1 = UserView(w, Rect(0,0,size,size/2)).background_(Color.black);
 ~logView1 = ListView( ~vw1, Rect(0, 0, size/4, size/2)).background_(Color.black)
 .stringColor_(Color.white).font_(Font('Arial', 18)).items_([]);
 
@@ -526,7 +515,7 @@ value=obj.value.linlin(0,1,0,~fuselim).round(1).postln;
 ~drive=value;
 ~log1.(value.asString);
 });
-~st7=StaticText(~vw1,Rect(150,(50+sk+50+25+sk),sk+20,sk)).string_("fusion")
+~st7=StaticText(~vw1,Rect(150,(50+sk+50+25+sk),sk+20,sk)).string_("drive")
 .stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
 );
 
@@ -534,12 +523,12 @@ value=obj.value.linlin(0,1,0,~fuselim).round(1).postln;
 ~sl8=Knob.new(~vw1, Rect.new(250,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,(~temperament*2).neg,~temperament*2).round(1).postln;
+value=obj.value.linlin(0,1,8,8.neg).round(1/16).postln;
 //~synth.set(\perspective,value);
-~holdm=2.pow(value/~temperament);
+~curve=value;
 ~log1.(value.asString);
 });
-~st8=StaticText(~vw1,Rect(250,(50+sk+50+25+sk),sk+20,sk)).string_("hold")
+~st8=StaticText(~vw1,Rect(250,(50+sk+50+25+sk),sk+20,sk)).string_("gate_c")
 .stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
 );
 
