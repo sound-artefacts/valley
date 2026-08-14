@@ -95,7 +95,7 @@ Routine({loop{
 //~x=(~x+rot.x.abs).wrap(0,2pi);
 //~y=(~y+rot.y.abs).wrap(0,2pi);
 //~z=(~z+rot.z.abs).wrap(0,2pi);
-~z=(~z+(~azr*((2pi-(2pi/~g))*~rate))).wrap(0,2pi);
+~z=(~z+(~azr*((2pi-(2pi/~g))*~rate)/2)).wrap(0,2pi);
 (~dur).wait;
 };
 }).play;
@@ -179,7 +179,8 @@ pitchx=2.pow(Select.kr((pitch.real*~note).abs,Select.kr(scselect,~scale))/12);
 pitchy=2.pow(Select.kr((pitch.imag*~note).abs,Select.kr(scselect,~scale))/12);
 
 //env fft
-env=EnvGen.ar(Env.new([1,0,1,0,1,0.01],[hold/3,0.001,hold/3,0.001,hold/3],[1]),gate:1,levelScale:1,doneAction:2);
+env=EnvGen.ar(Env.new([1,0,1,0,1,0,1,0],
+					[hold/3,0.001,hold/3,0.001,hold/3,0.001,hold/3],[1]),gate:1,levelScale:1,doneAction:2);
 //env=1;
 
 polytope.do{
@@ -327,20 +328,20 @@ pan2=[g2,g4,g6,g8];
 //////perspective
 immersion = (level/1.5) / ((level/1.5) + z + ((level/1.5)/2));
 
-a=(LeakDC.ar((sigx)*((sigz*immersion).fold2(overdrive*0.1)+(ampz*immersion.abs)))*env).softclip(2.dbamp);
-b=(LeakDC.ar((sigy)*((sigz*immersion).fold2(overdrive*0.1)+(ampz*immersion.abs)))*env).softclip(2.dbamp);
+a=(LeakDC.ar((sigx)*((sigz*immersion).fold2(overdrive*0.1)+(ampz*immersion.abs)))).softclip(2.dbamp);
+b=(LeakDC.ar((sigy)*((sigz*immersion).fold2(overdrive*0.1)+(ampz*immersion.abs)))).softclip(2.dbamp);
 //a=(a*pan1[n]).softclip(2.dbamp);
 //b=(b*pan2[n]).softclip(2.dbamp);
-gatex=Osc.ar(~wtc.bufnum,(rate/3)+a,mul:1);
-gatey=Osc.ar(~wtc.bufnum,(rate/3)+b,mul:1);
+gatex=Osc.ar(~wtc.bufnum,(rate/3)+a,mul:(3.dbamp)).fold2(overdrive*~comp*2);
+gatey=Osc.ar(~wtc.bufnum,(rate/3)+b,mul:(3.dbamp)).fold2(overdrive*~comp*2);
 ///out
 busarray1=[0,2,4,5];
 busarray2=[1,3,6,7];
 //busarray=[0,1,2,3];
 Out.ar(busarray1.[n],gatex);
 Out.ar(busarray2.[n],gatey);
-Out.ar(busarray1.[n],a);
-Out.ar(busarray2.[n],b);
+Out.ar(busarray1.[n],a*env);
+Out.ar(busarray2.[n],b*env);
 
 n=n+1;
 }
@@ -425,7 +426,7 @@ Pbind(\instrument, \synth,
 \scselect,Pfunc{~scaleselect},
 \rate,Pfunc{~rrate}
 )));
-~pattern.play(~clock);
+~pattern.play;
 
 ////////////////////////gui
 (
