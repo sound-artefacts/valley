@@ -51,14 +51,14 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 0.1.wait;
 
 ///////////inputs
-~rx=0;~ry=0;~rz=0;~gain=1;~fundament=0;~resonance=0;~harmonic=1;~fold=0;~perspective=0;~room=0;~azs=0;~els=0;
+~rx=0;~ry=0;~rz=0;~gain=1;~fundament=0;~resonance=0;~harmonic=1;~fold=0;~room=0;~azs=0;~els=0;
 ~azr=1;~elr=1;
 ~temperament=16256;
 ~lagtime=1/128;
-~rate=2048.reciprocal;
+~rate=1024.reciprocal;
 ~x=0;~y=0;~z=0;
 ~frames=~rate;
-~ffreq=12;
+~ffreq=16;
 ~window=110;
 ~dur=~frames*~window;
 
@@ -94,7 +94,7 @@ Routine({loop{
 //~x=(~x+rot.x.abs).wrap(0,2pi);
 //~y=(~y+rot.y.abs).wrap(0,2pi);
 //~z=(~z+rot.z.abs).wrap(0,2pi);
-~z=(~z+(~azr*((2pi-(2pi/~g))*~rate)/2)).wrap(0,2pi);
+~z=(~z+(~azr*((2pi-(2pi/~g))*~rate))).wrap(0,2pi);
 (~dur).wait;
 };
 }).play;
@@ -119,7 +119,7 @@ signal=Signal.sineFill(~signalSize,~array,~ph); wt = signal.asWavetable; ~wt.loa
 ////wave table
 (
 ~wavec=992;
-~nc=1.neg;~arrayc=16256.collect{~nc=~nc+1;2.pow(~nc/~wavec)};
+~nc=1.neg;~arrayc=~wavec.collect{~nc=~nc+1;2.pow(~nc/~wavec)};
 ~nc=(0-(2pi/~wavec)); ~phc=~wavec.collect{~nc=~nc+(2pi/~wavec);};
 ~bufferSizec = 2048*1;~signalSizec = 1024*1;
 ~wtc= Buffer.alloc(s,~bufferSizec);
@@ -177,8 +177,8 @@ pitchx=2.pow(Select.kr((pitch.real*~note).abs,Select.kr(scselect,~scale))/12);
 pitchy=2.pow(Select.kr((pitch.imag*~note).abs,Select.kr(scselect,~scale))/12);
 
 //env fft
-env=EnvGen.ar(Env.new([1,0,1,0,1,0,1,0],
-[rate/3,attack,rate/3,attack,rate/3,attack,rate/3],[curve]),
+env=EnvGen.ar(Env.new([1,0,1,0,1,0,1],
+[rate/3,attack,rate/3,attack,rate/3,attack],[curve]),
 gate:1,levelScale:1,doneAction:2);
 //env=1;
 
@@ -331,8 +331,8 @@ a=(LeakDC.ar((sigx)*((sigz*immersion).fold2(overdrive*0.1)+(ampz*immersion.abs))
 b=(LeakDC.ar((sigy)*((sigz*immersion).fold2(overdrive*0.1)+(ampz*immersion.abs)))).softclip(2.dbamp);
 //a=(a*pan1[n]).softclip(2.dbamp);
 //b=(b*pan2[n]).softclip(2.dbamp);
-gatex=Osc.ar(~wtc.bufnum,(rate/3),mul:level*3).fold2(overdrive*~comp*10)*(a.fold2(overdrive*0.1)+level);
-gatey=Osc.ar(~wtc.bufnum,(rate/3),mul:level*3).fold2(overdrive*~comp*10)*(a.fold2(overdrive*0.1)+level);
+gatex=Osc.ar(~wtc.bufnum,(rate/3)+a,mul:level*2).fold2(overdrive*~comp)*(a.fold2(overdrive*0.25)+level);
+gatey=Osc.ar(~wtc.bufnum,(rate/3)+b,mul:level*2).fold2(overdrive*~comp)*(a.fold2(overdrive*0.25)+level);
 ///out
 busarray1=[0,2,4,5];
 busarray2=[1,3,6,7];
@@ -367,21 +367,21 @@ Routine({loop{
 ///data
 
 (
-~time=2;
+			~time=2*(3/2);
 ~clock=TempoClock.default.tempo_(~time);
+~attack=0.001/~time;
+		);
+(
 ~fundamental=0;
 ~tone=0;
 ~gain=1;
 ~resonanse=1;
 ~harm=1;
 ~drive=0;
-~perspective=1;
 ~room=0;
 ~mag=0;
 ~tone=1;
 ~scaleselect=2;
-~rrate=1;
-~attack=0.01/~time;
 ~curve=4.neg;
 );
 
@@ -390,7 +390,7 @@ Routine({loop{
 (~pattern = Pdef(\1,
 Pbind(\instrument, \synth,
 //Pmono( \synth,
-\dur,~rrate,
+\dur,1,
 \gain,Pfunc{~gain},
 \fundamental,Pfunc{~fundamental},
 \tone,Pfunc{~tone},
@@ -402,7 +402,7 @@ Pbind(\instrument, \synth,
 \az,Pfunc{Ref([~azset.[0],~azset.[1],~azset.[2],~azset.[3]])},
 \el,Pfunc{Ref([~elset.[0],~elset.[1],~elset.[2],~elset.[3]])},
 \scselect,Pfunc{~scaleselect},
-\rate,Pfunc{~rrate},
+\rate,Pfunc{1/~time},
 \attack,Pfunc{~attack},
 \curve,Pfunc{~curve}
 )));
