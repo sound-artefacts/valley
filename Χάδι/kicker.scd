@@ -158,10 +158,10 @@ nn=1.neg;
 SynthDef.new(\synth,{
 
 arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,
-	tone=1,hold=0.1,scselect=0,rate=1,attack=0.01,curve=4.neg;
+	tone=1,hold=0.1,scselect=0,rate=1,attack=0.01,curve=4.neg,key=0;
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez;
-var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,thresholdk;
+var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,thresholdk,note,senv;
 var n=0,polytope=2,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
 
 ///inputs
@@ -174,16 +174,17 @@ overdrive=2.pow(drive.lag2(~lagtime)/16256);
 harmonic=harm;
 trange=mag.lag2(~lagtime);
 
-fund=c*tune;
+note=2.pow(key.lag2(~lagtime)/12);
 
+fund=c*tune;
 pitch=exp(Complex(0,1)*tone);
 pitchx=2.pow(Select.kr((pitch.real*~note).abs,Select.kr(scselect,~scale))/12);
 pitchy=2.pow(Select.kr((pitch.imag*~note).abs,Select.kr(scselect,~scale))/12);
 
 //env fft
-
-env=EnvGen.ar(Env.new([0.5,0,1,0,0.7,0,0.3],
-[rate/3,attack,rate/3,attack,rate/3,attack],[curve]),gate:1,levelScale:1,doneAction:2);
+senv=EnvGen.kr(Env.new([0,1,1,0],[(rate/3)+attack,(rate/3)+attack,(rate/3)+attack],[curve.neg,0,curve]));
+env=EnvGen.ar(Env.new([1,0,1,0,1,0,1],
+[rate/3,attack,rate/3,attack,rate/3,attack],[curve]),doneAction:2);
 //env=1;
 
 polytope.do{
@@ -209,9 +210,9 @@ toney=2.pow(ty.round(1)/~temperament);
 tonez=2.pow(tz.round(1)/~temperament);
 
 ////osc data
-freqx=(fund*pitchx)*tonex;
-freqy=(fund*pitchy)*toney;
-freqz=fund*tonez;
+freqx=(fund*pitchx)*tonex*note;
+freqy=(fund*pitchy)*toney*note;
+freqz=fund*tonez*note;
 ampx=c.reciprocal*tonex.reciprocal*level;
 ampy=c.reciprocal*toney.reciprocal*level;
 ampz=c.reciprocal*tonez.reciprocal*level;
@@ -345,18 +346,17 @@ b=Compander.ar(b,sigy,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 busarray1=[0,2,4,5];
 busarray2=[1,3,6,7];
 //busarray=[0,1,2,3];
-Out.ar(busarray1.[n],a.softclip(5)*env);
-Out.ar(busarray2.[n],b.softclip(5)*env);
+Out.ar(busarray1.[n],a.softclip(5)*env*senv);
+Out.ar(busarray2.[n],b.softclip(5)*env*senv);
 
 n=n+1;
 
 };
 
 ///kick////
-
-kenv=EnvGen.kr(Env.perc(0.001/rate, rate,curve:curve*4.neg));
-kpitch=EnvGen.kr(Env([tune*3, tune], [0.06],[-8]));
-kfm=EnvGen.kr(Env([tune*6, 0], [0.08], [-6]));
+kenv=EnvGen.kr(Env.perc(0.001/rate, rate+(attack*3),curve:4.neg));
+kpitch=EnvGen.kr(Env([tune*2, tune], [0.06],[-8]));
+kfm=EnvGen.kr(Env([tune*4, 0], [0.08], [-6]));
 
 gate=SinOsc.ar(kpitch+(SinOsc.ar(kpitch)*kfm),mul:level*(1/3)).fold2(overdrive*~comp);
 
@@ -393,6 +393,7 @@ Routine({loop{
 ~attack=0.001/~time;
 );
 (
+~setnote=0;
 ~fundamental=0;
 ~tone=0;
 ~gain=1;
@@ -405,7 +406,18 @@ Routine({loop{
 ~scaleselect=2;
 ~curve=4.neg;
 );
-
+~sn=Pseq([7,10,8,9,11,12],inf).asStream;
+//~sn=Pseq([8,10,14],inf).asStream;
+//~sn=Prand([0,5,7,12,17,19,24],inf).asStream;
+(
+{
+Routine({loop{
+~setnote=~sn.next;
+(~time/3).wait
+}
+}).play(~clock);
+}.defer
+);
 
 ///pattern
 (~pattern = Pdef(\1,
@@ -425,7 +437,8 @@ Pbind(\instrument, \synth,
 \scselect,Pfunc{~scaleselect},
 \rate,Pfunc{1/~time},
 \attack,Pfunc{~attack},
-\curve,Pfunc{~curve}
+\curve,Pfunc{~curve},
+\key,Pfunc{~setnote},
 )));
 ~pattern.play;
 
@@ -544,7 +557,7 @@ value=obj.value.linlin(0,1,0,~fuselim).round(1).postln;
 ~sl8=Knob.new(~vw1, Rect.new(250,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,8,8.neg).round(1/16).postln;
+value=obj.value.linlin(0,1,64,64.neg).round(1/128).postln;
 //~synth.set(\perspective,value);
 ~curve=value;
 ~log1.(value.asString);
@@ -581,6 +594,7 @@ value=obj.value.linlin(0,1,0,~temperament).round(1).postln;
 
 }.defer
 );
+
 ////midi
 (
 MIDIClient.init;
