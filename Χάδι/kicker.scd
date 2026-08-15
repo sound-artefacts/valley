@@ -103,7 +103,7 @@ Routine({loop{
 0.1.wait;
 
 ////////////osc table
-~wavec=992;
+~wavec=16256;
 (
 ~n=1.neg;~array=~wavec.collect{~n=~n+1;2.pow(~n/~wavec)};
 ~n=(0-(2pi/~wavec)); ~ph=~wavec.collect{~n=~n+(2pi/~wavec);};
@@ -182,7 +182,7 @@ pitchx=2.pow(Select.kr((pitch.real*~note).abs,Select.kr(scselect,~scale))/12);
 pitchy=2.pow(Select.kr((pitch.imag*~note).abs,Select.kr(scselect,~scale))/12);
 
 //env fft
-senv=EnvGen.kr(Env([0,1,0],[attack*2,rate],[16.neg,16]));
+senv=EnvGen.kr(Env([0,1,0],[attack+0.01,rate-0.01],[2.neg,16]));
 env=EnvGen.ar(Env.new([1,0,1,0,1,0,1],
 [rate/3,attack,rate/3,attack,rate/3,attack],[curve]),doneAction:2);
 //env=1;
@@ -235,7 +235,7 @@ c3=BPF.ar((Osc.ar(~wt.bufnum,freqz,phase:phasez,mul:~complevel).abs*
 SinOsc.ar(freqz,phase:phasez)),freqz,res,ampz*z.sign);
 
 ///distortion
-mix=overdrive.linexp(1,2.pow(~fuselim/16256),0.7,1);
+mix=overdrive.linlin(1,2.pow(~fuselim/16256),2.pow(~fuselim/16256),1);
 
 c1=c1.lag2(~signalSize.reciprocal)*
 (LPF.ar(Saw.ar(tune,(ampx)),tune*64*mix).fold2(mix*~distortion)+((ampx)));
@@ -245,9 +245,9 @@ c2=c2.lag2(~signalSize.reciprocal)*
 //(LPF.ar(Saw.ar(tune,(ampz)),tune*64*overdrive).fold2(mix*0.05)+((ampz)));
 
 ///distortion
-sigx=FreeVerb.ar((c1).fold2(overdrive*~comp),overdrive,room);
-sigy=FreeVerb.ar((c2).fold2(overdrive*~comp),overdrive,room);
-sigz=FreeVerb.ar((c3).fold2(~comp),overdrive,room);
+sigx=FreeVerb.ar((c1).fold2(overdrive*~comp),overdrive.linexp(1,2.pow(~fuselim/16256),0.7,1),room);
+sigy=FreeVerb.ar((c2).fold2(overdrive*~comp),overdrive.linexp(1,2.pow(~fuselim/16256),0.7,1),room);
+sigz=FreeVerb.ar((c3).fold2(~comp),overdrive.linexp(1,2.pow(~fuselim/16256),0.7,1),room);
 
 /////////spat
 //panners
@@ -354,11 +354,11 @@ n=n+1;
 };
 
 ///kick////
-kenv=EnvGen.kr(Env.perc(0.001/rate, rate+(attack*3),curve:4.neg));
-kpitch=EnvGen.kr(Env([tune*2, tune], [0.06],[-8]));
-kfm=EnvGen.kr(Env([tune*4, 0], [0.08], [-6]));
+kenv=EnvGen.kr(Env.perc(0.01/rate, rate+(attack*3),curve:4.neg));
+kpitch=EnvGen.kr(Env([tune*2, tune/2], [0.05],[-4]));
+kfm=EnvGen.kr(Env([tune*4, 0], [0.05], [-3]));
 
-gate=SinOsc.ar(kpitch+(SinOsc.ar(kpitch)*kfm),mul:level*(1/3)).fold2(overdrive*~comp);
+gate=FreeVerb.ar(HPF.ar(SinOsc.ar(kpitch+(SinOsc.ar(kpitch)*kfm),mul:level*1).fold2(overdrive*~comp*2),55),overdrive.linexp(1,2.pow(~fuselim/16256),0.7,1),room);
 
 thresholdk=(((343/0.3)/tune).reciprocal.ampdb/2.sqrt).dbamp;
 gate=Compander.ar(gate,Osc.ar(~wtc.bufnum,(rate/3),mul:level*2),thresholdk,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
@@ -368,6 +368,7 @@ Out.ar(busarray2.[0],LeakDC.ar(gate.softclip(3.dbamp)*kenv));
 
 }).add;
 );
+
 1.wait;
 
 ////////////////run
@@ -409,11 +410,12 @@ Routine({loop{
 //~sn=Pseq([7,10,8,9,11,12],inf).asStream;
 ~sn=Pseq([7,10,14],inf).asStream;
 //~sn=Prand([0,5,7,12,17,19,24],inf).asStream;
+//~sn=0;
 (
 {
 Routine({loop{
 ~setnote=~sn.next;
-(~time/4).wait
+(~time/3).wait
 }
 }).play;
 }.defer
@@ -556,7 +558,7 @@ value=obj.value.linlin(0,1,0,~fuselim).round(1).postln;
 ~sl8=Knob.new(~vw1, Rect.new(250,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,64,64.neg).round(1/128).postln;
+value=obj.value.linlin(0,1,64,8.neg).round(1/128).postln;
 //~synth.set(\perspective,value);
 ~curve=value;
 ~log1.(value.asString);
@@ -582,7 +584,7 @@ value=obj.value.linlin(0,1,(16256*12).neg,0).round(1).postln;
 ~sl10=Knob.new(~vw1, Rect.new(450,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,0,~temperament).round(1).postln;
+value=obj.value.linlin(0,1,0,~temperament/2).round(1).postln;
 //~synth.set(\mag,value);
 ~mag=value;
 ~log1.(value.asString);
@@ -595,7 +597,7 @@ value=obj.value.linlin(0,1,0,~temperament).round(1).postln;
 );
 
 ////midi
-(
+/*(
 MIDIClient.init;
 MIDIIn.connectAll;
 (
@@ -777,7 +779,7 @@ MIDIdef.cc(\midi_filterpot2,{ |val, num, chan, src|
 MIDIdef.cc(\midi_filterpot3,{ |val, num, chan, src|
 },32);
 );
-);
+)*/
 }); Tdef(\drone).play;
 }
 )
