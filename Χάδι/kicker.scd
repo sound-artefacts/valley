@@ -9,7 +9,7 @@ s.options.blockSize = 64;
 s.options.maxNodes = 8192*2;
 Buffer.freeAll;
 Window.closeAll;
-s.makeGui(w);
+//s.makeGui(w);
 s.meter;
 s.freqscope;
 s.scope;
@@ -104,10 +104,11 @@ Routine({loop{
 0.1.wait;
 
 ////////////osc table
+~wavec=992;
 (
-~n=1.neg;~array=16256.collect{~n=~n+1;2.pow(~n/16256)};
-~n=(0-(2pi/~temperament)); ~ph=16256.collect{~n=~n+(2pi/16256);};
-~bufferSize = 2048*8;~signalSize = 1024*8;
+~n=1.neg;~array=~wavec.collect{~n=~n+1;2.pow(~n/~wavec)};
+~n=(0-(2pi/~wavec)); ~ph=16256.collect{~n=~n+(2pi/~wavec);};
+~bufferSize = 2048*4;~signalSize = 1024*4;
 ~wt= Buffer.alloc(s,~bufferSize);
 {
 var signal,wt;
@@ -118,10 +119,10 @@ signal=Signal.sineFill(~signalSize,~array,~ph); wt = signal.asWavetable; ~wt.loa
 0.5.wait;
 
 ////wave table
+		~wavecc=496;
 (
-~wavec=992;
-~nc=1.neg;~arrayc=~wavec.collect{~nc=~nc+1;2.pow(~nc/~wavec)};
-~nc=(0-(2pi/~wavec)); ~phc=~wavec.collect{~nc=~nc+(2pi/~wavec);};
+~nc=1.neg;~arrayc=~wavecc.collect{~nc=~nc+1;2.pow(~nc/~wavecc)};
+~nc=(0-(2pi/~wavecc)); ~phc=~wavecc.collect{~nc=~nc+(2pi/~wavecc);};
 ~bufferSizec = 2048*1;~signalSizec = 1024*1;
 ~wtc= Buffer.alloc(s,~bufferSizec);
 {
@@ -153,6 +154,7 @@ nn=1.neg;
 ~fuselim=(16256*9).neg;
 ~comp=7;
 ~distortion=0.25;
+~complevel=1024;
 (
 SynthDef.new(\synth,{
 
@@ -161,7 +163,7 @@ arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,room=0,d
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,wave,kfreq;
-var n=0,polytope=1,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gatex,gatey,envk,k;
+var n=0,polytope=2,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gatex,gatey,envk,k;
 
 ///inputs
 level=2.pow(gain.lag2(~lagtime)/16256);
@@ -225,11 +227,11 @@ phasey=(y*pi);
 phasez=(z*pi);
 
 /////////osc
-c1=BPF.ar((Osc.ar(~wt.bufnum,freqx,phase:phasex,mul:1024).abs*
+c1=BPF.ar((Osc.ar(~wt.bufnum,freqx,phase:phasex,mul:~complevel).abs*
 SinOsc.ar(freqx,phase:phasex)),freqx,res,ampx*x.sign);
-c2=BPF.ar((Osc.ar(~wt.bufnum,freqy,phase:phasey,mul:1024).abs*
+c2=BPF.ar((Osc.ar(~wt.bufnum,freqy,phase:phasey,mul:~complevel).abs*
 SinOsc.ar(freqy,phase:phasey)),freqy,res,ampy*y.sign);
-c3=BPF.ar((Osc.ar(~wt.bufnum,freqz,phase:phasez,mul:1024).abs*
+c3=BPF.ar((Osc.ar(~wt.bufnum,freqz,phase:phasez,mul:~complevel).abs*
 SinOsc.ar(freqz,phase:phasez)),freqz,res,ampz*z.sign);
 
 ////volts rect
@@ -331,8 +333,8 @@ pan2=[g2,g4,g6,g8];
 immersion = (level/1.333) / ((level/1.333) + z + ((level/1.333)/2));
 
 ///sig
-a=(LeakDC.ar((sigx*immersion)*((sigz).fold2(overdrive*~distortion)+(ampz)))).softclip(1.dbamp);
-b=(LeakDC.ar((sigy*immersion)*((sigz).fold2(overdrive*~distortion)+(ampz)))).softclip(1.dbamp);
+a=HPF.ar((LeakDC.ar((sigx*immersion)*((sigz).fold2(overdrive*~distortion)+(ampz)))).softclip(1.dbamp),80);
+b=HPF.ar((LeakDC.ar((sigy*immersion)*((sigz).fold2(overdrive*~distortion)+(ampz)))).softclip(1.dbamp),80);
 //a=(a*pan1[n]).softclip(2.dbamp);
 //b=(b*pan2[n]).softclip(2.dbamp);
 
@@ -340,18 +342,18 @@ b=(LeakDC.ar((sigy*immersion)*((sigz).fold2(overdrive*~distortion)+(ampz)))).sof
 busarray1=[0,2,4,5];
 busarray2=[1,3,6,7];
 //busarray=[0,1,2,3];
-Out.ar(busarray1.[n],a*env);
-Out.ar(busarray2.[n],b*env);
+Out.ar(busarray1.[n],a.softclip(3)*env);
+Out.ar(busarray2.[n],b.softclip(3)*env);
 
 n=n+1;
 };
 
 ///kick
-gatex=Osc.ar(~wtc.bufnum,(rate),mul:level*1.neg);
-gatey=Osc.ar(~wtc.bufnum,(rate),mul:level*1.neg);
+gatex=Osc.ar(~wtc.bufnum,(rate/3),mul:level*2).abs*Saw.ar(rate*3,level);
+gatey=Osc.ar(~wtc.bufnum,(rate/3),mul:level*2).abs*Saw.ar(rate*3,level);
 
-Out.ar(busarray1.[0],LeakDC.ar(gatex));
-Out.ar(busarray2.[0],LeakDC.ar(gatey));
+Out.ar(busarray1.[0],LeakDC.ar(gatex.softclip(3)));
+Out.ar(busarray2.[0],LeakDC.ar(gatey.softclip(3)));
 
 }).add;
 );
@@ -374,9 +376,8 @@ Routine({loop{
 );
 0.1.wait;
 ///data
-
 (
-~time=2*(3/2);
+~time=2*(4/3);
 ~clock=TempoClock.default.tempo_(~time);
 ~attack=0.001/~time;
 );
