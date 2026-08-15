@@ -162,8 +162,8 @@ arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,room=0,d
 	tone=1,hold=0.1,scselect=0,rate=1,attack=0.01,curve=4.neg;
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez;
-var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,wave,kfreq;
-var n=0,polytope=2,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gatex,gatey,envk,k;
+var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,thresholdk;
+var n=0,polytope=2,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gatex,gatey,threshold;
 
 ///inputs
 level=2.pow(gain.lag2(~lagtime)/16256);
@@ -338,6 +338,11 @@ b=HPF.ar((LeakDC.ar((sigy*immersion)*((sigz).fold2(overdrive*~distortion)+(ampz)
 //a=(a*pan1[n]).softclip(2.dbamp);
 //b=(b*pan2[n]).softclip(2.dbamp);
 
+
+threshold=(((343/0.3)/tune).reciprocal.ampdb/2.sqrt).dbamp;
+a=Compander.ar(a,sigx,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
+b=Compander.ar(b,sigy,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
+
 ///out
 busarray1=[0,2,4,5];
 busarray2=[1,3,6,7];
@@ -351,6 +356,10 @@ n=n+1;
 ///kick
 gatex=Osc.ar(~wtc.bufnum,(rate/3),mul:level*2).abs*Saw.ar(rate*3,level);
 gatey=Osc.ar(~wtc.bufnum,(rate/3),mul:level*2).abs*Saw.ar(rate*3,level);
+
+thresholdk=(((343/0.3)/1).reciprocal.ampdb/2.sqrt).dbamp;
+gatex=Compander.ar(gatex,Osc.ar(~wtc.bufnum,(rate/3),mul:level*2),thresholdk,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
+gatey=Compander.ar(gatey,Osc.ar(~wtc.bufnum,(rate/3),mul:level*2),thresholdk,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 
 Out.ar(busarray1.[0],LeakDC.ar(gatex.softclip(3)));
 Out.ar(busarray2.[0],LeakDC.ar(gatey.softclip(3)));
