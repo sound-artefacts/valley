@@ -162,7 +162,7 @@ arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,room=0,d
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,thresholdk;
-var n=0,polytope=4,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
+var n=0,polytope=2,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
 
 ///inputs
 level=2.pow(gain.lag2(~lagtime)/16256);
@@ -182,7 +182,7 @@ pitchy=2.pow(Select.kr((pitch.imag*~note).abs,Select.kr(scselect,~scale))/12);
 
 //env fft
 
-env=EnvGen.ar(Env.new([1,0,0.7,0,0.5,0,0.7],
+env=EnvGen.ar(Env.new([0.5,0,1,0,0.7,0,0.3],
 [rate/3,attack,rate/3,attack,rate/3,attack],[curve]),gate:1,levelScale:1,doneAction:2);
 //env=1;
 
@@ -354,11 +354,11 @@ n=n+1;
 
 ///kick////
 
-kenv=EnvGen.kr(Env.perc(0.001/rate, rate,curve:curve*2.neg));
-kpitch=EnvGen.kr(Env([tune*4, tune], [0.06],[-8]));
-kfm=EnvGen.kr(Env([tune*8, 0], [0.08], [-6]));
+kenv=EnvGen.kr(Env.perc(0.001/rate, rate,curve:curve*4.neg));
+kpitch=EnvGen.kr(Env([tune*3, tune], [0.06],[-8]));
+kfm=EnvGen.kr(Env([tune*6, 0], [0.08], [-6]));
 
-gate=SinOsc.ar(kpitch+(SinOsc.ar(kpitch)*kfm),mul:level*(1/4)).fold2(overdrive*~comp);
+gate=SinOsc.ar(kpitch+(SinOsc.ar(kpitch)*kfm),mul:level*(1/3)).fold2(overdrive*~comp);
 
 thresholdk=(((343/0.3)/tune).reciprocal.ampdb/2.sqrt).dbamp;
 gate=Compander.ar(gate,Osc.ar(~wtc.bufnum,(rate/3),mul:level*2),thresholdk,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
