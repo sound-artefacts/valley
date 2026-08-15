@@ -59,7 +59,7 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 ~rate=1024.reciprocal;
 ~x=0;~y=0;~z=0;
 ~frames=~rate;
-~ffreq=32;
+~ffreq=16;
 ~window=110;
 ~dur=~frames*~window;
 
@@ -182,7 +182,7 @@ pitchx=2.pow(Select.kr((pitch.real*~note).abs,Select.kr(scselect,~scale))/12);
 pitchy=2.pow(Select.kr((pitch.imag*~note).abs,Select.kr(scselect,~scale))/12);
 
 //env fft
-senv=EnvGen.kr(Env.new([0,1,1,0],[(rate/3)+attack,(rate/3)+attack,(rate/3)+attack],[curve.neg,0,curve]));
+senv=EnvGen.kr(Env([0,1,0],[attack*2,rate],[16.neg,16]));
 env=EnvGen.ar(Env.new([1,0,1,0,1,0,1],
 [rate/3,attack,rate/3,attack,rate/3,attack],[curve]),doneAction:2);
 //env=1;
@@ -233,8 +233,9 @@ c2=BPF.ar((Osc.ar(~wt.bufnum,freqy,phase:phasey,mul:~complevel).abs*
 SinOsc.ar(freqy,phase:phasey)),freqy,res,ampy*y.sign);
 c3=BPF.ar((Osc.ar(~wt.bufnum,freqz,phase:phasez,mul:~complevel).abs*
 SinOsc.ar(freqz,phase:phasez)),freqz,res,ampz*z.sign);
-////volts rect
-mix=overdrive.linexp(1,2.pow(~fuselim/16256),0.5,1);
+
+///distortion
+mix=overdrive.linexp(1,2.pow(~fuselim/16256),0.7,1);
 
 c1=c1.lag2(~signalSize.reciprocal)*
 (LPF.ar(Saw.ar(tune,(ampx)),tune*64*mix).fold2(mix*~distortion)+((ampx)));
@@ -244,7 +245,6 @@ c2=c2.lag2(~signalSize.reciprocal)*
 //(LPF.ar(Saw.ar(tune,(ampz)),tune*64*overdrive).fold2(mix*0.05)+((ampz)));
 
 ///distortion
-
 sigx=FreeVerb.ar((c1).fold2(overdrive*~comp),overdrive,room);
 sigy=FreeVerb.ar((c2).fold2(overdrive*~comp),overdrive,room);
 sigz=FreeVerb.ar((c3).fold2(~comp),overdrive,room);
@@ -406,19 +406,18 @@ Routine({loop{
 ~scaleselect=2;
 ~curve=4.neg;
 );
-~sn=Pseq([7,10,8,9,11,12],inf).asStream;
-//~sn=Pseq([8,10,14],inf).asStream;
+//~sn=Pseq([7,10,8,9,11,12],inf).asStream;
+~sn=Pseq([7,10,14],inf).asStream;
 //~sn=Prand([0,5,7,12,17,19,24],inf).asStream;
 (
 {
 Routine({loop{
 ~setnote=~sn.next;
-(~time/3).wait
+(~time/4).wait
 }
-}).play(~clock);
+}).play;
 }.defer
 );
-
 ///pattern
 (~pattern = Pdef(\1,
 Pbind(\instrument, \synth,
