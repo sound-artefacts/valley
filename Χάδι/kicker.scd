@@ -161,7 +161,7 @@ arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,room=0,d
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,wave,kfreq;
-var n=0,polytope=1,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gatex,gatey;
+var n=0,polytope=1,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gatex,gatey,envk,k;
 
 ///inputs
 level=2.pow(gain.lag2(~lagtime)/16256);
@@ -180,9 +180,9 @@ pitchx=2.pow(Select.kr((pitch.real*~note).abs,Select.kr(scselect,~scale))/12);
 pitchy=2.pow(Select.kr((pitch.imag*~note).abs,Select.kr(scselect,~scale))/12);
 
 //env fft
+
 env=EnvGen.ar(Env.new([1,0,1,0,1,0,1],
-[rate/3,attack,rate/3,attack,rate/3,attack],[curve]),
-gate:1,levelScale:1,doneAction:2);
+[rate/3,attack,rate/3,attack,rate/3,attack],[curve]),gate:1,levelScale:1,doneAction:2);
 //env=1;
 
 polytope.do{
@@ -347,14 +347,11 @@ n=n+1;
 };
 
 ///kick
-kfreq=(rate*12);
-wave=Saw.ar(kfreq,mul:level.neg);
+gatex=Osc.ar(~wtc.bufnum,(rate),mul:level*1.neg);
+gatey=Osc.ar(~wtc.bufnum,(rate),mul:level*1.neg);
 
-gatex=BPF.ar((Osc.ar(~wtc.bufnum,(rate/3),mul:level*8).abs*wave),kfreq*2,res);
-gatey=BPF.ar((Osc.ar(~wtc.bufnum,(rate/3),mul:level*8).abs*wave),kfreq*2,res);
-
-Out.ar(busarray1.[0],LeakDC.ar(gatex.fold2(overdrive*~comp*3)));
-Out.ar(busarray2.[0],LeakDC.ar(gatey.fold2(overdrive*~comp*3)));
+Out.ar(busarray1.[0],LeakDC.ar(gatex));
+Out.ar(busarray2.[0],LeakDC.ar(gatey));
 
 }).add;
 );
@@ -381,7 +378,7 @@ Routine({loop{
 (
 ~time=2*(3/2);
 ~clock=TempoClock.default.tempo_(~time);
-~attack=0.0005/~time;
+~attack=0.001/~time;
 );
 (
 ~fundamental=0;
