@@ -40,7 +40,8 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 ///////tetrahedron
 (
 ~azimuth=[45.degrad,135.neg.degrad,45.neg.degrad,135.degrad];
-~elevation=[35.264390.neg.degrad,35.264390.neg.degrad,35.264390.degrad,35.264390.degrad];
+//~elevation=[35.264390.neg.degrad,35.264390.neg.degrad,35.264390.degrad,35.264390.degrad];
+~elevation=[0,0,0,0];
 );
 
 /////////cube
@@ -151,15 +152,16 @@ nn=1.neg;
 ///synth
 ~fuselim=(16256*9).neg;
 ~comp=7;
+~distortion=0.25;
 (
 SynthDef.new(\synth,{
 
 arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,
 	tone=1,hold=0.1,scselect=0,rate=1,attack=0.01,curve=4.neg;
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
-var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq*(9/8),phasex,phasey,phasez;
-var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8;
-var n=0,polytope=2,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gatex,gatey;
+var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez;
+var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,wave,kfreq;
+var n=0,polytope=1,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gatex,gatey;
 
 ///inputs
 level=2.pow(gain.lag2(~lagtime)/16256);
@@ -167,7 +169,8 @@ c=2.pow(fundamental.lag2(~lagtime)/16256);
 res=2.pow(resonanse.lag2(~lagtime)/16256);
 revroom=2.pow(room.lag2(~lagtime)/16256);
 overdrive=2.pow(drive.lag2(~lagtime)/16256);
-harmonic=2.pow(harm.lag2(~lagtime)/12);
+
+harmonic=harm;
 trange=mag.lag2(~lagtime);
 
 fund=c*tune;
@@ -233,9 +236,9 @@ SinOsc.ar(freqz,phase:phasez)),freqz,res,ampz*z.sign);
 mix=overdrive.linlin(1,2.pow(~fuselim/16256),2.pow(~fuselim/16256),1);
 
 c1=c1.lag2(~signalSize.reciprocal)*
-(LPF.ar(Saw.ar(tune,(ampx)),tune*64*mix).fold2(mix*0.1)+((ampx)));
+(LPF.ar(Saw.ar(tune,(ampx)),tune*64*mix).fold2(mix*~distortion)+((ampx)));
 c2=c2.lag2(~signalSize.reciprocal)*
-(LPF.ar(Saw.ar(tune,(ampy)),tune*64*mix).fold2(mix*0.1)+((ampy)));
+(LPF.ar(Saw.ar(tune,(ampy)),tune*64*mix).fold2(mix*~distortion)+((ampy)));
 //c3=c3.lag2(~signalSize.reciprocal)*
 //(LPF.ar(Saw.ar(tune,(ampz)),tune*64*overdrive).fold2(mix*0.05)+((ampz)));
 
@@ -325,25 +328,34 @@ pan1=[g1,g3,g5,g7];
 pan2=[g2,g4,g6,g8];
 
 //////perspective
-immersion = (level/1.5) / ((level/1.5) + z + ((level/1.5)/2));
+immersion = (level/1.333) / ((level/1.333) + z + ((level/1.333)/2));
 
-a=(LeakDC.ar((sigx)*((sigz*immersion).fold2(overdrive*0.1)+(ampz*immersion.abs)))).softclip(2.dbamp);
-b=(LeakDC.ar((sigy)*((sigz*immersion).fold2(overdrive*0.1)+(ampz*immersion.abs)))).softclip(2.dbamp);
+///sig
+a=(LeakDC.ar((sigx*immersion)*((sigz).fold2(overdrive*~distortion)+(ampz)))).softclip(1.dbamp);
+b=(LeakDC.ar((sigy*immersion)*((sigz).fold2(overdrive*~distortion)+(ampz)))).softclip(1.dbamp);
 //a=(a*pan1[n]).softclip(2.dbamp);
 //b=(b*pan2[n]).softclip(2.dbamp);
-gatex=Osc.ar(~wtc.bufnum,(rate/3)+a,mul:level*2).fold2(overdrive*~comp)*(a.fold2(overdrive*0.25)+level);
-gatey=Osc.ar(~wtc.bufnum,(rate/3)+b,mul:level*2).fold2(overdrive*~comp)*(a.fold2(overdrive*0.25)+level);
+
 ///out
 busarray1=[0,2,4,5];
 busarray2=[1,3,6,7];
 //busarray=[0,1,2,3];
-Out.ar(busarray1.[n],gatex);
-Out.ar(busarray2.[n],gatey);
 Out.ar(busarray1.[n],a*env);
 Out.ar(busarray2.[n],b*env);
 
 n=n+1;
-}
+};
+
+///kick
+kfreq=(rate*12);
+wave=Saw.ar(kfreq,mul:level.neg);
+
+gatex=BPF.ar((Osc.ar(~wtc.bufnum,(rate/3),mul:level*8).abs*wave),kfreq*2,res);
+gatey=BPF.ar((Osc.ar(~wtc.bufnum,(rate/3),mul:level*8).abs*wave),kfreq*2,res);
+
+Out.ar(busarray1.[0],LeakDC.ar(gatex.fold2(overdrive*~comp*3)));
+Out.ar(busarray2.[0],LeakDC.ar(gatey.fold2(overdrive*~comp*3)));
+
 }).add;
 );
 1.wait;
@@ -367,10 +379,10 @@ Routine({loop{
 ///data
 
 (
-			~time=2*(3/2);
+~time=2*(3/2);
 ~clock=TempoClock.default.tempo_(~time);
-~attack=0.001/~time;
-		);
+~attack=0.0005/~time;
+);
 (
 ~fundamental=0;
 ~tone=0;
@@ -497,7 +509,7 @@ value=obj.value.linlin(0,1,(16256*8).neg,16256*4).round(1).postln;
 ~sl6=Knob.new(~vw1, Rect.new(50,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,0,12*2).round(1/3).postln;
+value=obj.value.linlin(0,1,1,5).round(1).postln;
 //~synth.set(\harm,value);
 ~harm=value;
 ~log1.(value.asString);

@@ -19,10 +19,10 @@ s.waitForBoot{
 ~clock=TempoClock.default.tempo_(2);
 Tdef(\drone, {
 ///samplein
-(
+/*(
 ~k1 = Buffer.readChannel(s,"/Users/rohifes/Desktop/vv.wav",channels:0 );
 ~k2 = Buffer.readChannel(s,"/Users/rohifes/Desktop/vv.wav",channels:1 );
-);
+);*/
 0.1.wait;
 //////point arrays
 /*////l system boolean
@@ -157,7 +157,7 @@ c=2.pow(fundamental.lag2(~lagtime)/16256);
 res=2.pow(resonanse.lag2(~lagtime)/16256);
 revroom=2.pow(room.lag2(~lagtime)/16256);
 overdrive=2.pow(drive.lag2(~lagtime)/16256);
-harmonic=2.pow(harm.lag2(~lagtime)/12);
+harmonic=harm;
 trange=mag.lag2(~lagtime);
 
 note=2.pow(key.lag2(~lagtime)/12);
@@ -371,12 +371,12 @@ Routine({loop{
 );
 
 ///kicker
-(
+/*(
 {Out.ar(0,HPF.ar(LPF.ar(PlayBuf.ar(1, ~k1.bufnum, BufRateScale.kr(~k1), loop: 1,doneAction:2),
 MouseX.kr(20,20000),1),MouseY.kr(1,10000)))}.play;
 {Out.ar(1,HPF.ar(LPF.ar(PlayBuf.ar(1, ~k2.bufnum, BufRateScale.kr(~k2), loop: 1,doneAction:2),
 MouseX.kr(20,20000),1),MouseY.kr(1,10000)))}.play;
-);
+);*/
 ///data
 
 (
@@ -508,7 +508,7 @@ value=obj.value.linlin(0,1,(16256*8).neg,16256*4).round(1).postln;
 ~sl6=Knob.new(~vw1, Rect.new(50,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,0,12*2).round(1/3).postln;
+value=obj.value.linlin(0,1,1,5).round(1).postln;
 //~synth.set(\harm,value);
 ~harm=value;
 ~log1.(value.asString);
