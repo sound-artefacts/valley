@@ -107,7 +107,7 @@ Routine({loop{
 ~wavec=992;
 (
 ~n=1.neg;~array=~wavec.collect{~n=~n+1;2.pow(~n/~wavec)};
-~n=(0-(2pi/~wavec)); ~ph=16256.collect{~n=~n+(2pi/~wavec);};
+~n=(0-(2pi/~wavec)); ~ph=~wavec.collect{~n=~n+(2pi/~wavec);};
 ~bufferSize = 2048*4;~signalSize = 1024*4;
 ~wt= Buffer.alloc(s,~bufferSize);
 {
@@ -119,7 +119,7 @@ signal=Signal.sineFill(~signalSize,~array,~ph); wt = signal.asWavetable; ~wt.loa
 0.5.wait;
 
 ////wave table
-		~wavecc=496;
+		~wavecc=56;
 (
 ~nc=1.neg;~arrayc=~wavecc.collect{~nc=~nc+1;2.pow(~nc/~wavecc)};
 ~nc=(0-(2pi/~wavecc)); ~phc=~wavecc.collect{~nc=~nc+(2pi/~wavecc);};
@@ -163,7 +163,7 @@ arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,room=0,d
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,thresholdk;
-var n=0,polytope=2,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gatex,gatey,threshold;
+var n=0,polytope=4,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gatex,gatey,threshold;
 
 ///inputs
 level=2.pow(gain.lag2(~lagtime)/16256);
@@ -228,11 +228,19 @@ phasez=(z*pi);
 
 /////////osc
 c1=BPF.ar((Osc.ar(~wt.bufnum,freqx,phase:phasex,mul:~complevel).abs*
-SinOsc.ar(freqx,phase:phasex)),freqx,res,ampx*x.sign);
+SinOsc.ar(freqx,phase:phasex)),freqx,res,ampx*x.sign)+
+BPF.ar((Osc.ar(~wt.bufnum,freqx,phase:phasex,mul:~complevel).abs*
+SinOsc.ar(freqx,phase:phasex)),freqx,res/100,ampx*x.sign);
+
 c2=BPF.ar((Osc.ar(~wt.bufnum,freqy,phase:phasey,mul:~complevel).abs*
-SinOsc.ar(freqy,phase:phasey)),freqy,res,ampy*y.sign);
+SinOsc.ar(freqy,phase:phasey)),freqy,res,ampy*y.sign)+
+BPF.ar((Osc.ar(~wt.bufnum,freqx,phase:phasex,mul:~complevel).abs*
+SinOsc.ar(freqx,phase:phasex)),freqx,res/100,ampx*x.sign);
+
 c3=BPF.ar((Osc.ar(~wt.bufnum,freqz,phase:phasez,mul:~complevel).abs*
-SinOsc.ar(freqz,phase:phasez)),freqz,res,ampz*z.sign);
+SinOsc.ar(freqz,phase:phasez)),freqz,res,ampz*z.sign)+
+BPF.ar((Osc.ar(~wt.bufnum,freqz,phase:phasez,mul:~complevel).abs*
+SinOsc.ar(freqz,phase:phasez)),freqz,res/100,ampz*z.sign);
 
 ////volts rect
 mix=overdrive.linlin(1,2.pow(~fuselim/16256),2.pow(~fuselim/16256),1);
@@ -353,16 +361,17 @@ Out.ar(busarray2.[n],b.softclip(3)*env);
 n=n+1;
 };
 
-///kick
-gatex=Osc.ar(~wtc.bufnum,(rate/3),mul:level*2).abs*Saw.ar(rate*3,level);
-gatey=Osc.ar(~wtc.bufnum,(rate/3),mul:level*2).abs*Saw.ar(rate*3,level);
+///kick///////scratch the below, add fm sine  for bass punch on pulse tempo
 
-thresholdk=(((343/0.3)/1).reciprocal.ampdb/2.sqrt).dbamp;
-gatex=Compander.ar(gatex,Osc.ar(~wtc.bufnum,(rate/3),mul:level*2),thresholdk,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
-gatey=Compander.ar(gatey,Osc.ar(~wtc.bufnum,(rate/3),mul:level*2),thresholdk,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
+//gatex=Osc.ar(~wtc.bufnum,(rate/3),mul:level*2).abs*Saw.ar(rate*3,level);
+//gatey=Osc.ar(~wtc.bufnum,(rate/3),mul:level*2).abs*Saw.ar(rate*3,level);
 
-Out.ar(busarray1.[0],LeakDC.ar(gatex.softclip(3)));
-Out.ar(busarray2.[0],LeakDC.ar(gatey.softclip(3)));
+//thresholdk=(((343/0.3)/1).reciprocal.ampdb/2.sqrt).dbamp;
+//gatex=Compander.ar(gatex,Osc.ar(~wtc.bufnum,(rate/3),mul:level*2),thresholdk,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
+//gatey=Compander.ar(gatey,Osc.ar(~wtc.bufnum,(rate/3),mul:level*2),thresholdk,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
+
+//Out.ar(busarray1.[0],LeakDC.ar(gatex.softclip(3)));
+//Out.ar(busarray2.[0],LeakDC.ar(gatey.softclip(3)));
 
 }).add;
 );
@@ -476,7 +485,7 @@ value=obj.value.linlin(0,1,pi.neg,pi).postln;
 ~sl3=Knob.new(~vw1, Rect.new(250,50,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,(16256*4).neg,0).round(1).postln;
+value=obj.value.linlin(0,1,(16256*4).neg,16256).round(1).postln;
 //~synth.set(\gain,value);
 ~gain=value;
 ~log1.(value.asString);
