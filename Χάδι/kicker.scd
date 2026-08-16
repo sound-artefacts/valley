@@ -76,8 +76,8 @@ az=~azimuth.[n];
 el=~elevation.[n];
 n=n+1;
 sph=Spherical(1,az,el);
-sph=sph.rotateXY(~z.lag2(~lagtime)).asSpherical;///static z interferance
-//sph=sph.rotateYZ(~x.lag2(~lagtime)).rotateXZ(~y.lag2(~lagtime)).rotateXY(~z.lag2(~lagtime));//orchestral
+//sph=sph.rotateXY(~z.lag2(~lagtime)).asSpherical;///static z interferance
+sph=sph.rotateYZ(~x.lag2(~lagtime)).rotateXZ(~y.lag2(~lagtime)).rotateXY(~z.lag2(~lagtime));//orchestral
 ~az=~az++[sph.theta];
 ~el=~el++[sph.phi];
 };
@@ -91,9 +91,9 @@ sph=sph.rotateXY(~z.lag2(~lagtime)).asSpherical;///static z interferance
 {var rot;
 Routine({loop{
 //rot=Spherical(~dur,~azr,~elr);
-//~x=(~x+(~azr*((2pi-(2pi/~s))*~rate))).wrap(0,2pi);
-//~y=(~y+(~azr*((2pi-(2pi/~s))*~rate))).wrap(0,2pi);
-~z=(~z+(~azr*((2pi-(2pi/~g))*(~frames/100)))).wrap(0,2pi);
+~x=(~x+0).wrap(0,2pi);
+~y=(~y+(~azr*((2pi-(2pi/~s))*(~frames/25)))).wrap(0,2pi);
+~z=(~z+(~azr*((2pi-(2pi/~g))*(~frames/25)))).wrap(0,2pi);
 (~frames).wait;
 };
 }).play;
@@ -171,7 +171,7 @@ arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,room=0,d
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez,snt;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,thresholdk,note,senv,gate1;
-var n=0,polytope=1,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
+var n=0,polytope=3,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
 
 ///inputs
 level=2.pow(gain.lag2(~lagtime)/16256);
@@ -193,13 +193,14 @@ pitch=exp(Complex(0,1)*tone);
 pitchx=2.pow(Select.kr((pitch.real*~note).abs,Select.kr(scselect,~scale))/12);
 pitchy=2.pow(Select.kr((pitch.imag*~note).abs,Select.kr(scselect,~scale))/12);
 
+polytope.do{
+
 //env fft
 senv=EnvGen.kr(Env([0,1,0],[attack,rate+(attack*2)],[2,32]));
 env=EnvGen.ar(Env.new([0,1,0,1,0,1,0],
-[attack,(rate/3),attack,(rate/3),attack,(rate/3)],[curve]),doneAction:2);
+[attack,(rate/3),attack,(rate/3),attack,(rate/3)],[curve]),doneAction:2).lag(3/1000);
 //env=1;
 
-polytope.do{
 azn=az.[n].lag2(~lagtime);
 eln=el.[n].lag2(~lagtime);
 
@@ -209,12 +210,12 @@ y = (harmonic*cos(eln)*sin(azn))+(cos(harmonic*(azn))*sin(harmonic*(azn)));
 z = (harmonic*sin(eln))+(sin(harmonic*(eln)));
 
 ////cartesian
-//x = (cos(eln)*cos(azn));
-//y = (cos(eln)*sin(azn));
-//z = (sin(eln));
+x = x*(cos(eln)*cos(azn*harmonic));
+y = y*(cos(eln)*sin(azn*harmonic));
+z = z*(sin(eln));
 
 //////perspective
-immersion = (level/1.333) / ((level/1.333) + z + ((level/1.333)/2));
+immersion = (level/1.5) / ((level/1.5) + z + ((level/1.5)/2));
 
 ////temperament
 tx = (trange*x);
@@ -359,15 +360,14 @@ b=Compander.ar(b,sigy,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 busarray1=[0,2,4,6];
 busarray2=[1,3,5,7];
 //busarray=[0,1,2,3];
-Out.ar(busarray1.[n],a.softclip(5)*env*senv);
-Out.ar(busarray2.[n],b.softclip(5)*env*senv);
+Out.ar(busarray1.[0],a.softclip(5)*env*senv);
+Out.ar(busarray2.[0],b.softclip(5)*env*senv);
 
 n=n+1;
-
 };
 
 ///kick////
-kenv=EnvGen.kr(Env.perc(attack, rate,curve:4.neg),levelScale:level*klevel);
+kenv=EnvGen.kr(Env.perc(attack, rate,curve:4.neg),1,levelScale:level*klevel);
 kpitch=EnvGen.kr(Env([tune*4, tune], [rate/10],[-16]));
 kfm=EnvGen.kr(Env([tune*32, 2], [rate/10], [-16]));
 
@@ -422,8 +422,8 @@ Routine({loop{
 ///melody
 ~sn=Pseq([7,10,8,9,11,12],inf).asStream;
 ~sn=Pseq([7,10,14],inf).asStream;
-~sn=Pseq([0,5,7,12,17,19,24],inf).asStream;
-~sn=0;
+//~sn=Pseq([0,5,7,12,17,19,24],inf).asStream;
+//~sn=0;
 
 ~snt=Synth.new(\run).register;
 (
@@ -659,7 +659,7 @@ harm.postln;
 (
 MIDIdef.cc(\midi_pot6,{ |val, num, chan, src|
 var hold;
-hold=val.linlin(0,1,8.neg,64).postln;
+hold=val.linlin(0,127,16.neg,64).postln;
 hold.postln;
 ~curve=hold;
 },6);
@@ -758,23 +758,23 @@ narray=[0,5,7,12,17,19,24];
 (
 MIDIdef.cc(\midi_slider3,{ |val, num, chan, src|
 var k;
-k=val.linlin(0,127,0.0001,16);
+k=val.linexp(0,127,0.0001,16);
 k.postln;
 ~klevel=k;
 },23);
 );
 (
-MIDIdef.cc(\midi_slider3,{ |val, num, chan, src|
+MIDIdef.cc(\midi_slider4,{ |val, num, chan, src|
 var k;
-k=val.linlin(0,127,0.0001,1);
+k=val.linexp(0,127,0.0001,1);
 k.postln;
 ~attack=k/~time;
-},23);
+},24);
 );
 (
 MIDIdef.cc(\midi_slider9,{ |val, num, chan, src|
 var tempo;
-tempo=val.linlin(0,127,1/16,4).round(1/16);
+tempo=val.linlin(0,127,1,256);
 tempo.postln;
 ~time=1*tempo;
 //~clock=TempoClock.default.tempo_(~time);
