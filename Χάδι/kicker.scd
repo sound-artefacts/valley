@@ -102,7 +102,7 @@ Routine({loop{
 0.1.wait;
 
 ////////////osc table
-~wavec=16256;
+~wavec=992;
 (
 ~n=1.neg;~array=~wavec.collect{~n=~n+1;2.pow(~n/~wavec)};
 ~n=(0-(2pi/~wavec)); ~ph=~wavec.collect{~n=~n+(2pi/~wavec);};
@@ -181,8 +181,8 @@ pitchx=2.pow(Select.kr((pitch.real*~note).abs,Select.kr(scselect,~scale))/12);
 pitchy=2.pow(Select.kr((pitch.imag*~note).abs,Select.kr(scselect,~scale))/12);
 
 //env fft
-senv=EnvGen.kr(Env([0,1,0],[attack+0.01,rate-0.01],[2.neg,16]));
-env=EnvGen.ar(Env.new([1,0,1,0,1,0],
+senv=EnvGen.kr(Env([0,1,0],[attack+0.01,rate-0.01],[2,32]));
+env=EnvGen.ar(Env.new([1,0,2,0,4,0],
 [rate/3,attack,rate/3,attack,rate/3],[curve]),doneAction:2);
 //env=1;
 
@@ -354,17 +354,17 @@ n=n+1;
 };
 
 ///kick////
-kenv=EnvGen.kr(Env.perc(0.01/rate, rate+(attack*3),curve:4.neg));
-kpitch=EnvGen.kr(Env([tune*2, tune/2], [0.05],[-4]));
+kenv=EnvGen.kr(Env.perc(0.01/rate, rate+(attack*3),curve:4.neg),levelScale:level*8);
+kpitch=EnvGen.kr(Env([tune, tune/2], [0.05],[-4]));
 kfm=EnvGen.kr(Env([tune*4, 0], [0.05], [-3]));
 
-gate=FreeVerb.ar(HPF.ar(SinOsc.ar(kpitch+(SinOsc.ar(kpitch)*kfm),mul:level*2).fold2(overdrive*~comp*2),55),overdrive.linexp(1,2.pow(~fuselim/16256),0.7,1),room);
+gate=FreeVerb.ar(HPF.ar(SinOsc.ar(kpitch+(SinOsc.ar(kpitch)*kfm),mul:level).fold2(overdrive*~comp*2),55),overdrive.linexp(1,2.pow(~fuselim/16256),0.7,1),room);
 
 thresholdk=(((343/0.3)/tune).reciprocal.ampdb/2.sqrt).dbamp;
 gate=Compander.ar(gate,gate,thresholdk,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 
-Out.ar(busarray1.[0],LeakDC.ar(gate.softclip(4.dbamp)*kenv));
-Out.ar(busarray2.[0],LeakDC.ar(gate.softclip(4.dbamp)*kenv));
+Out.ar(busarray1.[0],LeakDC.ar(gate.softclip(2.dbamp)*kenv));
+Out.ar(busarray2.[0],LeakDC.ar(gate.softclip(2.dbamp)*kenv));
 
 }).add;
 );
@@ -389,7 +389,7 @@ Routine({loop{
 0.1.wait;
 ///data
 (
-~time=2;
+~time=2*1.5;
 ~clock=TempoClock.default.tempo_(~time);
 ~attack=0.001/~time;
 );
