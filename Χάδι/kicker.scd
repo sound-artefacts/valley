@@ -102,7 +102,7 @@ Routine({loop{
 0.1.wait;
 
 ////////////osc table
-~wavec=992;
+~wavec=16256;
 (
 ~n=1.neg;~array=~wavec.collect{~n=~n+1;2.pow(~n/~wavec)};
 ~n=(0-(2pi/~wavec)); ~ph=~wavec.collect{~n=~n+(2pi/~wavec);};
@@ -153,15 +153,25 @@ nn=1.neg;
 ~comp=3;
 ~distortion=0.25;
 ~complevel=1024;
+~controlBus_1=Bus.control(s,1);
+
+(//seq
+SynthDef.new(\run,{
+arg set=0;
+Out.kr(~controlBus_1.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(0.01)+set).round(1)));
+}).add;
+);
+
+0.5.wait;
 (
 SynthDef.new(\synth,{
 
 arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,
-	tone=1,hold=0.1,scselect=0,rate=1,attack=0.01,curve=4.neg,key=0;
+	tone=1,hold=0.1,scselect=0,rate=1,attack=0.01,curve=4.neg,key=0,klevel=8;
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
-var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez;
+var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez,snt;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,thresholdk,note,senv;
-var n=0,polytope=3,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
+var n=0,polytope=1,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
 
 ///inputs
 level=2.pow(gain.lag2(~lagtime)/16256);
@@ -173,7 +183,10 @@ overdrive=2.pow(drive.lag2(~lagtime)/16256);
 harmonic=harm;
 trange=mag.lag2(~lagtime);
 
-note=2.pow(key.lag2(~lagtime)/12);
+//sequencer
+snt=In.kr(~controlBus_1.index);
+//note=2.pow(key.lag2(~lagtime)/12);
+note=2.pow(snt/12);
 
 fund=c*tune;
 pitch=exp(Complex(0,1)*tone);
@@ -181,9 +194,9 @@ pitchx=2.pow(Select.kr((pitch.real*~note).abs,Select.kr(scselect,~scale))/12);
 pitchy=2.pow(Select.kr((pitch.imag*~note).abs,Select.kr(scselect,~scale))/12);
 
 //env fft
-senv=EnvGen.kr(Env([0,1,0],[attack+0.01,rate-0.01],[2,32]));
-env=EnvGen.ar(Env.new([1,0,2,0,4,0],
-[rate/3,attack,rate/3,attack,rate/3],[curve]),doneAction:2);
+senv=EnvGen.kr(Env([0,1,0],[attack,rate+(attack*2)],[2,32]));
+env=EnvGen.ar(Env.new([1,0,1,0,1,0,1],
+[rate/3,attack,rate/3,attack,rate/3,attack],[curve]),doneAction:2);
 //env=1;
 
 polytope.do{
@@ -354,7 +367,7 @@ n=n+1;
 };
 
 ///kick////
-kenv=EnvGen.kr(Env.perc(0.01/rate, rate+(attack*3),curve:4.neg),levelScale:level*8);
+kenv=EnvGen.kr(Env.perc(attack, rate+(attack*2),curve:4.neg),levelScale:level*klevel);
 kpitch=EnvGen.kr(Env([tune, tune/2], [0.05],[-4]));
 kfm=EnvGen.kr(Env([tune*4, 0], [0.05], [-3]));
 
@@ -370,15 +383,10 @@ Out.ar(busarray2.[0],LeakDC.ar(gate.softclip(2.dbamp)*kenv));
 );
 
 1.wait;
-
-////////////////run
-//~synth=Synth.new(\synth).register;
-0.5.wait;
 ///////////////////feed
 (
 {
 Routine({loop{
-//~synth.set(\az,[~az.[0],~az.[1],~az.[2],~az.[3]],\el,[~el.[0],~el.[1],~el.[2],~el.[3]]);
 ~azset=~az;
 ~elset=~el;
 (~frames).wait
@@ -389,9 +397,9 @@ Routine({loop{
 0.1.wait;
 ///data
 (
-~time=2*1.5;
+~time=1*1.5;
 ~clock=TempoClock.default.tempo_(~time);
-~attack=0.001/~time;
+~attack=0.0000000001/~time;
 );
 (
 ~setnote=0;
@@ -402,24 +410,29 @@ Routine({loop{
 ~harm=1;
 ~drive=0;
 ~room=0;
-~mag=0;
+~mag=1;
 ~tone=1;
-~scaleselect=2;
+~scaleselect=0;
 ~curve=4.neg;
+~klevel=0.1;
 );
+
+///melody
 ~sn=Pseq([7,10,8,9,11,12],inf).asStream;
 ~sn=Pseq([7,10,14],inf).asStream;
 //~sn=Prand([0,5,7,12,17,19,24],inf).asStream;
 //~sn=0;
+
+~snt=Synth.new(\run).register;
 (
-{
-Routine({loop{
+{Routine({loop{
 ~setnote=~sn.next;
-(~time).wait
-}
-}).play;
-}.defer
+~snt.set(\set,~setnote);
+((~time+(~attack*2))/3).wait}
+}).play;}.defer
 );
+
+
 ///pattern
 (~pattern = Pdef(\1,
 Pbind(\instrument, \synth,
@@ -439,7 +452,8 @@ Pbind(\instrument, \synth,
 \rate,Pfunc{1/~time},
 \attack,Pfunc{~attack},
 \curve,Pfunc{~curve},
-\key,Pfunc{~setnote},
+//\key,Pfunc{~setnote},
+\klevel,Pfunc{~klevel}
 )));
 ~pattern.play;
 
@@ -597,13 +611,13 @@ value=obj.value.linlin(0,1,0,~temperament/2).round(1).postln;
 );
 
 ////midi
-/*(
+(
 MIDIClient.init;
 MIDIIn.connectAll;
 (
 MIDIdef.cc(\midi_pot1,{ |val, num, chan, src|
 var gain;
-gain=val.linlin(0,127,(16256*4).neg,0).round(1);
+gain=val.linlin(0,127,(16256*4).neg,16256*2).round(1);
 gain.postln;
 ~gain=gain;
 },1);
@@ -635,7 +649,7 @@ drive.postln;
 (
 MIDIdef.cc(\midi_pot5,{ |val, num, chan, src|
 var harm;
-harm=val.linlin(0,127,0,12*2).round(1/3);
+harm=val.linlin(0,127,1,5).round(1).postln;
 harm.postln;
 ~harm=harm;
 },5);
@@ -643,9 +657,9 @@ harm.postln;
 (
 MIDIdef.cc(\midi_pot6,{ |val, num, chan, src|
 var hold;
-hold=val.linlin(0,127,(~temperament*4).neg,~temperament*2).round(1);
+hold=val.linlin(0,127,64,8.neg).round(1/128).postln;
 hold.postln;
-~holdm=2.pow(hold/~temperament);
+~curve=hold;
 },6);
 );
 (
@@ -653,6 +667,7 @@ MIDIdef.cc(\midi_pot7,{ |val, num, chan, src|
 var r;
 r=val.linlin(0,127,2pi.neg,2pi);
 ~azr=r;
+~elr=r/2;
 r.postln;
 },7);
 );
@@ -675,7 +690,7 @@ room.postln;
 (
 MIDIdef.cc(\midi_pot10,{ |val, num, chan, src|
 var mag;
-mag=val.linlin(0,127,0,~temperament).round(1);
+mag=val.linlin(0,127,0,~temperament/2).round(1);
 mag.postln;
 ~mag=mag;
 },10);
@@ -685,7 +700,7 @@ MIDIdef.cc(\midi_switch1,{ |val, num, chan, src|
 var sc;
 if(val>0,sc=0);
 sc.postln;
-~setnote=sc;
+~sn=sc;
 },11);
 );
 (
@@ -693,7 +708,7 @@ MIDIdef.cc(\midi_switch2,{ |val, num, chan, src|
 var sc;
 if(val>0,sc=5);
 sc.postln;
-~setnote=sc;
+~sn=sc;
 },12);
 );
 (
@@ -701,7 +716,7 @@ MIDIdef.cc(\midi_switch3,{ |val, num, chan, src|
 var sc;
 if(val>0,sc=7);
 sc.postln;
-~setnote=sc;
+~sn=sc;
 },13);
 );
 (
@@ -709,7 +724,7 @@ MIDIdef.cc(\midi_switch4,{ |val, num, chan, src|
 var sc;
 if(val>0,sc=12);
 sc.postln;
-~setnote=sc;
+~sn=sc;
 },14);
 );
 (
@@ -717,7 +732,7 @@ MIDIdef.cc(\midi_switch5,{ |val, num, chan, src|
 var sc;
 if(val>0,sc=17);
 sc.postln;
-~setnote=sc;
+~sn=sc;
 },15);
 );
 
@@ -731,55 +746,32 @@ sc.postln;
 );
 (
 MIDIdef.cc(\midi_slider2,{ |val, num, chan, src|
+var note,narray;
+note=val.linlin(0,127,0,6).round(1);
+note.postln;
+narray=[0,5,7,12,17,19,24];
+~sn=narray.[note];
 },22);
 );
 (
 MIDIdef.cc(\midi_slider3,{ |val, num, chan, src|
+var k;
+k=val.linlin(0,127,0.0001,16);
+k.postln;
+~klevel=k;
 },23);
-);
-(
-MIDIdef.cc(\midi_slider4,{ |val, num, chan, src|
-},24);
-);
-(
-MIDIdef.cc(\midi_slider5,{ |val, num, chan, src|
-},25);
-);
-(
-MIDIdef.cc(\midi_slider6,{ |val, num, chan, src|
-},26);
-);
-(
-MIDIdef.cc(\midi_slider7,{ |val, num, chan, src|
-},27);
-);
-(
-MIDIdef.cc(\midi_slider8,{ |val, num, chan, src|
-},28);
 );
 (
 MIDIdef.cc(\midi_slider9,{ |val, num, chan, src|
 var tempo;
-tempo=val.linlin(0,127,1/4,4).round(1/4);
+tempo=val.linlin(0,127,1/16,4).round(1/16);
 tempo.postln;
-~clock.tempo_(tempo);
+~time=1*tempo;
+~clock=TempoClock.default.tempo_(~time);
+~attack=0.001/~time;
 },29);
 );
-(
-MIDIdef.cc(\midi_filterpot1,{ |val, num, chan, src|
-
-},30);
-);
-(
-MIDIdef.cc(\midi_filterpot2,{ |val, num, chan, src|
-
-},31);
-);
-(
-MIDIdef.cc(\midi_filterpot3,{ |val, num, chan, src|
-},32);
-);
-)*/
+)
 }); Tdef(\drone).play;
 }
 )
