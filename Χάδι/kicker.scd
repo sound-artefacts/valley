@@ -170,7 +170,7 @@ arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,room=0,d
 	tone=1,hold=0.1,scselect=0,rate=1,attack=0.01,curve=4.neg,key=0,klevel=8;
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez,snt;
-var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,thresholdk,note,senv;
+var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,thresholdk,note,senv,gate1;
 var n=0,polytope=1,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
 
 ///inputs
@@ -195,8 +195,8 @@ pitchy=2.pow(Select.kr((pitch.imag*~note).abs,Select.kr(scselect,~scale))/12);
 
 //env fft
 senv=EnvGen.kr(Env([0,1,0],[attack,rate+(attack*2)],[2,32]));
-env=EnvGen.ar(Env.new([1,0,1,0,1,0,1],
-[rate/3,attack,rate/3,attack,rate/3,attack],[curve]),doneAction:2);
+env=EnvGen.ar(Env.new([0,1,0,1,0,1,0],
+[attack,(rate/3),attack,(rate/3),attack,(rate/3)],[curve]),doneAction:2);
 //env=1;
 
 polytope.do{
@@ -261,9 +261,9 @@ c2=c2.lag2(~signalSize.reciprocal)*
 //(LPF.ar(Saw.ar(tune,(ampz)),tune*64*overdrive).fold2(mix*0.05)+((ampz)));
 
 ///distortion
-sigx=FreeVerb.ar((c1).fold2(overdrive*~comp),overdrive.linexp(1,2.pow(~fuselim/16256),0.7,1),room);
-sigy=FreeVerb.ar((c2).fold2(overdrive*~comp),overdrive.linexp(1,2.pow(~fuselim/16256),0.7,1),room);
-sigz=FreeVerb.ar((c3).fold2(~comp),overdrive.linexp(1,2.pow(~fuselim/16256),0.7,1),room);
+sigx=FreeVerb.ar((c1).fold2(overdrive*~comp),mix,room);
+sigy=FreeVerb.ar((c2).fold2(overdrive*~comp),mix,room);
+sigz=FreeVerb.ar((c3).fold2(~comp),mix,room);
 
 /////////spat
 //panners
@@ -345,8 +345,8 @@ pan1=[g1,g3,g5,g7];
 pan2=[g2,g4,g6,g8];
 
 ///sig
-a=HPF.ar((LeakDC.ar((sigx)*((sigz).fold2(overdrive*~distortion)+(ampz)))).softclip(3.dbamp),55);
-b=HPF.ar((LeakDC.ar((sigy)*((sigz).fold2(overdrive*~distortion)+(ampz)))).softclip(3.dbamp),55);
+a=HPF.ar((LeakDC.ar((sigx)*((sigz).fold2(overdrive*~distortion)+(ampz)))),32);
+b=HPF.ar((LeakDC.ar((sigy)*((sigz).fold2(overdrive*~distortion)+(ampz)))),32);
 //a=(a*pan1[n]).softclip(3.dbamp);
 //b=(b*pan2[n]).softclip(3.dbamp);
 
@@ -367,17 +367,19 @@ n=n+1;
 };
 
 ///kick////
-kenv=EnvGen.kr(Env.perc(attack, rate+(attack*2),curve:4.neg),levelScale:level*klevel);
-kpitch=EnvGen.kr(Env([tune, tune/2], [0.05],[-4]));
-kfm=EnvGen.kr(Env([tune*4, 0], [0.05], [-3]));
+kenv=EnvGen.kr(Env.perc(attack, rate,curve:4.neg),levelScale:level*klevel);
+kpitch=EnvGen.kr(Env([tune*4, tune], [rate/10],[-16]));
+kfm=EnvGen.kr(Env([tune*32, 2], [rate/10], [-16]));
 
-gate=FreeVerb.ar(HPF.ar(SinOsc.ar(kpitch+(SinOsc.ar(kpitch)*kfm),mul:level).fold2(overdrive*~comp*2),55),overdrive.linexp(1,2.pow(~fuselim/16256),0.7,1),room);
+gate=FreeVerb.ar(HPF.ar(SinOsc.ar(kpitch+(SinOsc.ar(kpitch,phase:0)*kfm),phase:0,mul:level),16),0.33,room);
+gate1=FreeVerb.ar(HPF.ar(SinOsc.ar(kpitch+(SinOsc.ar(kpitch,phase:0.5pi)*kfm),phase:0.5pi,mul:level),16),0.33,room);
 
 thresholdk=(((343/0.3)/tune).reciprocal.ampdb/2.sqrt).dbamp;
 gate=Compander.ar(gate,gate,thresholdk,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
+gate1=Compander.ar(gate,gate1,thresholdk,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 
 Out.ar(busarray1.[0],LeakDC.ar(gate.softclip(2.dbamp)*kenv));
-Out.ar(busarray2.[0],LeakDC.ar(gate.softclip(2.dbamp)*kenv));
+Out.ar(busarray2.[0],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 
 }).add;
 );
@@ -397,9 +399,9 @@ Routine({loop{
 0.1.wait;
 ///data
 (
-~time=1*1.5;
-~clock=TempoClock.default.tempo_(~time);
-~attack=0.0000000001/~time;
+~time=2;
+~clock=TempoClock.default.tempo_(1);
+~attack=0.01/~time;
 );
 (
 ~setnote=0;
@@ -414,21 +416,21 @@ Routine({loop{
 ~tone=1;
 ~scaleselect=0;
 ~curve=4.neg;
-~klevel=0.1;
+~klevel=5;
 );
 
 ///melody
 ~sn=Pseq([7,10,8,9,11,12],inf).asStream;
 ~sn=Pseq([7,10,14],inf).asStream;
-//~sn=Prand([0,5,7,12,17,19,24],inf).asStream;
-//~sn=0;
+~sn=Pseq([0,5,7,12,17,19,24],inf).asStream;
+~sn=0;
 
 ~snt=Synth.new(\run).register;
 (
 {Routine({loop{
 ~setnote=~sn.next;
 ~snt.set(\set,~setnote);
-((~time+(~attack*2))/3).wait}
+((~time+(~attack*3))/3).wait}
 }).play;}.defer
 );
 
@@ -437,7 +439,7 @@ Routine({loop{
 (~pattern = Pdef(\1,
 Pbind(\instrument, \synth,
 //Pmono( \synth,
-\dur,1,
+\dur,Pfunc{(1/~time)+(~attack*3)},
 \gain,Pfunc{~gain},
 \fundamental,Pfunc{~fundamental},
 \tone,Pfunc{~tone},
@@ -449,7 +451,7 @@ Pbind(\instrument, \synth,
 \az,Pfunc{Ref([~azset.[0],~azset.[1],~azset.[2],~azset.[3]])},
 \el,Pfunc{Ref([~elset.[0],~elset.[1],~elset.[2],~elset.[3]])},
 \scselect,Pfunc{~scaleselect},
-\rate,Pfunc{1/~time},
+\rate,Pfunc{(1/~time)},
 \attack,Pfunc{~attack},
 \curve,Pfunc{~curve},
 //\key,Pfunc{~setnote},
@@ -572,7 +574,7 @@ value=obj.value.linlin(0,1,0,~fuselim).round(1).postln;
 ~sl8=Knob.new(~vw1, Rect.new(250,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,64,8.neg).round(1/128).postln;
+value=obj.value.linlin(0,1,8.neg,64).postln;
 //~synth.set(\perspective,value);
 ~curve=value;
 ~log1.(value.asString);
@@ -657,7 +659,7 @@ harm.postln;
 (
 MIDIdef.cc(\midi_pot6,{ |val, num, chan, src|
 var hold;
-hold=val.linlin(0,127,64,8.neg).round(1/128).postln;
+hold=val.linlin(0,1,8.neg,64).postln;
 hold.postln;
 ~curve=hold;
 },6);
@@ -762,13 +764,20 @@ k.postln;
 },23);
 );
 (
+MIDIdef.cc(\midi_slider3,{ |val, num, chan, src|
+var k;
+k=val.linlin(0,127,0.0001,1);
+k.postln;
+~attack=k/~time;
+},23);
+);
+(
 MIDIdef.cc(\midi_slider9,{ |val, num, chan, src|
 var tempo;
 tempo=val.linlin(0,127,1/16,4).round(1/16);
 tempo.postln;
 ~time=1*tempo;
-~clock=TempoClock.default.tempo_(~time);
-~attack=0.001/~time;
+//~clock=TempoClock.default.tempo_(~time);
 },29);
 );
 )
