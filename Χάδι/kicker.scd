@@ -56,9 +56,8 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 ~azr=1;~elr=1;
 ~temperament=16256;
 ~lagtime=1/128;
-~rate=1024.reciprocal;
+~frames=2048.reciprocal;
 ~x=0;~y=0;~z=0;
-~frames=~rate;
 ~ffreq=16;
 ~window=110;
 ~dur=~frames*~window;
@@ -82,7 +81,7 @@ sph=sph.rotateXY(~z.lag2(~lagtime)).asSpherical;///static z interferance
 ~az=~az++[sph.theta];
 ~el=~el++[sph.phi];
 };
-(~dur).wait;
+(~frames).wait;
 };
 }).play;
 }.defer
@@ -94,8 +93,8 @@ Routine({loop{
 //rot=Spherical(~dur,~azr,~elr);
 //~x=(~x+(~azr*((2pi-(2pi/~s))*~rate))).wrap(0,2pi);
 //~y=(~y+(~azr*((2pi-(2pi/~s))*~rate))).wrap(0,2pi);
-~z=(~z+(~azr*((2pi-(2pi/~g))*~rate))).wrap(0,2pi);
-(~dur).wait;
+~z=(~z+(~azr*((2pi-(2pi/~g))*(~frames/100)))).wrap(0,2pi);
+(~frames).wait;
 };
 }).play;
 }.defer
@@ -151,8 +150,8 @@ nn=1.neg;
 
 ///synth
 ~fuselim=(16256*9).neg;
-~comp=6;
-~distortion=0.1;
+~comp=3;
+~distortion=0.25;
 ~complevel=1024;
 (
 SynthDef.new(\synth,{
@@ -162,7 +161,7 @@ arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,room=0,d
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,thresholdk,note,senv;
-var n=0,polytope=2,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
+var n=0,polytope=3,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
 
 ///inputs
 level=2.pow(gain.lag2(~lagtime)/16256);
@@ -183,8 +182,8 @@ pitchy=2.pow(Select.kr((pitch.imag*~note).abs,Select.kr(scselect,~scale))/12);
 
 //env fft
 senv=EnvGen.kr(Env([0,1,0],[attack+0.01,rate-0.01],[2.neg,16]));
-env=EnvGen.ar(Env.new([1,0,1,0,1,0,1],
-[rate/3,attack,rate/3,attack,rate/3,attack],[curve]),doneAction:2);
+env=EnvGen.ar(Env.new([1,0,1,0,1,0],
+[rate/3,attack,rate/3,attack,rate/3],[curve]),doneAction:2);
 //env=1;
 
 polytope.do{
@@ -201,6 +200,9 @@ z = (harmonic*sin(eln))+(sin(harmonic*(eln)));
 //y = (cos(eln)*sin(azn));
 //z = (sin(eln));
 
+//////perspective
+immersion = (level/1.333) / ((level/1.333) + z + ((level/1.333)/2));
+
 ////temperament
 tx = (trange*x);
 ty = (trange*y);
@@ -213,8 +215,8 @@ tonez=2.pow(tz.round(1)/~temperament);
 freqx=(fund*pitchx)*tonex*note;
 freqy=(fund*pitchy)*toney*note;
 freqz=fund*tonez*note;
-ampx=c.reciprocal*tonex.reciprocal*level;
-ampy=c.reciprocal*toney.reciprocal*level;
+ampx=c.reciprocal*tonex.reciprocal*level*immersion;
+ampy=c.reciprocal*toney.reciprocal*level*immersion;
 ampz=c.reciprocal*tonez.reciprocal*level;
 //phasex=(Complex(1,x).theta*2);
 //phasey=(Complex(1,y).theta*2);
@@ -225,6 +227,7 @@ ampz=c.reciprocal*tonez.reciprocal*level;
 phasex=(x*pi);
 phasey=(y*pi);
 phasez=(z*pi);
+
 
 /////////osc
 c1=BPF.ar((Osc.ar(~wt.bufnum,freqx,phase:phasex,mul:~complevel).abs*
@@ -328,14 +331,11 @@ sin(~elc.[7])));
 pan1=[g1,g3,g5,g7];
 pan2=[g2,g4,g6,g8];
 
-//////perspective
-immersion = (level/1.333) / ((level/1.333) + z + ((level/1.333)/2));
-
 ///sig
-a=HPF.ar((LeakDC.ar((sigx*immersion)*((sigz).fold2(overdrive*~distortion)+(ampz)))).softclip(3.dbamp),55);
-b=HPF.ar((LeakDC.ar((sigy*immersion)*((sigz).fold2(overdrive*~distortion)+(ampz)))).softclip(3.dbamp),55);
-//a=(a*pan1[n]).softclip(2.dbamp);
-//b=(b*pan2[n]).softclip(2.dbamp);
+a=HPF.ar((LeakDC.ar((sigx)*((sigz).fold2(overdrive*~distortion)+(ampz)))).softclip(3.dbamp),55);
+b=HPF.ar((LeakDC.ar((sigy)*((sigz).fold2(overdrive*~distortion)+(ampz)))).softclip(3.dbamp),55);
+//a=(a*pan1[n]).softclip(3.dbamp);
+//b=(b*pan2[n]).softclip(3.dbamp);
 
 
 threshold=(((343/0.3)/tune).reciprocal.ampdb/2.sqrt).dbamp;
@@ -343,8 +343,8 @@ a=Compander.ar(a,sigx,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 b=Compander.ar(b,sigy,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 
 ///out
-busarray1=[0,2,4,5];
-busarray2=[1,3,6,7];
+busarray1=[0,2,4,6];
+busarray2=[1,3,5,7];
 //busarray=[0,1,2,3];
 Out.ar(busarray1.[n],a.softclip(5)*env*senv);
 Out.ar(busarray2.[n],b.softclip(5)*env*senv);
@@ -358,13 +358,13 @@ kenv=EnvGen.kr(Env.perc(0.01/rate, rate+(attack*3),curve:4.neg));
 kpitch=EnvGen.kr(Env([tune*2, tune/2], [0.05],[-4]));
 kfm=EnvGen.kr(Env([tune*4, 0], [0.05], [-3]));
 
-gate=FreeVerb.ar(HPF.ar(SinOsc.ar(kpitch+(SinOsc.ar(kpitch)*kfm),mul:level*1).fold2(overdrive*~comp*2),55),overdrive.linexp(1,2.pow(~fuselim/16256),0.7,1),room);
+gate=FreeVerb.ar(HPF.ar(SinOsc.ar(kpitch+(SinOsc.ar(kpitch)*kfm),mul:level*2).fold2(overdrive*~comp*2),55),overdrive.linexp(1,2.pow(~fuselim/16256),0.7,1),room);
 
 thresholdk=(((343/0.3)/tune).reciprocal.ampdb/2.sqrt).dbamp;
-gate=Compander.ar(gate,Osc.ar(~wtc.bufnum,(rate/3),mul:level*2),thresholdk,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
+gate=Compander.ar(gate,gate,thresholdk,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 
-Out.ar(busarray1.[0],LeakDC.ar(gate.softclip(3.dbamp)*kenv));
-Out.ar(busarray2.[0],LeakDC.ar(gate.softclip(3.dbamp)*kenv));
+Out.ar(busarray1.[0],LeakDC.ar(gate.softclip(4.dbamp)*kenv));
+Out.ar(busarray2.[0],LeakDC.ar(gate.softclip(4.dbamp)*kenv));
 
 }).add;
 );
@@ -389,7 +389,7 @@ Routine({loop{
 0.1.wait;
 ///data
 (
-~time=2*(4/3);
+~time=2;
 ~clock=TempoClock.default.tempo_(~time);
 ~attack=0.001/~time;
 );
@@ -407,7 +407,7 @@ Routine({loop{
 ~scaleselect=2;
 ~curve=4.neg;
 );
-//~sn=Pseq([7,10,8,9,11,12],inf).asStream;
+~sn=Pseq([7,10,8,9,11,12],inf).asStream;
 ~sn=Pseq([7,10,14],inf).asStream;
 //~sn=Prand([0,5,7,12,17,19,24],inf).asStream;
 //~sn=0;
@@ -415,7 +415,7 @@ Routine({loop{
 {
 Routine({loop{
 ~setnote=~sn.next;
-(~time/3).wait
+(~time).wait
 }
 }).play;
 }.defer
