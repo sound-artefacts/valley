@@ -399,7 +399,7 @@ Routine({loop{
 0.1.wait;
 ///data
 (
-~time=2;
+~time=2*1.5;
 ~clock=TempoClock.default.tempo_(1);
 ~attack=0.01/~time;
 );
@@ -421,16 +421,17 @@ Routine({loop{
 
 ///melody
 ~sn=Pseq([7,10,8,9,11,12],inf).asStream;
-~sn=Pseq([7,10,14],inf).asStream;
+~sn=Pseq([7,10,14,9,12,16],inf).asStream;
 //~sn=Pseq([0,5,7,12,17,19,24],inf).asStream;
-//~sn=0;
+~sn=7;
+~sn=Pseq([2,7,4,9],inf).asStream;
 
 ~snt=Synth.new(\run).register;
 (
 {Routine({loop{
 ~setnote=~sn.next;
 ~snt.set(\set,~setnote);
-((~time+(~attack*3))/3).wait}
+((~time+(~attack*3))/2).wait}
 }).play;}.defer
 );
 
@@ -774,7 +775,7 @@ k.postln;
 (
 MIDIdef.cc(\midi_slider9,{ |val, num, chan, src|
 var tempo;
-tempo=val.linlin(0,127,1,256);
+tempo=val.linlin(0,127,1,128);
 tempo.postln;
 ~time=1*tempo;
 //~clock=TempoClock.default.tempo_(~time);
