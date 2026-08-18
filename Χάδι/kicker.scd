@@ -822,7 +822,7 @@ MIDIdef.cc(\midi_slider9,{ |val, num, chan, src|
 var tempo;
 tempo=val.linlin(0,127,1/4,4);
 tempo.postln;
-~timu=tempo;
+~time=~timu*tempo;
 //~clock=TempoClock.default.tempo_(~time);
 },29);
 );
