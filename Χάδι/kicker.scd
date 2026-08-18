@@ -152,7 +152,7 @@ nn=1.neg;
 ~fuselim=(16256*9).neg;
 ~comp=3;
 ~distortion=0.25;
-~noise=0.01;
+~noise=0.001;
 ~complevel=1024;
 ~controlBus_1=Bus.control(s,1);
 ~controlBus_2=Bus.control(s,1);
@@ -260,7 +260,7 @@ z = (harmonic*sin(eln))+(sin(harmonic*(eln)));
 ////cartesian
 x = x*(cos(eln)*cos(azn*harmonic));
 y = y*(cos(eln)*sin(azn*harmonic));
-z = z*(sin(eln));
+z = z*(sin(eln*harmonic));
 
 //////perspective
 immersion = (level/1.5) / ((level/1.5) + z + ((level/1.5)/2));
@@ -436,7 +436,7 @@ Out.ar(busarray2.[0],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 
 ///data
 (
-~time=2*1.5;
+~time=1;
 ~clock=TempoClock.default.tempo_(1);
 ~attack=0.01/~time;
 );
@@ -460,17 +460,16 @@ Out.ar(busarray2.[0],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 ~sn=Pseq([7,10,8,9,11,12],inf).asStream;
 ~sn=Pseq([7,10,14,9,12,16],inf).asStream;
 //~sn=Pseq([0,5,7,12,17,19,24],inf).asStream;
-~sn=7;
+//~sn=7;
 //~sn=Pseq([2,7,4,9],inf).asStream;
 
 (
 {Routine({loop{
 ~setnote=~sn.next;
 ~snt.set(\set,~setnote);
-((~time+(~attack*3))/2).wait}
+((~time+(~attack*3))/3).wait}
 }).play;}.defer
 );
-
 
 ///pattern
 (~pattern = Pdef(\1,
@@ -688,7 +687,7 @@ drive.postln;
 (
 MIDIdef.cc(\midi_pot5,{ |val, num, chan, src|
 var harm;
-harm=val.linlin(0,127,1,5).round(1).postln;
+harm=val.linlin(0,127,1,31).round(1).postln;
 harm.postln;
 ~harm=harm;
 },5);
@@ -820,7 +819,7 @@ tempo.postln;
 (
 MIDIdef.cc(\midi_slider9,{ |val, num, chan, src|
 var tempo;
-tempo=val.linlin(0,127,1/4,4);
+tempo=val.linlin(0,127,1/4,4).round(1/4);
 tempo.postln;
 ~time=~timu*tempo;
 //~clock=TempoClock.default.tempo_(~time);
