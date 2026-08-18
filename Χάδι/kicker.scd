@@ -2,7 +2,7 @@
 (
 (
 s.options.numWireBufs = 1024*16;
-s.options.numOutputBusChannels=8;
+s.options.numOutputBusChannels=9;
 s.options.numInputBusChannels=0;
 s.options.memSize = 8192*256;
 s.options.blockSize = 64;
@@ -148,30 +148,64 @@ nn=1.neg;
 }.value));
 ~scale=[~scale2,~scale3,~scale4,~scale5,~scale6]);
 
-///synth
+////seq
 ~fuselim=(16256*9).neg;
 ~comp=3;
 ~distortion=0.25;
+~noise=0.01;
 ~complevel=1024;
 ~controlBus_1=Bus.control(s,1);
+~controlBus_2=Bus.control(s,1);
+~controlBus_3=Bus.control(s,1);
+~controlBus_4=Bus.control(s,1);
+~controlBus_5=Bus.control(s,1);
+~controlBus_6=Bus.control(s,1);
+~controlBus_7=Bus.control(s,1);
+~controlBus_8=Bus.control(s,1);
+~controlBus_9=Bus.control(s,1);
 
-(//seq
+(
 SynthDef.new(\run,{
-arg set=0;
-Out.kr(~controlBus_1.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(0.01)+set).round(1)));
+arg set=0,az1=0,az2=0,az3=0,az4=0,el1=0,el2=0,el3=0,el4=0;
+Out.kr(~controlBus_1.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+set).round(1),mul:set.sign));
+Out.kr(~controlBus_2.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+az1),mul:az1.sign));
+Out.kr(~controlBus_3.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+az2),mul:az2.sign));
+Out.kr(~controlBus_4.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+az3),mul:az3.sign));
+Out.kr(~controlBus_5.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+az4),mul:az4.sign));
+Out.kr(~controlBus_6.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+el1),mul:el1.sign));
+Out.kr(~controlBus_7.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+el2),mul:el2.sign));
+Out.kr(~controlBus_8.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+el3),mul:el3.sign));
+Out.kr(~controlBus_9.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+el4),mul:el4.sign));
 }).add;
 );
+///////////////////feed
+0.1.wait;
+~snt=Synth.new(\run).register;
+(
+{
+Routine({loop{
+//~azset=~az;
+//~elset=~el;
+~snt.set(\az1,~az.[0],\az2,~az.[1],\az3,~az.[2],\az4,~az.[3],\el1,~el.[0],\el2,~el.[1],\el3,~el.[2],\el4,~el.[3]);
+(~frames).wait
+}
+}).play;
+}.defer
+);
+0.1.wait;
 
-0.5.wait;
+///synth
+//az=#[0,0,0,0],el=#[0,0,0,0]
 (
 SynthDef.new(\synth,{
 
-arg gain=0,az=#[0,0,0,0],el=#[0,0,0,0],fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,
+arg gain=0,fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,
 	tone=1,hold=0.1,scselect=0,rate=1,attack=0.01,curve=4.neg,key=0,klevel=8;
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez,snt;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,thresholdk,note,senv,gate1;
 var n=0,polytope=3,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
+var az1=0,az2=0,az3=0,az4=0,el1=0,el2=0,el3=0,el4=0,az,el;
 
 ///inputs
 level=2.pow(gain.lag2(~lagtime)/16256);
@@ -188,6 +222,20 @@ snt=In.kr(~controlBus_1.index);
 //note=2.pow(key.lag2(~lagtime)/12);
 note=2.pow(snt/12);
 
+///coordinates
+az1=In.kr(~controlBus_1.index);
+az2=In.kr(~controlBus_2.index);
+az3=In.kr(~controlBus_3.index);
+az4=In.kr(~controlBus_4.index);
+el1=In.kr(~controlBus_5.index);
+el2=In.kr(~controlBus_6.index);
+el3=In.kr(~controlBus_7.index);
+el4=In.kr(~controlBus_8.index);
+
+az=[az1,az2,az3,az4];
+el=[el1,el2,el3,el4];
+
+///pitch
 fund=c*tune;
 pitch=exp(Complex(0,1)*tone);
 pitchx=2.pow(Select.kr((pitch.real*~note).abs,Select.kr(scselect,~scale))/12);
@@ -385,18 +433,7 @@ Out.ar(busarray2.[0],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 );
 
 1.wait;
-///////////////////feed
-(
-{
-Routine({loop{
-~azset=~az;
-~elset=~el;
-(~frames).wait
-}
-}).play;
-}.defer
-);
-0.1.wait;
+
 ///data
 (
 ~time=2*1.5;
@@ -416,7 +453,7 @@ Routine({loop{
 ~tone=1;
 ~scaleselect=0;
 ~curve=4.neg;
-~klevel=5;
+~klevel=0.1;
 );
 
 ///melody
@@ -424,9 +461,8 @@ Routine({loop{
 ~sn=Pseq([7,10,14,9,12,16],inf).asStream;
 //~sn=Pseq([0,5,7,12,17,19,24],inf).asStream;
 ~sn=7;
-~sn=Pseq([2,7,4,9],inf).asStream;
+//~sn=Pseq([2,7,4,9],inf).asStream;
 
-~snt=Synth.new(\run).register;
 (
 {Routine({loop{
 ~setnote=~sn.next;
@@ -449,8 +485,8 @@ Pbind(\instrument, \synth,
 \drive,Pfunc{~drive},
 \room,Pfunc{~room},
 \mag,Pfunc{~mag},
-\az,Pfunc{Ref([~azset.[0],~azset.[1],~azset.[2],~azset.[3]])},
-\el,Pfunc{Ref([~elset.[0],~elset.[1],~elset.[2],~elset.[3]])},
+//\az,Pfunc{Ref([~azset.[0],~azset.[1],~azset.[2],~azset.[3]])},
+//\el,Pfunc{Ref([~elset.[0],~elset.[1],~elset.[2],~elset.[3]])},
 \scselect,Pfunc{~scaleselect},
 \rate,Pfunc{(1/~time)},
 \attack,Pfunc{~attack},
@@ -772,12 +808,21 @@ k.postln;
 ~attack=k/~time;
 },24);
 );
+~timu=1;
 (
-MIDIdef.cc(\midi_slider9,{ |val, num, chan, src|
+MIDIdef.cc(\midi_slider5,{ |val, num, chan, src|
 var tempo;
 tempo=val.linlin(0,127,1,128);
 tempo.postln;
-~time=1*tempo;
+~time=~timu*tempo;
+},25);
+);
+(
+MIDIdef.cc(\midi_slider9,{ |val, num, chan, src|
+var tempo;
+tempo=val.linlin(0,127,1/4,4);
+tempo.postln;
+~timu=tempo;
 //~clock=TempoClock.default.tempo_(~time);
 },29);
 );
