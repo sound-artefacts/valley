@@ -180,19 +180,6 @@ Out.kr(~controlBus_9.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+el4),mul
 );
 ///////////////////feed
 0.1.wait;
-~snt=Synth.new(\run).register;
-(
-{
-Routine({loop{
-//~azset=~az;
-//~elset=~el;
-~snt.set(\az1,~az.[0],\az2,~az.[1],\az3,~az.[2],\az4,~az.[3],\el1,~el.[0],\el2,~el.[1],\el3,~el.[2],\el4,~el.[3]);
-(~frames).wait
-}
-}).play;
-}.defer
-);
-0.1.wait;
 
 ///synth
 //az=#[0,0,0,0],el=#[0,0,0,0]
@@ -263,7 +250,7 @@ y = y*(cos(eln)*sin(azn*harmonic));
 z = z*(sin(eln*harmonic));
 
 //////perspective
-immersion = (level/1.5) / ((level/1.5) + z + ((level/1.5)/2));
+immersion = (level/1) / ((level/1) + z + ((level/1)/2));
 
 ////temperament
 tx = (trange*x);
@@ -462,12 +449,23 @@ Out.ar(busarray2.[0],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 //~sn=Pseq([0,5,7,12,17,19,24],inf).asStream;
 //~sn=7;
 //~sn=Pseq([2,7,4,9],inf).asStream;
-
+~snt=Synth.new(\run).register;
+(
+{
+Routine({loop{
+//~azset=~az;
+//~elset=~el;
+~snt.set(\az1,~az.[0],\az2,~az.[1],\az3,~az.[2],\az4,~az.[3],\el1,~el.[0],\el2,~el.[1],\el3,~el.[2],\el4,~el.[3]);
+(~frames).wait
+}
+}).play;
+}.defer
+);
 (
 {Routine({loop{
 ~setnote=~sn.next;
 ~snt.set(\set,~setnote);
-((~time+(~attack*3))/3).wait}
+(((1/~time)+(~attack*3))/3).wait}
 }).play;}.defer
 );
 
@@ -813,7 +811,7 @@ MIDIdef.cc(\midi_slider5,{ |val, num, chan, src|
 var tempo;
 tempo=val.linlin(0,127,1,128);
 tempo.postln;
-~time=~timu*tempo;
+~time=tempo;
 },25);
 );
 (
@@ -821,7 +819,7 @@ MIDIdef.cc(\midi_slider9,{ |val, num, chan, src|
 var tempo;
 tempo=val.linlin(0,127,1/4,4).round(1/4);
 tempo.postln;
-~time=~timu*tempo;
+~time=tempo;
 //~clock=TempoClock.default.tempo_(~time);
 },29);
 );
