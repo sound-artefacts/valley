@@ -40,8 +40,8 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 ///////tetrahedron
 (
 ~azimuth=[45.degrad,135.neg.degrad,45.neg.degrad,135.degrad];
-//~elevation=[35.264390.neg.degrad,35.264390.neg.degrad,35.264390.degrad,35.264390.degrad];
-~elevation=[0,0,0,0];
+~elevation=[35.264390.neg.degrad,35.264390.neg.degrad,35.264390.degrad,35.264390.degrad];
+//~elevation=[0,0,0,0];
 );
 
 /////////cube
@@ -186,7 +186,7 @@ Out.kr(~controlBus_9.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+el4),mul
 (
 SynthDef.new(\synth,{
 
-arg gain=0,fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,
+arg gain=0,fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,dist=1,
 	tone=1,hold=0.1,scselect=0,rate=1,attack=0.01,curve=4.neg,key=0,klevel=8;
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez,snt;
@@ -240,17 +240,17 @@ azn=az.[n].lag2(~lagtime);
 eln=el.[n].lag2(~lagtime);
 
 ///cardioid
-x = (harmonic*cos(eln)*cos(azn))+(cos(harmonic*(azn))*cos(harmonic*(azn)));
-y = (harmonic*cos(eln)*sin(azn))+(cos(harmonic*(azn))*sin(harmonic*(azn)));
-z = (harmonic*sin(eln))+(sin(harmonic*(eln)));
+//x = (harmonic*cos(eln)*cos(azn*harmonic))+(cos(harmonic*(azn*harmonic))*cos(harmonic*(azn*harmonic)));
+//y = (harmonic*cos(eln)*sin(azn*harmonic))+(cos(harmonic*(azn*harmonic))*sin(harmonic*(azn*harmonic)));
+z = (polytope*sin(eln))+(sin(polytope*(eln)));
 
 ////cartesian
-x = x*(cos(eln)*cos(azn*harmonic));
-y = y*(cos(eln)*sin(azn*harmonic));
-z = z*(sin(eln*harmonic));
+x = (cos(eln)*cos(azn*harmonic));
+y = (cos(eln)*sin(azn*harmonic));
+//z = (sin(eln*harmonic));
 
 //////perspective
-immersion = (level/1) / ((level/1) + z + ((level/1)/2));
+immersion = (level/dist) / ((level/dist) + z + ((level/dist)/2));
 
 ////temperament
 tx = (trange*x);
@@ -413,9 +413,10 @@ thresholdk=(((343/0.3)/tune).reciprocal.ampdb/2.sqrt).dbamp;
 gate=Compander.ar(gate,gate,thresholdk,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 gate1=Compander.ar(gate,gate1,thresholdk,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 
+Out.ar(busarray1.[0],LeakDC.ar(gate.softclip(2.dbamp)*kenv));
+Out.ar(busarray2.[0],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 Out.ar(busarray1.[1],LeakDC.ar(gate.softclip(2.dbamp)*kenv));
 Out.ar(busarray2.[1],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
-
 }).add;
 );
 
@@ -441,6 +442,7 @@ Out.ar(busarray2.[1],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 ~scaleselect=0;
 ~curve=4.neg;
 ~klevel=0.1;
+~dist=1;
 );
 
 ///melody
@@ -489,7 +491,9 @@ Pbind(\instrument, \synth,
 \attack,Pfunc{~attack},
 \curve,Pfunc{~curve},
 //\key,Pfunc{~setnote},
-\klevel,Pfunc{~klevel}
+\klevel,Pfunc{~klevel},
+\dist,Pfunc{~dist},
+
 )));
 ~pattern.play;
 
@@ -813,6 +817,14 @@ tempo=val.linlin(0,127,1,128);
 tempo.postln;
 ~time=tempo;
 },25);
+);
+(
+MIDIdef.cc(\midi_slider6,{ |val, num, chan, src|
+var dist;
+dist=val.linlin(0,127,1,10);
+dist.postln;
+~dist=dist;
+},26);
 );
 (
 MIDIdef.cc(\midi_slider9,{ |val, num, chan, src|
