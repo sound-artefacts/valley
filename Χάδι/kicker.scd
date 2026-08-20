@@ -191,7 +191,7 @@ arg gain=0,fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez,snt;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,thresholdk,note,senv,gate1;
-var n=0,polytope=3,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
+var n=0,polytope=2,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
 var az1=0,az2=0,az3=0,az4=0,el1=0,el2=0,el3=0,el4=0,az,el;
 
 ///inputs
@@ -395,16 +395,16 @@ b=Compander.ar(b,sigy,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 busarray1=[0,2,4,6];
 busarray2=[1,3,5,7];
 //busarray=[0,1,2,3];
-Out.ar(busarray1.[0],a.softclip(5)*env*senv);
-Out.ar(busarray2.[0],b.softclip(5)*env*senv);
+Out.ar(busarray1.[n],a.softclip(5)*env*senv);
+Out.ar(busarray2.[n],b.softclip(5)*env*senv);
 
 n=n+1;
 };
 
 ///kick////
 kenv=EnvGen.kr(Env.perc(attack, rate,curve:4.neg),1,levelScale:level*klevel);
-kpitch=EnvGen.kr(Env([tune*4, tune], [rate/10],[-16]));
-kfm=EnvGen.kr(Env([tune*32, 2], [rate/10], [-16]));
+kpitch=EnvGen.kr(Env([tune, tune/2], [rate/10],[-16]));
+kfm=EnvGen.kr(Env([tune*8, 2], [rate/10], [-16]));
 
 gate=FreeVerb.ar(HPF.ar(SinOsc.ar(kpitch+(SinOsc.ar(kpitch,phase:0)*kfm),phase:0,mul:level),16),0.33,room);
 gate1=FreeVerb.ar(HPF.ar(SinOsc.ar(kpitch+(SinOsc.ar(kpitch,phase:0.5pi)*kfm),phase:0.5pi,mul:level),16),0.33,room);
@@ -413,8 +413,8 @@ thresholdk=(((343/0.3)/tune).reciprocal.ampdb/2.sqrt).dbamp;
 gate=Compander.ar(gate,gate,thresholdk,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 gate1=Compander.ar(gate,gate1,thresholdk,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 
-Out.ar(busarray1.[0],LeakDC.ar(gate.softclip(2.dbamp)*kenv));
-Out.ar(busarray2.[0],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
+Out.ar(busarray1.[1],LeakDC.ar(gate.softclip(2.dbamp)*kenv));
+Out.ar(busarray2.[1],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 
 }).add;
 );
