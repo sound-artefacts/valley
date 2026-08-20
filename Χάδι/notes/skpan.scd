@@ -190,9 +190,9 @@ arg gain=0,fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,dist=1,
 	tone=1,hold=0.1,scselect=0,rate=1,attack=0.01,curve=4.neg,key=0,klevel=8;
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez,snt;
-var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,thresholdk,note,senv,gate1;
-var n=0,polytope=2,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
-var az1=0,az2=0,az3=0,az4=0,el1=0,el2=0,el3=0,el4=0,az,el,xp,yp,zp,kx,ky,kz;
+var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,spatx,spaty,spatz,thresholdk,note,senv,gate1;
+var n=0,polytope=4,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
+var az1=0,az2=0,az3=0,az4=0,el1=0,el2=0,el3=0,el4=0,az,el,xp,yp,zp,kx,ky,kz,spat,sx,sy,sz;
 
 ///inputs
 level=2.pow(gain.lag2(~lagtime)/16256);
@@ -239,22 +239,10 @@ env=EnvGen.ar(Env.new([0,1,0,1,0,1,0],
 azn=az.[n].lag2(~lagtime);
 eln=el.[n].lag2(~lagtime);
 
-///spat
-xp = (harmonic*cos(eln)*cos(azn))+(cos(harmonic*(azn))*cos(harmonic*(azn)));
-yp = (harmonic*cos(eln)*sin(azn))+(cos(harmonic*(azn))*sin(harmonic*(azn)));
-zp = (harmonic*sin(eln))+(sin(harmonic*(eln)));
+x = (cos(eln)*cos(azn));
+y = (cos(eln)*sin(azn));
+z = (sin(eln));
 
-kx = (cos(eln)*cos(azn*harmonic));
-ky = (cos(eln)*sin(azn*harmonic));
-kz = (sin(eln*harmonic));
-
-x=(xp*kx);
-y=(yp*ky);
-z=(zp*kz);
-
-//x = (cos(eln)*cos(azn));
-//y = (cos(eln)*sin(azn));
-//z = (sin(eln));
 
 //////perspective
 immersion = (level/dist) / ((level/dist) + z + ((level/dist)/2));
@@ -308,83 +296,25 @@ sigx=FreeVerb.ar((c1).fold2(overdrive*~comp),mix,room);
 sigy=FreeVerb.ar((c2).fold2(overdrive*~comp),mix,room);
 sigz=FreeVerb.ar((c3).fold2(~comp),mix,room);
 
-//panner
-/*(
-g1=((cos(eln)*cos(azn*harmonic)*
-cos(~elc.[0])*cos(~azc.[0]))
-+
-(cos(eln)*sin(azn*harmonic)*
- cos(~elc.[0])*sin(~azc.[0]))
-+
-(sin(eln*harmonic)*
-sin(~elc.[0])));
+//////panner
+xp = (harmonic*cos(eln)*cos(azn))+(cos(harmonic*(azn))*cos(harmonic*(azn)));
+yp = (harmonic*cos(eln)*sin(azn))+(cos(harmonic*(azn))*sin(harmonic*(azn)));
+zp = (harmonic*sin(eln))+(sin(harmonic*(eln)));
 
-g2=((cos(eln)*cos(azn*harmonic)*
-cos(~elc.[1])*cos(~azc.[1]))
-+
-(cos(eln)*sin(azn*harmonic)*
- cos(~elc.[1])*sin(~azc.[1]))
-+
-(sin(eln*harmonic)*
-sin(~elc.[1])));
+kx = (cos(eln)*cos(azn*harmonic));
+ky = (cos(eln)*sin(azn*harmonic));
+kz = (sin(eln*harmonic));
 
-g3=((cos(eln)*cos(azn*harmonic)*
-cos(~elc.[2])*cos(~azc.[2]))
-+
-(cos(eln)*sin(azn*harmonic)*
- cos(~elc.[2])*sin(~azc.[2]))
-+
-(sin(eln*harmonic)*
-sin(~elc.[2])));
+sx = (cos(~elevation.[n])*cos((~azimuth.[n])));
+sy = (cos(~elevation.[n])*sin((~azimuth.[n])));
+sz = (sin(~elevation.[n]));
 
-g4=((cos(eln)*cos(azn*harmonic)*
-cos(~elc.[3])*cos(~azc.[3]))
-+
-(cos(eln)*sin(azn*harmonic)*
- cos(~elc.[3])*sin(~azc.[3]))
-+
-(sin(eln*harmonic)*
-sin(~elc.[3])));
+spatx=(xp*kx).abs.max(0.1);
+spaty=(yp*ky).abs.max(0.1);
+spatz=(zp*kz).abs.max(0.1);
 
-g5=((cos(eln)*cos(azn*harmonic)*
-cos(~elc.[4])*cos(~azc.[4]))
-+
-(cos(eln)*sin(azn*harmonic)*
- cos(~elc.[4])*sin(~azc.[4]))
-+
-(sin(eln*harmonic)*
-sin(~elc.[4])));
+spat=(spatx*sx)+(spaty*sy)+(spatz*sz);
 
-g6=((cos(eln)*cos(azn*harmonic)*
-cos(~elc.[5])*cos(~azc.[5]))
-+
-(cos(eln)*sin(azn*harmonic)*
- cos(~elc.[5])*sin(~azc.[5]))
-+
-(sin(eln*harmonic)*
-sin(~elc.[5])));
-
-g7=((cos(eln)*cos(azn*harmonic)*
-cos(~elc.[6])*cos(~azc.[6]))
-+
-(cos(eln)*sin(azn*harmonic)*
- cos(~elc.[6])*sin(~azc.[6]))
-+
-(sin(eln*harmonic)*
-sin(~elc.[6])));
-
-g8=((cos(eln)*cos(azn*harmonic)*
-cos(~elc.[7])*cos(~azc.[7]))
-+
-(cos(eln)*sin(azn*harmonic)*
- cos(~elc.[7])*sin(~azc.[7]))
-+
-(sin(eln*harmonic)*
-sin(~elc.[7])));
-			);
-
-pan1=[g1,g3,g5,g7];
-pan2=[g2,g4,g6,g8];*/
 
 ///sig
 a=HPF.ar((LeakDC.ar((sigx)*((sigz).fold2(overdrive*~distortion)+(ampz)))),32);
@@ -401,8 +331,8 @@ b=Compander.ar(b,sigy,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 busarray1=[0,2,4,6];
 busarray2=[1,3,5,7];
 //busarray=[0,1,2,3];
-Out.ar(busarray1.[n],a.softclip(5)*env*senv);
-Out.ar(busarray2.[n],b.softclip(5)*env*senv);
+Out.ar(busarray1.[n],a.softclip(5)*env*senv*spat);
+Out.ar(busarray2.[n],b.softclip(5)*env*senv*spat);
 
 n=n+1;
 };
@@ -430,9 +360,9 @@ Out.ar(busarray2.[1],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 
 ///data
 (
-~time=2;
+~time=64;
 ~clock=TempoClock.default.tempo_(1);
-~attack=0.01/~time;
+~attack=0.001/~time;
 );
 (
 ~setnote=0;
@@ -447,7 +377,7 @@ Out.ar(busarray2.[1],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 ~tone=1;
 ~scaleselect=0;
 ~curve=4.neg;
-~klevel=0.1;
+~klevel=0.001;
 ~dist=1;
 );
 
