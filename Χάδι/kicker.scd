@@ -123,9 +123,9 @@ sph=sph.rotateYZ(~x.lag2(~lagtime)).rotateXZ(~y.lag2(~lagtime)).rotateXY(~z.lag2
 {var rot;
 Routine({loop{
 //rot=Spherical(~dur,~azr,~elr);
-~x=(~x+(~azr*((2pi-(2pi/~s))*(~frames/25)))).wrap(0,2pi);
-~y=(~y+(~azr*((2pi-(2pi/~s))*(~frames/25)))).wrap(0,2pi);
-~z=(~z+(~azr*((2pi-(2pi/~g))*(~frames/25)))).wrap(0,2pi);
+~x=(~x+(~azr*((2pi-(2pi/~s))*(~frames/16)))).wrap(0,2pi);
+~y=(~y+(~azr*((2pi-(2pi/~s))*(~frames/16)))).wrap(0,2pi);
+~z=(~z+(~azr*((2pi-(2pi/~g))*(~frames/16)))).wrap(0,2pi);
 (~frames).wait;
 };
 }).play;
@@ -252,7 +252,7 @@ overdrive=2.pow(drive.lag2(~lagtime)/16256);
 
 harmonic=harm;
 trange=mag.lag2(~lagtime);
-
+level=level;
 //sequencer
 snt=In.kr(~controlBus_1.index);
 //note=2.pow(key.lag2(~lagtime)/12);
@@ -294,9 +294,9 @@ r=~azimuthr.size.rand;
 ///reverb
 raz=~azimuthr.[r];
 rel=~elevationr.[r];
-rx =2.sqrt* ((harmonic*cos(rel)*cos(raz))+(cos(harmonic*(rel))*cos(harmonic*(raz)))).abs;
-ry =2.sqrt* ((harmonic*cos(rel)*sin(raz))+(cos(harmonic*(rel))*sin(harmonic*(raz)))).abs;
-rz =2.sqrt* ((harmonic*sin(rel))+(sin(harmonic*(rel)))).abs;
+rx=2.sqrt*((harmonic*cos(rel)*cos(raz))+(cos(harmonic*(rel))*cos(harmonic*(raz)))).abs;
+ry=2.sqrt*((harmonic*cos(rel)*sin(raz))+(cos(harmonic*(rel))*sin(harmonic*(raz)))).abs;
+rz=2.sqrt*((harmonic*sin(rel))+(sin(harmonic*(rel)))).abs;
 
 polytope.do{
 

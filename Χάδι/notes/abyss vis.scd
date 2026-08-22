@@ -72,7 +72,7 @@ Slider(w, Rect(920, 10, 10, 450)).action_{|me|
 (
 var data;
 var az=0,el=0,gold_r=((1+5.sqrt)/2);
-var sph,az1,el1,pl=0,mag,x,y,z,cardioid,n=1;
+var sph,az1,el1,pl=0,mag,x,y,z,cardioid,n=3;
 var run = true, ot=0,size=600,an1,an2,sph1,xp,yp,zp,kx,ky,kz;
 ~data=[];
 size=size*n.reciprocal;
@@ -100,13 +100,9 @@ xp = (n*cos(el)*cos(az))+(cos(n*(el))*cos(n*(az)));
 yp = (n*cos(el)*sin(az))+(cos(n*(el))*sin(n*(az)));
 zp = (n*sin(el))+(sin(n*(el)));
 
-kx = (cos(el)*cos(az*n));
-ky = (cos(el)*sin(az*n));
-kz = (sin(el*n));
-
-x=(xp*1);
-y=(yp*1);
-z=(zp*1);
+x=(xp);
+y=(yp);
+z=(zp*);
 
 		sph=Cartesian(x,y,z)*mag*size;
 
@@ -150,7 +146,7 @@ Pen.translate(400,400);
 /////////////
 (
 {
-var  sph1,sph2,sph3,sph4,sph5,sph6,sph7,m_x=1,m_y=1,m_z=1,qx,qy,mq=m_x-1;
+var  sph1,sph2,sph3,sph4,sph5,sph6,sph7,m_x=3,m_y=3,m_z=3,qx,qy,mq=m_x-1;
 var az1=0,el1=0,az2=0,el2=0,az3=0,el3=0,mag,mag_x,mag_y,mag_z,mag_qx,mag_qy;
 var az4=0,el4=0,az5=0,el5=0,az6=0,el6=0,az7=0,el7=0;
 var azimuth,elevation,magnitudex,magnitudey,magnitudez,angle=0,n=12;
