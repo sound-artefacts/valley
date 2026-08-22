@@ -294,8 +294,8 @@ r=~azimuthr.size.rand;
 ///reverb
 raz=~azimuthr.[r];
 rel=~elevationr.[r];
-rx =2.sqrt* ((harmonic*cos(rel)*cos(raz))+(cos(harmonic*(raz))*cos(harmonic*(raz)))).abs;
-ry =2.sqrt* ((harmonic*cos(rel)*sin(raz))+(cos(harmonic*(raz))*sin(harmonic*(raz)))).abs;
+rx =2.sqrt* ((harmonic*cos(rel)*cos(raz))+(cos(harmonic*(rel))*cos(harmonic*(raz)))).abs;
+ry =2.sqrt* ((harmonic*cos(rel)*sin(raz))+(cos(harmonic*(rel))*sin(harmonic*(raz)))).abs;
 rz =2.sqrt* ((harmonic*sin(rel))+(sin(harmonic*(rel)))).abs;
 
 polytope.do{
@@ -310,8 +310,8 @@ azn=az.[n].lag2(~lagtime);
 eln=el.[n].lag2(~lagtime);
 
 ///spat
-xp = (harmonic*cos(eln)*cos(azn))+(cos(harmonic*(azn))*cos(harmonic*(azn)));
-yp = (harmonic*cos(eln)*sin(azn))+(cos(harmonic*(azn))*sin(harmonic*(azn)));
+xp = (harmonic*cos(eln)*cos(azn))+(cos(harmonic*(eln))*cos(harmonic*(azn)));
+yp = (harmonic*cos(eln)*sin(azn))+(cos(harmonic*(eln))*sin(harmonic*(azn)));
 zp = (harmonic*sin(eln))+(sin(harmonic*(eln)));
 
 kx = (cos(eln)*cos(azn*harmonic));
