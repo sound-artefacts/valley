@@ -100,13 +100,13 @@ xp = (n*cos(el)*cos(az))+(cos(n*(el))*cos(n*(az)));
 yp = (n*cos(el)*sin(az))+(cos(n*(el))*sin(n*(az)));
 zp = (n*sin(el))+(sin(n*(el)));
 
-kx = (cos(eln)*cos(azn*n));
-ky = (cos(eln)*sin(azn*n));
-kz = (sin(eln*n));
+kx = (cos(el)*cos(az*n));
+ky = (cos(el)*sin(az*n));
+kz = (sin(el*n));
 
-x=(1*kx);
-y=(1*ky);
-z=(1*kz);
+x=(xp*1);
+y=(yp*1);
+z=(zp*1);
 
 		sph=Cartesian(x,y,z)*mag*size;
 

@@ -88,7 +88,7 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 ~azr=1;~elr=1;
 ~temperament=16256;
 ~lagtime=1/128;
-~frames=2048.reciprocal;
+~frames=1024.reciprocal;
 ~x=0;~y=0;~z=0;
 ~ffreq=16;
 ~window=110;
@@ -314,9 +314,9 @@ xp = (harmonic*cos(eln)*cos(azn))+(cos(harmonic*(eln))*cos(harmonic*(azn)));
 yp = (harmonic*cos(eln)*sin(azn))+(cos(harmonic*(eln))*sin(harmonic*(azn)));
 zp = (harmonic*sin(eln))+(sin(harmonic*(eln)));
 
-kx = (cos(eln)*cos(azn*harmonic));
-ky = (cos(eln)*sin(azn*harmonic));
-kz = (sin(eln*harmonic));
+kx=((Complex(cos(azn*harmonic),cos(azn*harmonic)).rho/(2.sqrt))*(Complex(cos(eln),cos(eln)).rho/(2.sqrt)));
+ky=((Complex(sin(azn*harmonic),sin(azn*harmonic)).rho/(2.sqrt))*(Complex(cos(eln),cos(eln)).rho/(2.sqrt)));
+kz=(Complex(sin(eln*harmonic),sin(eln*harmonic))).rho/(2.sqrt);
 
 x=(1*kx);
 y=(1*ky);
