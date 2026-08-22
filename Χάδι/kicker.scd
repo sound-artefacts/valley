@@ -88,7 +88,7 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 ~azr=1;~elr=1;
 ~temperament=16256;
 ~lagtime=1/128;
-~frames=512.reciprocal;
+~frames=2048.reciprocal;
 ~x=0;~y=0;~z=0;
 ~ffreq=16;
 ~window=110;
@@ -123,7 +123,7 @@ sph=sph.rotateYZ(~x.lag2(~lagtime)).rotateXZ(~y.lag2(~lagtime)).rotateXY(~z.lag2
 {var rot;
 Routine({loop{
 //rot=Spherical(~dur,~azr,~elr);
-~x=(~x+0).wrap(0,2pi);
+~x=(~x+(~azr*((2pi-(2pi/~s))*(~frames/25)))).wrap(0,2pi);
 ~y=(~y+(~azr*((2pi-(2pi/~s))*(~frames/25)))).wrap(0,2pi);
 ~z=(~z+(~azr*((2pi-(2pi/~g))*(~frames/25)))).wrap(0,2pi);
 (~frames).wait;
@@ -294,9 +294,9 @@ r=~azimuthr.size.rand;
 ///reverb
 raz=~azimuthr.[r];
 rel=~elevationr.[r];
-rx = (harmonic*cos(rel)*cos(raz))+(cos(harmonic*(raz))*cos(harmonic*(raz)));
-ry = (harmonic*cos(rel)*sin(raz))+(cos(harmonic*(raz))*sin(harmonic*(raz)));
-rz = (harmonic*sin(rel))+(sin(harmonic*(rel)));
+rx =2.sqrt* ((harmonic*cos(rel)*cos(raz))+(cos(harmonic*(raz))*cos(harmonic*(raz)))).abs;
+ry =2.sqrt* ((harmonic*cos(rel)*sin(raz))+(cos(harmonic*(raz))*sin(harmonic*(raz)))).abs;
+rz =2.sqrt* ((harmonic*sin(rel))+(sin(harmonic*(rel)))).abs;
 
 polytope.do{
 
@@ -797,7 +797,7 @@ hold.postln;
 (
 MIDIdef.cc(\midi_pot7,{ |val, num, chan, src|
 var r;
-r=val.linlin(0,127,0.5pi.neg,0.5pi);
+r=val.linlin(0,127,pi.neg,pi);
 ~azr=r;
 ~elr=r/2;
 r.postln;
