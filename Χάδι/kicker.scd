@@ -2,7 +2,7 @@
 (
 (
 s.options.numWireBufs = 1024*16;
-s.options.numOutputBusChannels=9;
+s.options.numOutputBusChannels=32;
 s.options.numInputBusChannels=0;
 s.options.memSize = 8192*256;
 s.options.blockSize = 64;
@@ -16,16 +16,47 @@ s.scope;
 );
 s.waitForBoot{
 Tdef(\drone, {
-///samplein
 
-0.1.wait;
 //////point arrays
-/*////l system boolean
+///massive expansion coordinates
+///for this array instead of simple comment out simple (tetrahedron) set frames less than 1/64 and set 32^2 iteration on rotation routine
+///also on synthdef larger polytope number and more ouput channels on bus array, also more control buses matrix on synthdef
+/*(
+{
+var az1=0,el1=0,az2=0,el2=0,angle=0;
+var silver_r=(1+2.sqrt), g=((1+5.sqrt)/2), azimuth, elevation;
+
+~azimuth=[]; ~elevation=[];
+
+32.do{
+    azimuth = 32.collect{
+        az1 = (az1 + (2pi-(2pi/silver_r))).wrap(pi.neg,pi);
+        el1 = (el1 + (pi-(pi/g))).wrap((pi/2).neg,(pi/2));
+        (az1 + angle).wrap(pi.neg,pi)
+    };
+
+    elevation = 32.collect{
+        az2 = (az2 + (2pi-(2pi/silver_r))).wrap(pi.neg,pi);
+        el2 = (el2 + (pi-(pi/g))).wrap((pi/2).neg,(pi/2));
+        (el2 + angle).wrap((pi/2).neg,(pi/2))
+    };
+
+    angle = (angle + (2pi-(2pi/silver_r))).wrap(pi.neg,pi);
+
+    ~azimuth = ~azimuth ++ azimuth;
+    ~elevation = ~elevation ++ elevation;
+
+    az1=0; el1=0;
+    az2=0; el2=0;
+};
+}.value;
+);		0.1.wait;*/
+/////l system boolean
 ({
 var dict = IdentityDictionary[\A -> "AB", \B -> "A"];
 var word = "A";
 var string_temp = "";
-var iter = 5;
+var iter = 16;
 var dictnotes = IdentityDictionary[\A ->0, \B -> 1];
  ~lseq=[];
 iter.do({
@@ -35,16 +66,16 @@ word.postln;
 word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 ~lseq.postln;
 }.value);
-0.1.wait;*/
+0.1.wait;
 
-///////tetrahedron
+///////tetrahedron simple setup
 (
 ~azimuth=[45.degrad,135.neg.degrad,45.neg.degrad,135.degrad];
 ~elevation=[35.264390.neg.degrad,35.264390.neg.degrad,35.264390.degrad,35.264390.degrad];
 //~elevation=[0,0,0,0];
 );
 
-/////////cube
+///////// pan on cube arrasy
 (
 ~azc=[45.degrad,135.degrad,45.neg.degrad,135.neg.degrad,45.degrad,135.degrad,45.neg.degrad,135.neg.degrad];
 ~elc=[35.264390.neg.degrad,35.264390.neg.degrad,35.264390.neg.degrad,35.264390.neg.degrad,35.264390.degrad,35.264390.degrad,35.264390.degrad,35.264390.degrad];
@@ -56,7 +87,7 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 ~azr=1;~elr=1;
 ~temperament=16256;
 ~lagtime=1/128;
-~frames=2048.reciprocal;
+~frames=64.reciprocal;
 ~x=0;~y=0;~z=0;
 ~ffreq=16;
 ~window=110;
@@ -68,10 +99,10 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 
 //////////rotation
 (
-{var sph,az,el,n;
+{var sph,az,el,n,bamk=2.pow(2);
 Routine({loop{
 n=0;~az=[];~el=[];
-4.do{
+bamk.do{
 az=~azimuth.[n];
 el=~elevation.[n];
 n=n+1;
@@ -163,10 +194,18 @@ nn=1.neg;
 ~controlBus_7=Bus.control(s,1);
 ~controlBus_8=Bus.control(s,1);
 ~controlBus_9=Bus.control(s,1);
+~controlBus_10=Bus.control(s,1);
+~controlBus_11=Bus.control(s,1);
+~controlBus_12=Bus.control(s,1);
+~controlBus_13=Bus.control(s,1);
+~controlBus_14=Bus.control(s,1);
+~controlBus_15=Bus.control(s,1);
+~controlBus_16=Bus.control(s,1);
+~controlBus_17=Bus.control(s,1);
 
 (
 SynthDef.new(\run,{
-arg set=0,az1=0,az2=0,az3=0,az4=0,el1=0,el2=0,el3=0,el4=0;
+arg set=0,az1=0,az2=0,az3=0,az4=0,el1=0,el2=0,el3=0,el4=0,az5=0,az6=0,az7=0,az8=0,el5=0,el6=0,el7=0,el8=0;
 Out.kr(~controlBus_1.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+set).round(1),mul:set.sign));
 Out.kr(~controlBus_2.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+az1),mul:az1.sign));
 Out.kr(~controlBus_3.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+az2),mul:az2.sign));
@@ -176,6 +215,14 @@ Out.kr(~controlBus_6.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+el1),mul
 Out.kr(~controlBus_7.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+el2),mul:el2.sign));
 Out.kr(~controlBus_8.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+el3),mul:el3.sign));
 Out.kr(~controlBus_9.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+el4),mul:el4.sign));
+Out.kr(~controlBus_10.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+az5),mul:az5.sign));
+Out.kr(~controlBus_11.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+az6),mul:az6.sign));
+Out.kr(~controlBus_12.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+az7),mul:az7.sign));
+Out.kr(~controlBus_13.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+az8),mul:az8.sign));
+Out.kr(~controlBus_14.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+el5),mul:el5.sign));
+Out.kr(~controlBus_15.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+el6),mul:el6.sign));
+Out.kr(~controlBus_16.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+el7),mul:el7.sign));
+Out.kr(~controlBus_17.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+el8),mul:el8.sign));
 }).add;
 );
 ///////////////////feed
@@ -186,13 +233,14 @@ Out.kr(~controlBus_9.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+el4),mul
 (
 SynthDef.new(\synth,{
 
-arg gain=0,fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,dist=1,
+arg gain=0,fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,dist=1,lsystem=1,
 	tone=1,hold=0.1,scselect=0,rate=1,attack=0.01,curve=4.neg,key=0,klevel=8;
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez,snt;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,thresholdk,note,senv,gate1;
 var n=0,polytope=2,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
 var az1=0,az2=0,az3=0,az4=0,el1=0,el2=0,el3=0,el4=0,az,el,xp,yp,zp,kx,ky,kz;
+var az5=0,az6=0,az7=0,az8=0,el5=0,el6=0,el7=0,el8=0;
 
 ///inputs
 level=2.pow(gain.lag2(~lagtime)/16256);
@@ -218,9 +266,17 @@ el1=In.kr(~controlBus_5.index);
 el2=In.kr(~controlBus_6.index);
 el3=In.kr(~controlBus_7.index);
 el4=In.kr(~controlBus_8.index);
+az5=In.kr(~controlBus_1.index);
+az6=In.kr(~controlBus_2.index);
+az7=In.kr(~controlBus_3.index);
+az8=In.kr(~controlBus_4.index);
+el5=In.kr(~controlBus_5.index);
+el6=In.kr(~controlBus_6.index);
+el7=In.kr(~controlBus_7.index);
+el8=In.kr(~controlBus_8.index);
 
-az=[az1,az2,az3,az4];
-el=[el1,el2,el3,el4];
+az=[az1,az2,az3,az4,az5,az6,az7,az8];
+el=[el1,el2,el3,el4,el5,el6,el7,el8];
 
 ///pitch
 fund=c*tune;
@@ -231,7 +287,7 @@ pitchy=2.pow(Select.kr((pitch.imag*~note).abs,Select.kr(scselect,~scale))/12);
 polytope.do{
 
 //env fft
-senv=EnvGen.kr(Env([0,1,0],[attack,rate+(attack*2)],[2,32]));
+senv=EnvGen.kr(Env([0,1,0],[attack,rate+(attack*2)],[32.neg,32]),gate:lsystem);
 env=EnvGen.ar(Env.new([0,1,0,1,0,1,0],
 [attack,(rate/3),attack,(rate/3),attack,(rate/3)],[curve]),doneAction:2).lag(3/1000);
 //env=1;
@@ -398,13 +454,24 @@ a=Compander.ar(a,sigx,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 b=Compander.ar(b,sigy,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 
 ///out
-busarray1=[0,2,4,6];
-busarray2=[1,3,5,7];
+busarray1=[0,2,4,6,8,10,12,14];
+busarray2=[1,3,5,7,9,11,13,15];
 //busarray=[0,1,2,3];
 Out.ar(busarray1.[n],a.softclip(5)*env*senv);
 Out.ar(busarray2.[n],b.softclip(5)*env*senv);
 
+//formants
+/*(
+Out.ar(busarray1.[n],BPF.ar(a.softclip(5),730,0.01,0.dbamp)*env*senv);
+Out.ar(busarray2.[n],BPF.ar(b.softclip(5),730,0.01,0.dbamp)*env*senv);
+Out.ar(busarray1.[n],BPF.ar(a.softclip(5),1090,0.01,0.neg.dbamp)*env*senv);
+Out.ar(busarray2.[n],BPF.ar(b.softclip(5),1090,0.01,0.neg.dbamp)*env*senv);
+Out.ar(busarray1.[n],BPF.ar(a.softclip(5),2440,0.01,0.neg.dbamp)*env*senv);
+Out.ar(busarray2.[n],BPF.ar(b.softclip(5),2440,0.01,0.neg.dbamp)*env*senv);
+					)*/
+
 n=n+1;
+
 };
 
 ///kick////
@@ -430,7 +497,7 @@ Out.ar(busarray2.[1],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 
 ///data
 (
-~time=2;
+~time=1;
 ~clock=TempoClock.default.tempo_(1);
 ~attack=0.01/~time;
 );
@@ -449,13 +516,15 @@ Out.ar(busarray2.[1],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 ~curve=4.neg;
 ~klevel=0.1;
 ~dist=1;
+~lseq=[1];
 );
 
 ///melody
+~sn=10;
 ~sn=Pseq([7,10,8,9,11,12],inf).asStream;
 ~sn=Pseq([7,10,14,9,12,16],inf).asStream;
 //~sn=Pseq([0,5,7,12,17,19,24],inf).asStream;
-//~sn=7;
+
 //~sn=Pseq([2,7,4,9],inf).asStream;
 ~snt=Synth.new(\run).register;
 (
@@ -463,7 +532,8 @@ Out.ar(busarray2.[1],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 Routine({loop{
 //~azset=~az;
 //~elset=~el;
-~snt.set(\az1,~az.[0],\az2,~az.[1],\az3,~az.[2],\az4,~az.[3],\el1,~el.[0],\el2,~el.[1],\el3,~el.[2],\el4,~el.[3]);
+~snt.set(\az1,~az.[0],\az2,~az.[1],\az3,~az.[2],\az4,~az.[3],\el1,~el.[0],\el2,~el.[1],\el3,~el.[2],\el4,~el.[3],
+	\az5,~az.[4],\az6,~az.[5],\az7,~az.[6],\az8,~az.[7],\el5,~el.[4],\el6,~el.[5],\el7,~el.[6],\el8,~el.[7]);
 (~frames).wait
 }
 }).play;
@@ -499,7 +569,7 @@ Pbind(\instrument, \synth,
 //\key,Pfunc{~setnote},
 \klevel,Pfunc{~klevel},
 \dist,Pfunc{~dist},
-
+\lsystem,Pseq(~lseq,inf),
 )));
 ~pattern.play;
 
