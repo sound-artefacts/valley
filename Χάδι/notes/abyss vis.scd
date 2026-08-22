@@ -72,19 +72,19 @@ Slider(w, Rect(920, 10, 10, 450)).action_{|me|
 (
 var data;
 var az=0,el=0,gold_r=((1+5.sqrt)/2);
-var sph,az1,el1,pl=0,mag,x,y,z,cardioid,n=3;
+var sph,az1,el1,pl=0,mag,x,y,z,cardioid,n=18;
 var run = true, ot=0,size=600,an1,an2,sph1,xp,yp,zp,kx,ky,kz;
 ~data=[];
 size=size*n.reciprocal;
 1.do{
 
-data = (32*32).collect{
+data = (128*128).collect{
 
 	az=~az.[pl];
 	el=~el.[pl];
 	//mag=1000;
 	// mag=(Cartesian(~magx.[pl],~magy.[pl],~magz.[pl]).rho/(2.sqrt))+(Cartesian(~qx.[pl],~qy.[pl],~magz.[pl]).rho/(2.sqrt));
-				 mag=(Cartesian(~magx.[pl],~magy.[pl],~magz.[pl]).rho/(2.sqrt));
+				 //mag=(Cartesian(~magx.[pl],~magy.[pl],~magz.[pl]).rho/(2.sqrt));
 			// mag=(Cartesian(~qx.[pl],0,0).rho/(2.sqrt));
 		//mag=1;
 		// mag=~magz.[pl];
@@ -102,9 +102,9 @@ zp = (n*sin(el))+(sin(n*(el)));
 
 x=(xp);
 y=(yp);
-z=(zp*);
+z=(zp);
 
-		sph=Cartesian(x,y,z)*mag*size;
+		sph=Cartesian(x,y,z)*size;
 
 	//x=sph.x.clip2(size/2);
 	//y=sph.y.clip2(size/2);
@@ -157,8 +157,8 @@ var mag1=1,mag2=1,mag3=1,mag4=1,mag5=1,mag6=1,mag7=1;
 
 //	spread = if(m_z < 1) { 1 / m_z } { m_z };
 
-	32.do{
-azimuth=32.collect{
+	128.do{
+azimuth=128.collect{
 			az1 = (az1+(2pi-(2pi/silver_r))).wrap(pi.neg,pi);
 		   el1 = (el1+(pi-(pi/silver_r))).wrap((pi/2).neg,(pi/2));
 
@@ -167,7 +167,7 @@ sph1=(Spherical(mag1,(az1+angle).wrap(pi.neg,pi),(el1+angle).wrap((pi/2).neg,(pi
 
 	};
 
-elevation=32.collect{
+elevation=128.collect{
 				az2 = (az2+(2pi-(2pi/silver_r))).wrap(pi.neg,pi);
 			el2 = (el2+(pi-(pi/silver_r))).wrap((pi/2).neg,(pi/2));
 
