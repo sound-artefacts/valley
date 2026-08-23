@@ -123,9 +123,9 @@ sph=sph.rotateYZ(~x.lag2(~lagtime)).rotateXZ(~y.lag2(~lagtime)).rotateXY(~z.lag2
 {var rot;
 Routine({loop{
 //rot=Spherical(~dur,~azr,~elr);
-~x=(~x+(~azr*((2pi-(2pi/~s))*(~frames/16)))).wrap(0,2pi);
-~y=(~y+(~azr*((2pi-(2pi/~s))*(~frames/16)))).wrap(0,2pi);
-~z=(~z+(~azr*((2pi-(2pi/~g))*(~frames/16)))).wrap(0,2pi);
+~x=(~x+(~azr*((2pi-(2pi/~s))*(~frames/64)))).wrap(0,2pi);
+~y=(~y+(~azr*((2pi-(2pi/~s))*(~frames/64)))).wrap(0,2pi);
+~z=(~z+(~azr*((2pi-(2pi/~g))*(~frames/64)))).wrap(0,2pi);
 (~frames).wait;
 };
 }).play;
@@ -239,7 +239,7 @@ arg gain=0,fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,dist=1,lsystem=
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez,snt;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,thresholdk,note,senv,gate1;
-var n=0,polytope=2,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
+var n=0,polytope=3,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
 var az1=0,az2=0,az3=0,az4=0,el1=0,el2=0,el3=0,el4=0,az,el,xp,yp,zp,kx,ky,kz;
 var az5=0,az6=0,az7=0,az8=0,el5=0,el6=0,el7=0,el8=0,rbank=7,raz,rel,rx,ry,rz,r=0;
 
@@ -309,17 +309,17 @@ azn=az.[n].lag2(~lagtime);
 eln=el.[n].lag2(~lagtime);
 
 ///spat
-xp = ((harmonic*cos(eln)*cos(azn))+(cos(harmonic*(eln))*cos(harmonic*(azn))))/2.sqrt;
-yp = ((harmonic*cos(eln)*sin(azn))+(cos(harmonic*(eln))*sin(harmonic*(azn))))/2.sqrt;
-zp = ((harmonic*sin(eln))+(sin(harmonic*(eln))))/2.sqrt;
+xp = ((harmonic*cos(eln)*cos(azn))+(cos(harmonic*(eln))*cos(harmonic*(azn))))/harmonic;
+yp = ((harmonic*cos(eln)*sin(azn))+(cos(harmonic*(eln))*sin(harmonic*(azn))))/harmonic;
+zp = ((harmonic*sin(eln))+(sin(harmonic*(eln))))/harmonic;
 
 kx=((Complex(cos(azn*harmonic),cos(azn*harmonic)).rho/(2.sqrt))*(Complex(cos(eln),cos(eln)).rho/(2.sqrt)));
 ky=((Complex(sin(azn*harmonic),sin(azn*harmonic)).rho/(2.sqrt))*(Complex(cos(eln),cos(eln)).rho/(2.sqrt)));
 kz=(Complex(sin(eln*harmonic),sin(eln*harmonic))).rho/(2.sqrt);
 
-x=(1*kx);
-y=(1*ky);
-z=(1*kz);
+x=(xp*kx);
+y=(yp*ky);
+z=(zp*kz);
 
 //x = (cos(eln)*cos(azn));
 //y = (cos(eln)*sin(azn));
@@ -373,9 +373,9 @@ c2=c2.lag2(~signalSize.reciprocal)*
 //(LPF.ar(Saw.ar(tune,(ampz)),tune*64*overdrive).fold2(mix*0.05)+((ampz)));
 
 ///rev
-sigx=FreeVerb.ar((c1).fold2(overdrive*~comp),rx.abs,revroom);
-sigy=FreeVerb.ar((c2).fold2(overdrive*~comp),ry.abs,revroom);
-sigz=FreeVerb.ar((c3).fold2(~comp),rz.abs,revroom);
+sigx=FreeVerb.ar((c1).fold2(overdrive*~comp),rx.abs,revroom,mul:2.pow((rx*12)/12));
+sigy=FreeVerb.ar((c2).fold2(overdrive*~comp),ry.abs,revroom,mul:2.pow((ry*12)/12));
+sigz=FreeVerb.ar((c3).fold2(~comp),rz.abs,revroom,mul:2.pow((rz*12)/12));
 
 //vbap panner
 /*(
@@ -495,20 +495,20 @@ kenv=EnvGen.kr(Env.perc(attack, rate,curve:4.neg),1,levelScale:level*klevel*2);
 kpitch=EnvGen.kr(Env([tune, tune/2], [rate/10],[-16]));
 kfm=EnvGen.kr(Env([tune*8, 2], [rate/10], [-16]));
 
-gate=FreeVerb.ar(HPF.ar(SinOsc.ar(kpitch+(SinOsc.ar(kpitch,phase:0)*kfm),phase:0,mul:level),16),rz.abs,revroom);
-gate1=FreeVerb.ar(HPF.ar(SinOsc.ar(kpitch+(SinOsc.ar(kpitch,phase:0.5pi)*kfm),phase:0.5pi,mul:level),16),rz.abs,revroom);
+gate=FreeVerb.ar(HPF.ar(SinOsc.ar(kpitch+(SinOsc.ar(kpitch,phase:0)*kfm),phase:0,mul:level),16),rz.abs,revroom,mul:2.pow((rz*12)/12));
+gate1=FreeVerb.ar(HPF.ar(SinOsc.ar(kpitch+(SinOsc.ar(kpitch,phase:0.5pi)*kfm),phase:0.5pi,mul:level),16),rz.abs,revroom,mul:2.pow((rz*12)/12));
 
 thresholdk=(((343/0.3)/tune).reciprocal.ampdb/2.sqrt).dbamp;
 gate=Compander.ar(gate,gate,thresholdk,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 gate1=Compander.ar(gate,gate1,thresholdk,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 
-//Out.ar(busarray1.[0],LeakDC.ar(gate.softclip(2.dbamp)*kenv));
-//Out.ar(busarray2.[0],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
+Out.ar(busarray1.[0],LeakDC.ar(gate.softclip(2.dbamp)*kenv));
+Out.ar(busarray2.[0],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 //Out.ar(busarray1.[1],LeakDC.ar(gate.softclip(2.dbamp)*kenv));
 //Out.ar(busarray2.[1],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 //quad out
-Out.ar(0,Pan4.ar(gate.softclip(2.dbamp),rx,rz,kenv));
-Out.ar(0,Pan4.ar(gate1.softclip(2.dbamp),rz,ry,kenv));
+///Out.ar(0,Pan4.ar(gate.softclip(2.dbamp),rx,rz,kenv));
+//Out.ar(0,Pan4.ar(gate1.softclip(2.dbamp),rz,ry,kenv));
 
 };
 
