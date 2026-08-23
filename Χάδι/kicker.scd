@@ -294,9 +294,9 @@ r=~azimuthr.size.rand;
 ///reverb
 raz=~azimuthr.[r];
 rel=~elevationr.[r];
-rx=2.sqrt*((harmonic*cos(rel)*cos(raz))+(cos(harmonic*(rel))*cos(harmonic*(raz)))).abs;
-ry=2.sqrt*((harmonic*cos(rel)*sin(raz))+(cos(harmonic*(rel))*sin(harmonic*(raz)))).abs;
-rz=2.sqrt*((harmonic*sin(rel))+(sin(harmonic*(rel)))).abs;
+rx=(((harmonic*2)*cos(rel)*cos(raz))+(cos((harmonic*2)*(rel))*cos((harmonic*2)*(raz))))/2.sqrt/harmonic;
+ry=(((harmonic*2)*cos(rel)*sin(raz))+(cos((harmonic*2)*(rel))*sin((harmonic*2)*(raz))))/2.sqrt/harmonic;
+rz=(((harmonic*2)*sin(rel))+(sin((harmonic*2)*(rel))))/2.sqrt/harmonic;
 
 polytope.do{
 
@@ -304,15 +304,14 @@ polytope.do{
 senv=EnvGen.kr(Env([0,1,0],[attack,rate+(attack*2)],[32.neg,32]),gate:lsystem);
 env=EnvGen.ar(Env.new([0,1,0,1,0,1,0],
 [attack,(rate/3),attack,(rate/3),attack,(rate/3)],[curve]),doneAction:2).lag(3/1000);
-//env=1;
 
 azn=az.[n].lag2(~lagtime);
 eln=el.[n].lag2(~lagtime);
 
 ///spat
-xp = (harmonic*cos(eln)*cos(azn))+(cos(harmonic*(eln))*cos(harmonic*(azn)));
-yp = (harmonic*cos(eln)*sin(azn))+(cos(harmonic*(eln))*sin(harmonic*(azn)));
-zp = (harmonic*sin(eln))+(sin(harmonic*(eln)));
+xp = ((harmonic*cos(eln)*cos(azn))+(cos(harmonic*(eln))*cos(harmonic*(azn))))/2.sqrt;
+yp = ((harmonic*cos(eln)*sin(azn))+(cos(harmonic*(eln))*sin(harmonic*(azn))))/2.sqrt;
+zp = ((harmonic*sin(eln))+(sin(harmonic*(eln))))/2.sqrt;
 
 kx=((Complex(cos(azn*harmonic),cos(azn*harmonic)).rho/(2.sqrt))*(Complex(cos(eln),cos(eln)).rho/(2.sqrt)));
 ky=((Complex(sin(azn*harmonic),sin(azn*harmonic)).rho/(2.sqrt))*(Complex(cos(eln),cos(eln)).rho/(2.sqrt)));
@@ -374,11 +373,11 @@ c2=c2.lag2(~signalSize.reciprocal)*
 //(LPF.ar(Saw.ar(tune,(ampz)),tune*64*overdrive).fold2(mix*0.05)+((ampz)));
 
 ///rev
-sigx=FreeVerb.ar((c1).fold2(overdrive*~comp),rx,revroom);
-sigy=FreeVerb.ar((c2).fold2(overdrive*~comp),ry,revroom);
-sigz=FreeVerb.ar((c3).fold2(~comp),rz,revroom);
+sigx=FreeVerb.ar((c1).fold2(overdrive*~comp),rx.abs,revroom);
+sigy=FreeVerb.ar((c2).fold2(overdrive*~comp),ry.abs,revroom);
+sigz=FreeVerb.ar((c3).fold2(~comp),rz.abs,revroom);
 
-//panner
+//vbap panner
 /*(
 g1=((cos(eln)*cos(azn*harmonic)*
 cos(~elc.[0])*cos(~azc.[0]))
@@ -467,12 +466,16 @@ threshold=(((343/0.3)/tune).reciprocal.ampdb/2.sqrt).dbamp;
 a=Compander.ar(a,sigx,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 b=Compander.ar(b,sigy,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 
-///out
+///stereo outs
 busarray1=[0,2,4,6,8,10,12,14];
 busarray2=[1,3,5,7,9,11,13,15];
 //busarray=[0,1,2,3];
 Out.ar(busarray1.[n],a.softclip(5)*env*senv);
 Out.ar(busarray2.[n],b.softclip(5)*env*senv);
+
+//quad out
+//Out.ar(0,Pan4.ar(a.softclip(5),rx,rz,env*senv));
+//Out.ar(0,Pan4.ar(b.softclip(5),rz,ry,env*senv));
 
 //formants
 /*(
@@ -488,28 +491,31 @@ n=n+1;
 };
 
 ///kick////
-kenv=EnvGen.kr(Env.perc(attack, rate,curve:4.neg),1,levelScale:level*klevel);
+kenv=EnvGen.kr(Env.perc(attack, rate,curve:4.neg),1,levelScale:level*klevel*2);
 kpitch=EnvGen.kr(Env([tune, tune/2], [rate/10],[-16]));
 kfm=EnvGen.kr(Env([tune*8, 2], [rate/10], [-16]));
 
-gate=FreeVerb.ar(HPF.ar(SinOsc.ar(kpitch+(SinOsc.ar(kpitch,phase:0)*kfm),phase:0,mul:level),16),rz,revroom);
-gate1=FreeVerb.ar(HPF.ar(SinOsc.ar(kpitch+(SinOsc.ar(kpitch,phase:0.5pi)*kfm),phase:0.5pi,mul:level),16),rz,revroom);
+gate=FreeVerb.ar(HPF.ar(SinOsc.ar(kpitch+(SinOsc.ar(kpitch,phase:0)*kfm),phase:0,mul:level),16),rz.abs,revroom);
+gate1=FreeVerb.ar(HPF.ar(SinOsc.ar(kpitch+(SinOsc.ar(kpitch,phase:0.5pi)*kfm),phase:0.5pi,mul:level),16),rz.abs,revroom);
 
 thresholdk=(((343/0.3)/tune).reciprocal.ampdb/2.sqrt).dbamp;
 gate=Compander.ar(gate,gate,thresholdk,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 gate1=Compander.ar(gate,gate1,thresholdk,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 
-Out.ar(busarray1.[0],LeakDC.ar(gate.softclip(2.dbamp)*kenv));
-Out.ar(busarray2.[0],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
-Out.ar(busarray1.[1],LeakDC.ar(gate.softclip(2.dbamp)*kenv));
-Out.ar(busarray2.[1],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
+//Out.ar(busarray1.[0],LeakDC.ar(gate.softclip(2.dbamp)*kenv));
+//Out.ar(busarray2.[0],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
+//Out.ar(busarray1.[1],LeakDC.ar(gate.softclip(2.dbamp)*kenv));
+//Out.ar(busarray2.[1],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
+//quad out
+Out.ar(0,Pan4.ar(gate.softclip(2.dbamp),rx,rz,kenv));
+Out.ar(0,Pan4.ar(gate1.softclip(2.dbamp),rz,ry,kenv));
 
 };
 
 }).add;
 );
 
-5.wait;
+3.wait;
 
 ///data
 (
@@ -678,7 +684,7 @@ value=obj.value.linlin(0,1,(16256*8).neg,16256*4).round(1).postln;
 ~sl6=Knob.new(~vw1, Rect.new(50,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
-value=obj.value.linlin(0,1,1,5).round(1).postln;
+value=obj.value.linlin(0,1,1,16).round(1).postln;
 //~synth.set(\harm,value);
 ~harm=value;
 ~log1.(value.asString);
