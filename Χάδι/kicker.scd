@@ -241,10 +241,10 @@ var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,thresholdk,note,senv,gate1;
 var n=0,polytope=2,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
 var az1=0,az2=0,az3=0,az4=0,el1=0,el2=0,el3=0,el4=0,az,el,xp,yp,zp,kx,ky,kz;
-var az5=0,az6=0,az7=0,az8=0,el5=0,el6=0,el7=0,el8=0,rbank=14,raz,rel,rx,ry,rz,r=0;
+var az5=0,az6=0,az7=0,az8=0,el5=0,el6=0,el7=0,el8=0,rbank=7,raz,rel,rx,ry,rz,r=0;
 
 ///inputs
-level=2.pow(gain.lag2(~lagtime)/16256)/(rbank/4);
+level=2.pow(gain.lag2(~lagtime)/16256)/(1);
 c=2.pow(fundamental.lag2(~lagtime)/16256);
 res=2.pow(resonanse.lag2(~lagtime)/16256);
 revroom=2.pow(room.lag2(~lagtime)/16256);
@@ -294,9 +294,9 @@ r=~azimuthr.size.rand;
 ///reverb
 raz=~azimuthr.[r];
 rel=~elevationr.[r];
-rx=(((harmonic*2)*cos(rel)*cos(raz))+(cos((harmonic*2)*(rel))*cos((harmonic*2)*(raz))))/2.sqrt/harmonic;
-ry=(((harmonic*2)*cos(rel)*sin(raz))+(cos((harmonic*2)*(rel))*sin((harmonic*2)*(raz))))/2.sqrt/harmonic;
-rz=(((harmonic*2)*sin(rel))+(sin((harmonic*2)*(rel))))/2.sqrt/harmonic;
+rx=(((harmonic*2)*cos(rel)*cos(raz))+(cos((harmonic*2)*(rel))*cos((harmonic*2)*(raz))))/harmonic;
+ry=(((harmonic*2)*cos(rel)*sin(raz))+(cos((harmonic*2)*(rel))*sin((harmonic*2)*(raz))))/harmonic;
+rz=(((harmonic*2)*sin(rel))+(sin((harmonic*2)*(rel))))/harmonic;
 
 polytope.do{
 
