@@ -317,13 +317,13 @@ kx=((Complex(cos(azn*harmonic),cos(azn*harmonic)).rho/(2.sqrt))*(Complex(cos(eln
 ky=((Complex(sin(azn*harmonic),sin(azn*harmonic)).rho/(2.sqrt))*(Complex(cos(eln),cos(eln)).rho/(2.sqrt)));
 kz=(Complex(sin(eln*harmonic),sin(eln*harmonic))).rho/(2.sqrt);
 
-x=(1*xp);
-y=(1*yp);
-z=(1*zp);
-
 //x = (cos(eln)*cos(azn));
 //y = (cos(eln)*sin(azn));
 //z = (sin(eln));
+
+x=(1*kx);
+y=(1*ky);
+z=(1*kz);
 
 //////perspective
 immersion = (level/dist) / ((level/dist) + z + ((level/dist)/2));
@@ -489,11 +489,10 @@ Out.ar(busarray2.[n],BPF.ar(b.softclip(5),2440,0.01,0.neg.dbamp)*env*senv);
 
 n=n+1;
 };
-
 ///kick////
-kenv=EnvGen.kr(Env.perc(attack, rate,curve:4.neg),1,levelScale:level*klevel*2);
-kpitch=EnvGen.kr(Env([tune, tune/2], [rate/10],[-16]));
-kfm=EnvGen.kr(Env([tune*8, 2], [rate/10], [-16]));
+kenv=EnvGen.kr(Env.perc(attack, rate+(attack*2),curve:4.neg),1,levelScale:level*klevel*2);
+kpitch=EnvGen.kr(Env([tune, tune/2], [rate+(attack*2)/10],[-16]));
+kfm=EnvGen.kr(Env([tune*8, 2], [rate+(attack*2)/10], [-16]));
 
 gate=FreeVerb.ar(HPF.ar(SinOsc.ar(kpitch+(SinOsc.ar(kpitch,phase:0)*kfm),phase:0,mul:level),16),rz.abs,revroom,mul:2.pow((rz*12)/12));
 gate1=FreeVerb.ar(HPF.ar(SinOsc.ar(kpitch+(SinOsc.ar(kpitch,phase:0.5pi)*kfm),phase:0.5pi,mul:level),16),rz.abs,revroom,mul:2.pow((rz*12)/12));
@@ -509,7 +508,6 @@ Out.ar(busarray2.[0],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 //quad out
 ///Out.ar(0,Pan4.ar(gate.softclip(2.dbamp),rx,rz,kenv));
 //Out.ar(0,Pan4.ar(gate1.softclip(2.dbamp),rz,ry,kenv));
-
 };
 
 }).add;
@@ -542,11 +540,10 @@ Out.ar(busarray2.[0],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 );
 
 ///melody
-~sn=10;
-~sn=Pseq([7,10,8,9,11,12],inf).asStream;
-~sn=Pseq([7,10,14,9,12,16],inf).asStream;
+~sn=10;~sn1=0;~sn2=0;~sn3=0;~sn4=0;~sn5=0;~sn6=0;~sn7=0;~sn8=0;
+//~sn=Pseq([7,10,8,9,11,12],inf).asStream;
 //~sn=Pseq([0,5,7,12,17,19,24],inf).asStream;
-
+//~sn=Pseq([7,19,22,10,19,22,14,26],inf).asStream;
 //~sn=Pseq([2,7,4,9],inf).asStream;
 ~snt=Synth.new(\run).register;
 (
@@ -561,9 +558,12 @@ Routine({loop{
 }).play;
 }.defer
 );
+		~r=0;
 (
 {Routine({loop{
-~setnote=~sn.next;
+//~sn=Pseq([~sn1,~sn2,~sn3,~sn4,~sn5,~sn6,~sn7,~sn8],inf).asStream;
+~setnote=[~sn1,~sn2,~sn3,~sn4,~sn5,~sn6,~sn7,~sn8].[~r];
+~r=(~r+1).wrap(0,7);
 ~snt.set(\set,~setnote);
 (((1/~time)+(~attack*3))/3).wait}
 }).play;}.defer
@@ -821,7 +821,7 @@ dist.postln;
 );
 
 ////midi
-/*(
+(
 MIDIClient.init;
 MIDIIn.connectAll;
 (
@@ -906,106 +906,128 @@ mag.postln;
 },10);
 );
 (
-MIDIdef.cc(\midi_switch1,{ |val, num, chan, src|
-var sc;
-if(val>0,sc=0);
-sc.postln;
-~sn=sc;
-},11);
-);
-(
-MIDIdef.cc(\midi_switch2,{ |val, num, chan, src|
-var sc;
-if(val>0,sc=5);
-sc.postln;
-~sn=sc;
-},12);
-);
-(
-MIDIdef.cc(\midi_switch3,{ |val, num, chan, src|
-var sc;
-if(val>0,sc=7);
-sc.postln;
-~sn=sc;
-},13);
-);
-(
-MIDIdef.cc(\midi_switch4,{ |val, num, chan, src|
-var sc;
-if(val>0,sc=12);
-sc.postln;
-~sn=sc;
-},14);
-);
-(
-MIDIdef.cc(\midi_switch5,{ |val, num, chan, src|
-var sc;
-if(val>0,sc=17);
-sc.postln;
-~sn=sc;
-},15);
-);
-
-(
-MIDIdef.cc(\midi_slider1,{ |val, num, chan, src|
+MIDIdef.cc(\midi_pot11,{ |val, num, chan, src|
 var sc;
 sc=val.linlin(0,127,0,4).round(1);
 sc.postln;
 ~scaleselect=sc;
-},21);
+},11);
 );
 (
-MIDIdef.cc(\midi_slider2,{ |val, num, chan, src|
-var note,narray;
-note=val.linlin(0,127,0,6).round(1);
-note.postln;
-narray=[0,5,7,12,17,19,24];
-~sn=narray.[note];
-},22);
-);
-(
-MIDIdef.cc(\midi_slider3,{ |val, num, chan, src|
+MIDIdef.cc(\midi_pot12,{ |val, num, chan, src|
 var k;
 k=val.linexp(0,127,0.0001,16);
 k.postln;
 ~klevel=k;
-},23);
+},12);
 );
 (
-MIDIdef.cc(\midi_slider4,{ |val, num, chan, src|
+MIDIdef.cc(\midi_pot13,{ |val, num, chan, src|
 var k;
 k=val.linexp(0,127,0.0001,1);
 k.postln;
 ~attack=k/~time;
-},24);
+},13);
 );
 ~timu=1;
 (
-MIDIdef.cc(\midi_slider5,{ |val, num, chan, src|
+MIDIdef.cc(\midi_pot14,{ |val, num, chan, src|
 var tempo;
 tempo=val.linlin(0,127,1,128);
 tempo.postln;
 ~time=tempo;
-},25);
+},14);
 );
 (
-MIDIdef.cc(\midi_slider6,{ |val, num, chan, src|
+MIDIdef.cc(\midi_pot15,{ |val, num, chan, src|
 var dist;
 dist=val.linlin(0,127,1,10);
 dist.postln;
 ~dist=dist;
-},26);
+},15);
 );
 (
-MIDIdef.cc(\midi_slider9,{ |val, num, chan, src|
+MIDIdef.cc(\midi_pot16,{ |val, num, chan, src|
 var tempo;
 tempo=val.linlin(0,127,1/4,4).round(1/4);
 tempo.postln;
 ~time=tempo;
 //~clock=TempoClock.default.tempo_(~time);
-},29);
+},16);
 );
-)*/
+(
+MIDIdef.cc(\midi_pot17,{ |val, num, chan, src|
+var note;
+note=val.linlin(0,127,0,24).round(1);
+note.postln;
+~sn1=note;
+},17);
+);
+(
+MIDIdef.cc(\midi_pot18,{ |val, num, chan, src|
+var note;
+note=val.linlin(0,127,0,24).round(1);
+note.postln;
+~sn2=note;
+},18);
+);
+(
+MIDIdef.cc(\midi_pot19,{ |val, num, chan, src|
+var note;
+note=val.linlin(0,127,0,24).round(1);
+note.postln;
+~sn3=note;
+},19);
+);
+(
+MIDIdef.cc(\midi_pot20,{ |val, num, chan, src|
+var note;
+note=val.linlin(0,127,0,24).round(1);
+note.postln;
+~sn4=note;
+},20);
+);
+(
+MIDIdef.cc(\midi_pot21,{ |val, num, chan, src|
+var note;
+note=val.linlin(0,127,0,24).round(1);
+note.postln;
+~sn5=note;
+},21);
+);
+(
+MIDIdef.cc(\midi_pot22,{ |val, num, chan, src|
+var note;
+note=val.linlin(0,127,0,24).round(1);
+note.postln;
+~sn6=note;
+},22);
+);
+(
+MIDIdef.cc(\midi_pot23,{ |val, num, chan, src|
+var note;
+note=val.linlin(0,127,0,24).round(1);
+note.postln;
+~sn7=note;
+},23);
+);
+(
+MIDIdef.cc(\midi_pot24,{ |val, num, chan, src|
+var note;
+note=val.linlin(0,127,0,24).round(1);
+note.postln;
+~sn8=note;
+},24);
+);
+			// (
+			// 	MIDIdef.cc(\midi_switch1,{ |val, num, chan, src|
+			// 		var sc;
+			// 		if(val>0,sc=0);
+			// 		sc.postln;
+			// 		~sn=sc;
+			// 	},11);
+			// );
+)
 }); Tdef(\drone).play;
 }
 )
