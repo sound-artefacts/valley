@@ -759,14 +759,13 @@ sc.postln;
 (
 ~s12=Knob.new(~vw1, Rect.new(150,(50+sk+50+sk+25+25+50), sk)).background_(Color.black).action_({
 arg obj;
-var note,narray;
-note=obj.value.linlin(0,1,0,6).round(1);
+var note;
+note=obj.value.linlin(0,1,0,24).round(1);
 note.postln;
-narray=[0,5,7,12,17,19,24];
-~sn=narray.[note];
+~sn1=note;
 ~log1.(note.asString);
 });
-~st12=StaticText(~vw1,Rect(150,(50+sk+50+sk+25+25+sk+50),sk+20,sk)).string_("note")
+~st12=StaticText(~vw1,Rect(150,(50+sk+50+sk+25+25+sk+50),sk+20,sk)).string_("n1")
 .stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
 );
 (
@@ -815,6 +814,54 @@ dist.postln;
 ~log1.(dist.asString);
 });
 ~st16=StaticText(~vw1,Rect(50,(50+sk+50+sk+25+25+sk+50+sk+50+sk),sk+20,sk)).string_("distance")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
+);
+(
+~s117=Knob.new(~vw1, Rect.new(150,(50+sk+50+sk+25+25+sk+50+sk+50), sk)).background_(Color.black).action_({
+arg obj;
+var note;
+note=obj.value.linlin(0,1,0,24).round(1);
+note.postln;
+~sn2=note;
+~log1.(note.asString);
+});
+~s117=StaticText(~vw1,Rect(150,(50+sk+50+sk+25+25+sk+50+sk+50+sk),sk+20,sk)).string_("n2")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
+);
+(
+~s118=Knob.new(~vw1, Rect.new(250,(50+sk+50+sk+25+25+sk+50+sk+50),sk, sk)).background_(Color.black).action_({
+arg obj;
+var note;
+note=obj.value.linlin(0,1,0,24).round(1);
+note.postln;
+~sn3=note;
+~log1.(note.asString);
+});
+~s118=StaticText(~vw1,Rect(250,(50+sk+50+sk+25+25+sk+50+sk+50+sk),sk+20,sk)).string_("n3")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
+);
+(
+~s119=Knob.new(~vw1, Rect.new(350,(50+sk+50+sk+25+25+sk+50+sk+50),sk, sk)).background_(Color.black).action_({
+arg obj;
+var note;
+note=obj.value.linlin(0,1,0,24).round(1);
+note.postln;
+~sn4=note;
+~log1.(note.asString);
+});
+~s119=StaticText(~vw1,Rect(350,(50+sk+50+sk+25+25+sk+50+sk+50+sk),sk+20,sk)).string_("n4")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
+);
+(
+~sl20=Knob.new(~vw1, Rect.new(450,(50+sk+50+sk+25+25+sk+50+sk+50),sk, sk)).background_(Color.black).action_({
+arg obj;
+var note;
+note=obj.value.linlin(0,1,0,24).round(1);
+note.postln;
+~sn5=note;
+~log1.(note.asString);
+});
+~sl20=StaticText(~vw1,Rect(450,(50+sk+50+sk+25+25+sk+50+sk+50+sk),sk+20,sk)).string_("n5")
 .stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
 );
 }.defer
