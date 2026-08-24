@@ -622,7 +622,7 @@ Pbind(\instrument, \synth,
 \key,Prand([0,2,2.neg,5.neg,10.neg],inf),
 \klevel,Pfunc{~klevel},
 \dist,Pfunc{~dist},
-				\lsystem,Pseq([1],inf),
+				\lsystem,Pseq(~lseq,inf),
 )));
 ~pattern1.play;
 ~pattern2.play;
