@@ -256,9 +256,9 @@ harmonic=harm;
 trange=mag.lag2(~lagtime);
 level=level;
 //sequencer
-//snt=In.kr(~controlBus_1.index);
-note=2.pow(key.lag2(~lagtime)/12);
-//note=2.pow(snt/12);
+snt=In.kr(~controlBus_1.index);
+//note=2.pow(key.lag2(~lagtime)/12);
+note=2.pow(snt/12);
 
 ///coordinates
 az1=In.kr(~controlBus_2.index);
@@ -473,12 +473,12 @@ Out.ar(busarray1.[n],a.softclip(5)*env*senv);
 Out.ar(busarray2.[n],b.softclip(5)*env*senv);
 
 //pan stereo out
-//.ar(busarray1.[n],Pan2.ar(a.softclip(5)*env*senv,(x)*immersion));
-//Out.ar(busarray1.[n],Pan2.ar(b.softclip(5)*env*senv,(y)*immersion));
+Out.ar(busarray1.[n],Pan2.ar(a.softclip(5),(x)*immersion,env*senv));
+Out.ar(busarray1.[n],Pan2.ar(b.softclip(5),(y)*immersion,env*senv));
 
 //quad out
-Out.ar(busarray1.[n],Pan4.ar(a.softclip(5),(x)*immersion,(y)*immersion,env*senv));
-Out.ar(busarray1.[n],Pan4.ar(b.softclip(5),(x)*immersion,(y)*immersion,env*senv));
+//Out.ar(busarray1.[n],Pan4.ar(a.softclip(5),(x)*immersion,(y)*immersion,env*senv));
+//Out.ar(busarray1.[n],Pan4.ar(b.softclip(5),(x)*immersion,(y)*immersion,env*senv));
 
 //formants
 /*(
@@ -569,19 +569,18 @@ Routine({loop{
 (
 {Routine({loop{
 //~sn=Pseq([~sn1,~sn2,~sn3,~sn4,~sn5,~sn6,~sn7,~sn8],inf).asStream;
-~setnote=[~sn1,~sn2,~sn3,~sn4,~sn5,~sn6,~sn7,~sn8,~sn9,~sn10,~sn11,~sn12,~sn13,~sn14,~sn15,~sn16,~sn17,~sn18,~sn19,
-~sn20,~s21,~sn22,~sn23,~sn24].[~r];
-~r=(~r+1).wrap(0,23);
+~setnote=[~sn1,~sn2,~sn3,~sn4,~sn5,~sn6,~sn7,~sn8].[~r];
+~r=(~r+1).wrap(0,7);
 ~snt.set(\set,~setnote);
-(((1/~time)/1)+(~attack*1)).wait}
+((1/~time)).wait}
 }).play;}.defer
 );
-~ttt=0.999.rand;
+
 ///pattern
 (~pattern1 = Pdef(\1,
 Pbind(\instrument, \synth,
 //Pmono( \synth,
-\dur,Pfunc{(1/~time)*~ttt},
+\dur,Pfunc{(1/~time)},
 \gain,Pfunc{~gain},
 \fundamental,Pfunc{~fundamental},
 \tone,Pfunc{~tone},
@@ -596,7 +595,7 @@ Pbind(\instrument, \synth,
 \rate,Pfunc{(1/~time)},
 \attack,Pfunc{~attack},
 \curve,Pfunc{~curve},
-\key,Pseq([7,10,12,9,14,2,10,14,9,12,10,2,9,14,2,10,14,10,12,9,14,7,10,2],inf),
+//\key,Pseq([7,10,12,9,14,2,10,14,9,12,10,2,9,14,2,10,14,10,12,9,14,7,10,2],inf),
 \klevel,Pfunc{~klevel},
 \dist,Pfunc{~dist},
 \lsystem,Pseq([1],inf),
@@ -604,7 +603,7 @@ Pbind(\instrument, \synth,
 (~pattern2 = Pdef(\2,
 Pbind(\instrument, \synth,
 //Pmono( \synth,
-\dur,Pfunc{(1/~time)*~ttt/(2/1)},
+\dur,Pfunc{(1/~time)/(2/1)},
 \gain,Pfunc{~gain},
 \fundamental,Pfunc{~fundamental},
 \tone,Pfunc{~tone},
@@ -619,7 +618,7 @@ Pbind(\instrument, \synth,
 \rate,Pfunc{(1/~time)},
 \attack,Pfunc{~attack},
 \curve,Pfunc{~curve},
-\key,Pseq([10.neg,5.neg,2.neg,2,5.neg,0,10.neg,2.neg,5.neg,0,10.neg,5.neg],inf),
+//\key,Pseq([10.neg,5.neg,2.neg,2,5.neg,0,10.neg,2.neg,5.neg,0,10.neg,5.neg],inf),
 \klevel,Pfunc{~klevel},
 \dist,Pfunc{~dist},
 \lsystem,Pseq([1],inf),
@@ -1039,135 +1038,137 @@ tempo.postln;
 //~clock=TempoClock.default.tempo_(~time);
 },16);
 );
-			// (
-			// 	MIDIdef.cc(\midi_pot1,{ |val, num, chan, src|
-			// 		var note;
-			// 		note=val.linlin(0,127,0,24).round(1);
-			// 		note.postln;
-			// 		~sn1=note;
-			// 	},1);
-			// );
-			// (
-			// 	MIDIdef.cc(\midi_pot2,{ |val, num, chan, src|
-			// 		var note;
-			// 		note=val.linlin(0,127,0,24).round(1);
-			// 		note.postln;
-			// 		~sn2=note;
-			// 	},2);
-			// );
-			// (
-			// 	MIDIdef.cc(\midi_pot3,{ |val, num, chan, src|
-			// 		var note;
-			// 		note=val.linlin(0,127,0,24).round(1);
-			// 		note.postln;
-			// 		~sn3=note;
-			// 	},3);
-			// );
-			// (
-			// 	MIDIdef.cc(\midi_pot4,{ |val, num, chan, src|
-			// 		var note;
-			// 		note=val.linlin(0,127,0,24).round(1);
-			// 		note.postln;
-			// 		~sn4=note;
-			// 	},4);
-			// );
-			// (
-			// 	MIDIdef.cc(\midi_pot5,{ |val, num, chan, src|
-			// 		var note;
-			// 		note=val.linlin(0,127,0,24).round(1);
-			// 		note.postln;
-			// 		~sn5=note;
-			// 	},5);
-			// );
-			// (
-			// 	MIDIdef.cc(\midi_pot6,{ |val, num, chan, src|
-			// 		var note;
-			// 		note=val.linlin(0,127,0,24).round(1);
-			// 		note.postln;
-			// 		~sn6=note;
-			// 	},6);
-			// );
-			// (
-			// 	MIDIdef.cc(\midi_pot7,{ |val, num, chan, src|
-			// 		var note;
-			// 		note=val.linlin(0,127,0,24).round(1);
-			// 		note.postln;
-			// 		~sn7=note;
-			// 	},7);
-			// );
-			// (
-			// 	MIDIdef.cc(\midi_pot8,{ |val, num, chan, src|
-			// 		var note;
-			// 		note=val.linlin(0,127,0,24).round(1);
-			// 		note.postln;
-			// 		~sn8=note;
-			// 	},8);
-			// );
-			// (
-			// 	MIDIdef.cc(\midi_pot9,{ |val, num, chan, src|
-			// 		var note;
-			// 		note=val.linlin(0,127,0,24).round(1);
-			// 		note.postln;
-			// 		~sn9=note;
-			// 	},9);
-			// );
-			// (
-			// 	MIDIdef.cc(\midi_pot10,{ |val, num, chan, src|
-			// 		var note;
-			// 		note=val.linlin(0,127,0,24).round(1);
-			// 		note.postln;
-			// 		~sn10=note;
-			// 	},10);
-			// );
-			// (
-			// 	MIDIdef.cc(\midi_pot11,{ |val, num, chan, src|
-			// 		var note;
-			// 		note=val.linlin(0,127,0,24).round(1);
-			// 		note.postln;
-			// 		~sn11=note;
-			// 	},11);
-			// );
-			// (
-			// 	MIDIdef.cc(\midi_pot12,{ |val, num, chan, src|
-			// 		var note;
-			// 		note=val.linlin(0,127,0,24).round(1);
-			// 		note.postln;
-			// 		~sn12=note;
-			// 	},12);
-			// );
-			// (
-			// 	MIDIdef.cc(\midi_pot13,{ |val, num, chan, src|
-			// 		var note;
-			// 		note=val.linlin(0,127,0,24).round(1);
-			// 		note.postln;
-			// 		~sn13=note;
-			// 	},13);
-			// );
-			// ~timu=1;
-			// (
-			// 	MIDIdef.cc(\midi_pot14,{ |val, num, chan, src|
-			// 		var note;
-			// 		note=val.linlin(0,127,0,24).round(1);
-			// 		note.postln;
-			// 		~sn14=note;
-			// 	},14);
-			// );
-			// (
-			// 	MIDIdef.cc(\midi_pot15,{ |val, num, chan, src|
-			// 		var note;
-			// 		note=val.linlin(0,127,0,24).round(1);
-			// 		note.postln;
-			// 		~sn15=note;
-			// 	},15);
-			// );
-			// (
-			// 	MIDIdef.cc(\midi_pot16,{ |val, num, chan, src|
-			// 		var note;
-			// 		note=val.linlin(0,127,0,24).round(1);
-			// 		note.postln;
-			// 		~sn16=note;
-			// 	},16);
-			// );
+
+(
+MIDIdef.cc(\switch1,{ |val, num, chan, src|
+					var sc;
+					if(val>0,sc=10.neg);
+					sc.postln;
+					~sn1=sc;
+			 	},25);
+			 );
+			 (
+				MIDIdef.cc(\switch2,{ |val, num, chan, src|
+					var sc;
+					if(val>0,sc=5.neg);
+					sc.postln;
+					~sn2=sc;
+			 	},26);
+			 );
+			 (
+			 	MIDIdef.cc(\switch3,{ |val, num, chan, src|
+					var sc;
+					if(val>0,sc=2.neg);
+					sc.postln;
+					~sn3=sc;
+			 	},27);
+			 );
+			 (
+				MIDIdef.cc(\switch4,{ |val, num, chan, src|
+					var sc;
+					if(val>0,sc=2);
+					sc.postln;
+					~sn4=sc;
+			 	},28);
+			 );
+			 (
+			 	MIDIdef.cc(\switch5,{ |val, num, chan, src|
+					var sc;
+					if(val>0,sc=7);
+					sc.postln;
+					~sn5=sc;
+			 	},29);
+			 );
+			 (
+			 	MIDIdef.cc(\switch6,{ |val, num, chan, src|
+					var sc;
+					if(val>1,sc=10);
+					sc.postln;
+					~sn6=sc;
+			 	},30);
+			 );
+			 (
+			 	MIDIdef.cc(\switch7,{ |val, num, chan, src|
+					var sc;
+					if(val>0,sc=12);
+					sc.postln;
+					~sn7=sc;
+			 	},31);
+			 );
+			 (
+			 	MIDIdef.cc(\switch8,{ |val, num, chan, src|
+					var sc;
+					if(val>0,sc=14);
+					sc.postln;
+					~sn8=sc;
+			 	},32);
+			 );
+			 (
+			 	MIDIdef.cc(\switch9,{ |val, num, chan, src|
+					var sc;
+					if(val>0,sc=12);
+					sc.postln;
+					~sn9=sc;
+			 	},38);
+		 );
+			 (
+			 	MIDIdef.cc(\switch10,{ |val, num, chan, src|
+					var sc;
+					if(val>0,sc=14);
+					sc.postln;
+					~sn10=sc;
+			 	},39);
+			 );
+			 (
+			 	MIDIdef.cc(\switch11,{ |val, num, chan, src|
+					var sc;
+					if(val>0,sc=0);
+					sc.postln;
+					~sn11=sc;
+			 	},35);
+			 );
+			 (
+			 	MIDIdef.cc(\switch12,{ |val, num, chan, src|
+					var sc;
+					if(val>0,sc=0);
+					sc.postln;
+					~sn12=sc;
+			 	},36);
+			 );
+			 (
+				MIDIdef.cc(\switch13,{ |val, num, chan, src|
+					var sc;
+					if(val>0,sc=0);
+					sc.postln;
+					~sn13=sc;
+			 	},37);
+			 );
+			 ~timu=1;
+			 (
+			 	MIDIdef.cc(\switch14,{ |val, num, chan, src|
+					var sc;
+					if(val>0,sc=0);
+					sc.postln;
+					~sn14=sc;
+			 	},38);
+			 );
+			 (
+			 	MIDIdef.cc(\switch15,{ |val, num, chan, src|
+					var sc;
+					if(val>0,sc=0);
+					sc.postln;
+					~sn15=sc;
+			 	},39);
+			 );
+(
+MIDIdef.cc(\switch16,{ |val, num, chan, src|
+					var sc;
+					if(val>0,sc=0);
+					sc.postln;
+					~sn16=sc;
+			 	},40);
+ );
+
 (
 MIDIdef.cc(\midi_pot17,{ |val, num, chan, src|
 var note;
@@ -1232,20 +1233,11 @@ note.postln;
 ~sn24=note;
 },24);
 );
-			// (
-			// 	MIDIdef.cc(\midi_switch1,{ |val, num, chan, src|
-			// 		var sc;
-			// 		if(val>0,sc=0);
-			// 		sc.postln;
-			// 		~sn=sc;
-			// 	},11);
-			// );
+
 )
 }); Tdef(\drone).play;
 }
 )
-
-
 
 
 
