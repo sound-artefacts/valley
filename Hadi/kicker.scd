@@ -125,9 +125,9 @@ sph=sph.rotateYZ(~x.lag2(~lagtime)).rotateXZ(~y.lag2(~lagtime)).rotateXY(~z.lag2
 {var rot;
 Routine({loop{
 //rot=Spherical(~dur,~azr,~elr);
-~x=(~x+(~azr*((2pi-(2pi/~g))*(~frames/16)))).wrap(0,2pi);
-~y=(~y+(~azr*((2pi-(2pi/~g))*(~frames/16)))).wrap(0,2pi);
-~z=(~z+(~azr*((2pi-(2pi/~g))*(~frames/16)))).wrap(0,2pi);
+~x=(~x+(~azr*((2pi-(2pi/~g))*(~frames/8)))).wrap(0,2pi);
+~y=(~y+(~azr*((2pi-(2pi/~g))*(~frames/8)))).wrap(0,2pi);
+~z=(~z+(~azr*((2pi-(2pi/~g))*(~frames/8)))).wrap(0,2pi);
 (~frames).wait;
 };
 }).play;
@@ -324,7 +324,6 @@ x = (cos(eln)*cos(azn));
 y = (cos(eln)*sin(azn));
 z = (sin(eln));
 
-
 //////perspective
 immersion = (level/dist) / ((level/dist) + kz + ((level/dist)/2));
 
@@ -474,12 +473,12 @@ Out.ar(busarray1.[n],a.softclip(5)*env*senv);
 Out.ar(busarray2.[n],b.softclip(5)*env*senv);
 
 //pan stereo out
-Out.ar(busarray1.[n],Pan2.ar(a.softclip(5)*env*senv,(xp*rx)));
-Out.ar(busarray1.[n],Pan2.ar(b.softclip(5)*env*senv,yp*ry));
+//Out.ar(busarray1.[n],Pan2.ar(a.softclip(5)*env*senv,(xp*rx)*immersion));
+//Out.ar(busarray1.[n],Pan2.ar(b.softclip(5)*env*senv,(yp*ry)*immersion));
 
 //quad out
-//Out.ar(0,Pan4.ar(a.softclip(5),rx,rz,env*senv));
-//Out.ar(0,Pan4.ar(b.softclip(5),rz,ry,env*senv));
+Out.ar(busarray1.[n],Pan4.ar(a.softclip(5),(xp*rx)*immersion,(yp*ry)*immersion,env*senv));
+Out.ar(busarray1.[n],Pan4.ar(b.softclip(5),(xp*rx)*immersion,(yp*ry)*immersion,env*senv));
 
 //formants
 /*(
