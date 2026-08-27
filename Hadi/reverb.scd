@@ -18,8 +18,8 @@ s.scope;
 );
 s.waitForBoot{
 Tdef(\drone, {
-~c1 = Buffer.readChannel(s,"/Users/rohifes/Music/morph.wav",channels:0 );
-~c2 = Buffer.readChannel(s,"/Users/rohifes/Music/morph.wav",channels:1 );
+~c1 = Buffer.readChannel(s,,channels:0 );
+~c2 = Buffer.readChannel(s,,channels:1 );
 (
 {
 var az1=0,el1=0,az2=0,el2=0,angle=0;
@@ -57,10 +57,9 @@ var silver_r=(1+2.sqrt), g=((1+5.sqrt)/2), azimuth, elevation;
 SynthDef.new(\re,{
 
 arg level=0,room=0,harmonic=1,dist=1;
-var sig1,sig2,rbank=128,r,rx,ry,rz,immersion,raz,rel;
+var sig1,sig2,rbank=128,rx,ry,rz,immersion,raz,rel,r=0;
 
 rbank.do{
-r=0;
 ///reverb
 raz=~azimuthr.[r];
 rel=~elevationr.[r];
@@ -72,11 +71,10 @@ rz=(((harmonic)*sin(rel))+(sin((harmonic)*(rel))))/harmonic;
 immersion = (level/dist) / ((level/dist) + rz + ((level/dist)/2));
 
 ///sig
-sig1=FreeVerb.ar(PlayBuf.ar(1, ~c1.bufnum, BufRateScale.kr(~c1), loop: 0,doneAction:0)*rz,rx,room);
-sig2=FreeVerb.ar(PlayBuf.ar(1, ~c2.bufnum, BufRateScale.kr(~c2), loop: 0,doneAction:0)*rz,ry,room);
-
+sig1=level*FreeVerb.ar(PlayBuf.ar(1, ~c1.bufnum, BufRateScale.kr(~c1), loop: 0,doneAction:0)*rz,rx.abs,room);
+sig2=level*FreeVerb.ar(PlayBuf.ar(1, ~c2.bufnum, BufRateScale.kr(~c2), loop: 0,doneAction:0)*rz,ry.abs,room);
 Out.ar(0,sig1/(rbank));
-Out.ar(0,sig2/(rbank));
+Out.ar(1,sig2/(rbank));
 r=r+1;
 };
 }).add;
@@ -86,7 +84,7 @@ r=r+1;
 
 ~snt=Synth.new(\re).register;
 
-~snt.set(\level,0.1,\room,1,\harmonic,31,\dist,5);
+~snt.set(\level,0.1,\room,1,\harmonic,31,\dist,2);
 
 /*(
 s.record(numChannels:2);
