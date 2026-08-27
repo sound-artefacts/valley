@@ -18,7 +18,8 @@ s.scope;
 );
 s.waitForBoot{
 Tdef(\drone, {
-
+//~c1 = Buffer.readChannel(s,,channels:0 );
+//~c2 = Buffer.readChannel(s,,channels:1 );
 //////point arrays
 ///massive expansion coordinates
 ///for this array instead of simple comment out simple (tetrahedron) set frames less than 1/64 and set 32^2 iteration on rotation routine
@@ -33,13 +34,13 @@ var silver_r=(1+2.sqrt), g=((1+5.sqrt)/2), azimuth, elevation;
 
 32.do{
     azimuth = 32.collect{
-        az1 = (az1 + (2pi-(2pi/silver_r))).wrap(pi.neg,pi);
+        az1 = (az1 + (2pi-(2pi/g))).wrap(pi.neg,pi);
         el1 = (el1 + (pi-(pi/g))).wrap((pi/2).neg,(pi/2));
         (az1 + angle).wrap(pi.neg,pi)
     };
 
     elevation = 32.collect{
-        az2 = (az2 + (2pi-(2pi/silver_r))).wrap(pi.neg,pi);
+        az2 = (az2 + (2pi-(2pi/g))).wrap(pi.neg,pi);
         el2 = (el2 + (pi-(pi/g))).wrap((pi/2).neg,(pi/2));
         (el2 + angle).wrap((pi/2).neg,(pi/2))
     };
@@ -241,7 +242,7 @@ arg gain=0,fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,dist=1,lsystem=
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez,snt;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,thresholdk,note,senv,gate1;
-var n=0,polytope=2,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
+var n=0,polytope=1,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
 var az1=0,az2=0,az3=0,az4=0,el1=0,el2=0,el3=0,el4=0,az,el,xp,yp,zp,kx,ky,kz;
 var az5=0,az6=0,az7=0,az8=0,el5=0,el6=0,el7=0,el8=0,rbank=2,raz,rel,rx,ry,rz,r=0;
 
@@ -668,14 +669,19 @@ Pbind(\instrument, \synth,
 \dist,Pfunc{~dist},
 \lsystem,Pseq([1],inf),
 )));
-~pattern1.play;
+//~pattern1.play;
 ~pattern2.play;
 /*(
 ~pattern1.stop;
 ~pattern2.stop;
 
 		)*/
-		//s.record(numChannels:4);
+
+/*(
+s.record(numChannels:2);
+{Out.ar(0,PlayBuf.ar(1, ~c1.bufnum, BufRateScale.kr(~c1), loop: 0,doneAction:0))}.play;
+{Out.ar(1,PlayBuf.ar(1, ~c2.bufnum, BufRateScale.kr(~c2), loop: 0,doneAction:0))}.play;
+)*/
 ////////////////////////gui
 (
 {
