@@ -341,7 +341,7 @@ freqy=(fund*pitchy)*toney*note;
 freqz=fund*tonez*note;
 ampx=c.reciprocal*tonex.reciprocal*level*immersion;
 ampy=c.reciprocal*toney.reciprocal*level*immersion;
-ampz=c.reciprocal*tonez.reciprocal*level;
+ampz=c.reciprocal*tonez.reciprocal*level*note.reciprocal;
 //phasex=(Complex(1,x).theta*2);
 //phasey=(Complex(1,y).theta*2);
 //phasez=(Complex(1,z).theta*2);
@@ -675,7 +675,7 @@ Pbind(\instrument, \synth,
 ~pattern2.stop;
 
 		)*/
-		s.record(numChannels:4);
+		//s.record(numChannels:4);
 ////////////////////////gui
 (
 {
@@ -773,8 +773,8 @@ value=obj.value.linlin(0,1,1,16).round(1).postln;
 ~st6=StaticText(~vw1,Rect(50,(50+sk+50+25+sk),sk+20,sk)).string_("harmonic")
 .stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
 );
-
 (
+
 ~sl7=Knob.new(~vw1, Rect.new(150,50+sk+50+25,sk, sk)).background_(Color.black).action_({
 arg obj;
 var value;
