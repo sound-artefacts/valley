@@ -40,7 +40,7 @@ var silver_r=(1+2.sqrt), g=((1+5.sqrt)/2), azimuth, elevation;
         (el2 + angle).wrap((pi/2).neg,(pi/2))
     };
 
-    angle = (angle + (2pi-(2pi/silver_r))).wrap(pi.neg,pi);
+    angle = (angle + (2pi-(2pi/g))).wrap(pi.neg,pi);
 
     ~azimuthr = ~azimuthr ++ azimuth;
     ~elevationr = ~elevationr ++ elevation;
