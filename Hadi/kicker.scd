@@ -241,9 +241,9 @@ arg gain=0,fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,dist=1,lsystem=
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez,snt;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,thresholdk,note,senv,gate1;
-var n=0,polytope=1,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
+var n=0,polytope=2,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
 var az1=0,az2=0,az3=0,az4=0,el1=0,el2=0,el3=0,el4=0,az,el,xp,yp,zp,kx,ky,kz;
-var az5=0,az6=0,az7=0,az8=0,el5=0,el6=0,el7=0,el8=0,rbank=14,raz,rel,rx,ry,rz,r=0;
+var az5=0,az6=0,az7=0,az8=0,el5=0,el6=0,el7=0,el8=0,rbank=2,raz,rel,rx,ry,rz,r=0;
 
 ///inputs
 level=2.pow(gain.lag2(~lagtime)/16256)/(5);
@@ -256,9 +256,9 @@ harmonic=harm;
 trange=mag.lag2(~lagtime);
 level=level;
 //sequencer
-snt=In.kr(~controlBus_1.index);
-//note=2.pow(key.lag2(~lagtime)/12);
-note=2.pow(snt/12);
+//snt=In.kr(~controlBus_1.index);
+note=2.pow(key.lag2(~lagtime)/12);
+//note=2.pow(snt/12);
 
 ///coordinates
 az1=In.kr(~controlBus_2.index);
@@ -565,7 +565,7 @@ Routine({loop{
 }).play;
 }.defer
 );
-		~r=0;
+/*		~r=0;
 (
 {Routine({loop{
 //~sn=Pseq([~sn1,~sn2,~sn3,~sn4,~sn5,~sn6,~sn7,~sn8],inf).asStream;
@@ -574,7 +574,7 @@ Routine({loop{
 ~snt.set(\set,~setnote);
 ((1/~time)).wait}
 }).play;}.defer
-);
+);*/
 
 ///pattern
 (~pattern1 = Pdef(\1,
@@ -595,7 +595,31 @@ Pbind(\instrument, \synth,
 \rate,Pfunc{(1/~time)},
 \attack,Pfunc{~attack},
 \curve,Pfunc{~curve},
-//\key,Pseq([7,10,12,9,14,2,10,14,9,12,10,2,9,14,2,10,14,10,12,9,14,7,10,2],inf),
+\key,Pseq([2,7,9,10,2,7,9,12,
+		   2,7,9,10,2,7,9,12,
+		   2,7,9,10,2,7,9,12,
+		   2,7,9,10,2,7,9,12,
+
+		   2,7,9,10,2,7,9,12,
+		   2,7,9,10,2,7,9,12,
+		   2,7,10,12,2,9,10,14,
+		   2,7,10,12,2,9,10,14,
+
+		   2,7,10,12,2,9,10,14,
+		   2,7,10,12,2,9,10,14,
+		   2,7,10,12,2,9,10,14,
+		   2,7,10,12,2,9,10,14,
+
+		   2,7,10,12,2,9,10,14,
+		   2,7,10,12,2,9,10,14,
+		   2,7,10,14,2,9,10,12,
+		   2,7,10,14,2,9,10,12,
+
+		   2,7,10,14,2,9,10,12,
+		   2,7,10,14,2,9,10,12,
+		   2,7,10,14,2,9,10,12,
+		   2,7,10,14,2,9,10,12],inf),
+//\key,Pfunc{~sn},
 \klevel,Pfunc{~klevel},
 \dist,Pfunc{~dist},
 \lsystem,Pseq([1],inf),
@@ -603,7 +627,7 @@ Pbind(\instrument, \synth,
 (~pattern2 = Pdef(\2,
 Pbind(\instrument, \synth,
 //Pmono( \synth,
-\dur,Pfunc{(1/~time)/(2/1)},
+\dur,Pfunc{(1/~time)},
 \gain,Pfunc{~gain},
 \fundamental,Pfunc{~fundamental},
 \tone,Pfunc{~tone},
@@ -618,19 +642,40 @@ Pbind(\instrument, \synth,
 \rate,Pfunc{(1/~time)},
 \attack,Pfunc{~attack},
 \curve,Pfunc{~curve},
-//\key,Pseq([10.neg,5.neg,2.neg,2,5.neg,0,10.neg,2.neg,5.neg,0,10.neg,5.neg],inf),
+ \key,Pseq([17.neg,14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
+			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
+			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
+			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
+			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
+			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
+			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
+			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
+
+			12.neg,10.neg,5.neg,10.neg,12.neg,17.neg,
+			12.neg,10.neg,5.neg,10.neg,12.neg,17.neg,
+			12.neg,10.neg,5.neg,10.neg,12.neg,17.neg,
+			12.neg,10.neg,5.neg,10.neg,12.neg,17.neg,
+
+			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
+			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
+			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
+			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
+			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
+			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
+			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
+			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg],inf),
 \klevel,Pfunc{~klevel},
 \dist,Pfunc{~dist},
 \lsystem,Pseq([1],inf),
 )));
 ~pattern1.play;
-//~pattern2.play;
+~pattern2.play;
 /*(
 ~pattern1.stop;
 ~pattern2.stop;
 
 		)*/
-		//s.record(numChannels:4);
+		s.record(numChannels:4);
 ////////////////////////gui
 (
 {
@@ -1044,7 +1089,7 @@ MIDIdef.cc(\switch1,{ |val, num, chan, src|
 					var sc;
 					if(val>0,sc=10.neg);
 					sc.postln;
-					~sn1=sc;
+					~sn=sc;
 			 	},25);
 			 );
 			 (
@@ -1052,7 +1097,7 @@ MIDIdef.cc(\switch1,{ |val, num, chan, src|
 					var sc;
 					if(val>0,sc=5.neg);
 					sc.postln;
-					~sn2=sc;
+					~sn=sc;
 			 	},26);
 			 );
 			 (
@@ -1060,7 +1105,7 @@ MIDIdef.cc(\switch1,{ |val, num, chan, src|
 					var sc;
 					if(val>0,sc=2.neg);
 					sc.postln;
-					~sn3=sc;
+					~sn=sc;
 			 	},27);
 			 );
 			 (
@@ -1068,7 +1113,7 @@ MIDIdef.cc(\switch1,{ |val, num, chan, src|
 					var sc;
 					if(val>0,sc=2);
 					sc.postln;
-					~sn4=sc;
+					~sn=sc;
 			 	},28);
 			 );
 			 (
@@ -1076,7 +1121,7 @@ MIDIdef.cc(\switch1,{ |val, num, chan, src|
 					var sc;
 					if(val>0,sc=7);
 					sc.postln;
-					~sn5=sc;
+					~sn=sc;
 			 	},29);
 			 );
 			 (
@@ -1084,7 +1129,7 @@ MIDIdef.cc(\switch1,{ |val, num, chan, src|
 					var sc;
 					if(val>1,sc=10);
 					sc.postln;
-					~sn6=sc;
+					~sn=sc;
 			 	},30);
 			 );
 			 (
@@ -1092,7 +1137,7 @@ MIDIdef.cc(\switch1,{ |val, num, chan, src|
 					var sc;
 					if(val>0,sc=12);
 					sc.postln;
-					~sn7=sc;
+					~sn=sc;
 			 	},31);
 			 );
 			 (
@@ -1100,7 +1145,7 @@ MIDIdef.cc(\switch1,{ |val, num, chan, src|
 					var sc;
 					if(val>0,sc=14);
 					sc.postln;
-					~sn8=sc;
+					~sn=sc;
 			 	},32);
 			 );
 			 (
@@ -1108,7 +1153,7 @@ MIDIdef.cc(\switch1,{ |val, num, chan, src|
 					var sc;
 					if(val>0,sc=12);
 					sc.postln;
-					~sn9=sc;
+					~sn=sc;
 			 	},38);
 		 );
 			 (
@@ -1116,7 +1161,7 @@ MIDIdef.cc(\switch1,{ |val, num, chan, src|
 					var sc;
 					if(val>0,sc=14);
 					sc.postln;
-					~sn10=sc;
+					~sn=sc;
 			 	},39);
 			 );
 			 (
@@ -1124,7 +1169,7 @@ MIDIdef.cc(\switch1,{ |val, num, chan, src|
 					var sc;
 					if(val>0,sc=0);
 					sc.postln;
-					~sn11=sc;
+					~sn=sc;
 			 	},35);
 			 );
 			 (
