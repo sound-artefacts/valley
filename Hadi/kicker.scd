@@ -166,8 +166,8 @@ signal=Signal.sineFill(~signalSizec,~arrayc,~phc); wt = signal.asWavetable; ~wtc
 
 
 (//scales
-(~note=25;
-~scale1=[0,5,7,12,17,19,24,29,31,48,53,55,96,55,53,48,31,29,24,19,17,12,7,5,0];
+(~note=19;
+~scale1=[0,5,7,12,17,19,24,29,31,48,31,29,24,19,17,12,7,5,0];
 ({var nn=1.neg;
 ~scale2=~note.collect{nn=nn+1;Scale.dorian.performDegreeToKey(nn,12)}}.value);
 ({var nn=1.neg;
@@ -180,7 +180,7 @@ var nn=1.neg,scale1,scale2;
 nn=1.neg;
 ~scale6=~note.collect{nn=nn+1;Scale.majorPentatonic.performDegreeToKey(nn,12)};
 }.value));
-~scale=[~scale2,~scale3,~scale4,~scale5,~scale6]);
+~scale=[~scale1,~scale2,~scale3,~scale4,~scale5,~scale6]);
 
 ////seq
 ~fuselim=(16256*9).neg;
@@ -492,7 +492,7 @@ Out.ar(busarray2.[n],BPF.ar(b.softclip(5),2440,0.01,0.neg.dbamp)*env*senv);
 
 n=n+1;
 };
-/*///kick////
+///kick////
 kenv=EnvGen.kr(Env.perc(attack, rate+(attack*2),curve:4.neg),1,levelScale:level*klevel*2);
 kpitch=EnvGen.kr(Env([tune, tune/2], [rate+(attack*2)/10],[-16]));
 kfm=EnvGen.kr(Env([tune*8, 2], [rate+(attack*2)/10], [-16]));
@@ -510,7 +510,7 @@ Out.ar(busarray2.[0],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 //Out.ar(busarray2.[1],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 //quad out
 ///Out.ar(0,Pan4.ar(gate.softclip(2.dbamp),rx,rz,kenv));
-//Out.ar(0,Pan4.ar(gate1.softclip(2.dbamp),rz,ry,kenv));*/
+//Out.ar(0,Pan4.ar(gate1.softclip(2.dbamp),rz,ry,kenv));
 };
 
 }).add;
@@ -537,7 +537,7 @@ Out.ar(busarray2.[0],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 ~tone=1;
 ~scaleselect=0;
 ~curve=1.neg;
-~klevel=0.1;
+~klevel=0.00001;
 ~dist=1;
 
 //~lseq=[1];
@@ -1036,7 +1036,7 @@ mag.postln;
 (
 MIDIdef.cc(\midi_pot11,{ |val, num, chan, src|
 var sc;
-sc=val.linlin(0,127,0,4).round(1);
+sc=val.linlin(0,127,0,5).round(1);
 sc.postln;
 ~scaleselect=sc;
 },11);
