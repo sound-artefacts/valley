@@ -4,7 +4,7 @@ s.record(numChannels:6);
 (
 (
 s.options.numWireBufs = 1024*16;
-s.options.numOutputBusChannels=2;
+s.options.numOutputBusChannels=4;
 s.options.numInputBusChannels=0;
 s.options.memSize = 8192*256;
 s.options.blockSize = 64;
@@ -22,10 +22,6 @@ Tdef(\drone, {
 //~c1 = Buffer.readChannel(s,,channels:0 );
 //~c2 = Buffer.readChannel(s,,channels:1 );
 //////point arrays
-///massive expansion coordinates
-///for this array instead of simple comment out simple (tetrahedron) set frames less than 1/64 and set 32^2 iteration on rotation routine
-///also on synthdef larger polytope number and more ouput channels on bus array, also more control buses matrix on synthdef
-///here utilized as reverb array
 (
 {
 var az1=0,el1=0,az2=0,el2=0,angle=0;
@@ -56,35 +52,14 @@ var silver_r=(1+2.sqrt), g=((1+5.sqrt)/2), azimuth, elevation;
 };
 }.value;
 );		0.1.wait;
-/////l system boolean
-({
-var dict = IdentityDictionary[\A -> "AB", \B -> "A"];
-var word = "A";
-var string_temp = "";
-var iter = 16;
-var dictnotes = IdentityDictionary[\A ->0, \B -> 1];
- ~lseq=[];
-iter.do({
-word.asArray.do({|i|string_temp = string_temp ++ dict[i.asSymbol];});
-word = string_temp;string_temp = "";});
-word.postln;
-word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
-~lseq.postln;
-}.value);
-0.1.wait;
 
-///////tetrahedron simple setup
-/*(
+///////tetrahedron
+(
 ~azimuth=[45.degrad,135.neg.degrad,45.neg.degrad,135.degrad];
 ~elevation=[35.264390.neg.degrad,35.264390.neg.degrad,35.264390.degrad,35.264390.degrad];
 //~elevation=[0,0,0,0];
-);*/
+);
 
-///////// pan on cube array
-/*(
-~azc=[45.degrad,135.degrad,45.neg.degrad,135.neg.degrad,45.degrad,135.degrad,45.neg.degrad,135.neg.degrad];
-~elc=[35.264390.neg.degrad,35.264390.neg.degrad,35.264390.neg.degrad,35.264390.neg.degrad,35.264390.degrad,35.264390.degrad,35.264390.degrad,35.264390.degrad];
-)*/
 0.1.wait;
 
 ///////////inputs
@@ -237,9 +212,9 @@ SynthDef.new(\synth,{
 
 arg gain=0,fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,dist=1,lsystem=1,
 	tone=1,scselect=0,rate=1,attack=0.01,curve=4.neg,key=0;
-var level,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
+var level,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez,snt;
-var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,thresholdk,note,senv;
+var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,thresholdk,note;
 var n=0,polytope=5,busarray1,harmonic,fund,mix,a,b,cc,immersion,busarray,gate,threshold;
 var az1=0,az2=0,az3=0,az4=0,el1=0,el2=0,el3=0,el4=0,az,el,xp,yp,zp,kx,ky,kz;
 var az5=0,az6=0,az7=0,az8=0,el5=0,el6=0,el7=0,el8=0;
@@ -287,12 +262,11 @@ pitchy=2.pow(Select.kr((pitch.imag*~note).abs,Select.kr(scselect,~scale))/12);
 n=0;
 polytope.do{
 
-//triplet env
-//senv=EnvGen.kr(Env([0,1,0],[attack,rate+(attack*2)],[32.neg,32]),gate:lsystem);
+// env
 //env=EnvGen.ar(Env.new([0,1,0,1,0,1,0],
 //[attack,(rate/3),attack,(rate/3),attack,(rate/3)],[curve]),doneAction:2);
 env=EnvGen.ar(Env.perc(attack,rate*curve.abs),doneAction:2);
-senv=1;
+
 azn=az.[n].lag2(~lagtime);
 eln=el.[n].lag2(~lagtime);
 
@@ -363,119 +337,80 @@ sigy=FreeVerb.ar((c2).fold2(overdrive*~comp),yp.lag2(0.1).fold2(1).abs,revroom);
 sigz=FreeVerb.ar((c3).fold2(overdrive*~comp),zp.lag2(0.1).fold2(1).abs,revroom);
 
 //vbap panner
-/*(
-g1=((cos(eln)*cos(azn*harmonic)*
-cos(~elc.[0])*cos(~azc.[0]))
+(
+g1=((cos(eln)*cos(azn)*cos(~azimuth.[0])*cos(~azimuth.[0]))
 +
-(cos(eln)*sin(azn*harmonic)*
- cos(~elc.[0])*sin(~azc.[0]))
+(cos(eln)*sin(azn)* cos(~elevation.[0])*sin(~azimuth.[0]))
 +
-(sin(eln*harmonic)*
-sin(~elc.[0])));
+(sin(eln)*sin(~elevation.[0])));
 
-g2=((cos(eln)*cos(azn*harmonic)*
-cos(~elc.[1])*cos(~azc.[1]))
+g2=((cos(eln)*cos(azn)*cos(~elevation.[1])*cos(~azimuth.[1]))
 +
-(cos(eln)*sin(azn*harmonic)*
- cos(~elc.[1])*sin(~azc.[1]))
+(cos(eln)*sin(azn)*cos(~elevation.[1])*sin(~azimuth.[1]))
 +
-(sin(eln*harmonic)*
-sin(~elc.[1])));
+(sin(eln)*sin(~elevation.[1])));
 
-g3=((cos(eln)*cos(azn*harmonic)*
-cos(~elc.[2])*cos(~azc.[2]))
+g3=((cos(eln)*cos(azn)*cos(~elevation.[2])*cos(~azimuth.[2]))
 +
-(cos(eln)*sin(azn*harmonic)*
- cos(~elc.[2])*sin(~azc.[2]))
+(cos(eln)*sin(azn)*cos(~elevation.[2])*sin(~azimuth.[2]))
 +
-(sin(eln*harmonic)*
-sin(~elc.[2])));
+(sin(eln)*sin(~elevation.[2])));
 
-g4=((cos(eln)*cos(azn*harmonic)*
-cos(~elc.[3])*cos(~azc.[3]))
+g4=((cos(eln)*cos(azn)*cos(~elevation.[3])*cos(~azimuth.[3]))
 +
-(cos(eln)*sin(azn*harmonic)*
- cos(~elc.[3])*sin(~azc.[3]))
+(cos(eln)*sin(azn)*cos(~elevation.[3])*sin(~azimuth.[3]))
 +
-(sin(eln*harmonic)*
-sin(~elc.[3])));
-
-g5=((cos(eln)*cos(azn*harmonic)*
-cos(~elc.[4])*cos(~azc.[4]))
-+
-(cos(eln)*sin(azn*harmonic)*
- cos(~elc.[4])*sin(~azc.[4]))
-+
-(sin(eln*harmonic)*
-sin(~elc.[4])));
-
-g6=((cos(eln)*cos(azn*harmonic)*
-cos(~elc.[5])*cos(~azc.[5]))
-+
-(cos(eln)*sin(azn*harmonic)*
- cos(~elc.[5])*sin(~azc.[5]))
-+
-(sin(eln*harmonic)*
-sin(~elc.[5])));
-
-g7=((cos(eln)*cos(azn*harmonic)*
-cos(~elc.[6])*cos(~azc.[6]))
-+
-(cos(eln)*sin(azn*harmonic)*
- cos(~elc.[6])*sin(~azc.[6]))
-+
-(sin(eln*harmonic)*
-sin(~elc.[6])));
-
-g8=((cos(eln)*cos(azn*harmonic)*
-cos(~elc.[7])*cos(~azc.[7]))
-+
-(cos(eln)*sin(azn*harmonic)*
- cos(~elc.[7])*sin(~azc.[7]))
-+
-(sin(eln*harmonic)*
-sin(~elc.[7])));
-			);
-
-pan1=[g1,g3,g5,g7];
-pan2=[g2,g4,g6,g8];*/
+(sin(eln)*sin(~elevation.[3])));
+);
 
 ///sig
 a=HPF.ar((LeakDC.ar((sigx)*((sigz).fold2(overdrive*~distortion)+(ampz)))),64);
 b=HPF.ar((LeakDC.ar((sigy)*((sigz).fold2(overdrive*~distortion)+(ampz)))),64);
 cc=HPF.ar((LeakDC.ar((sigy)*((sigz).fold2(overdrive*~distortion)+(ampz)))),64);
 
-//a=(a*pan1[n]).softclip(3.dbamp);
-//b=(b*pan2[n]).softclip(3.dbamp);
-
 threshold=(((343/0.15)/tune).reciprocal.ampdb/2.sqrt).dbamp;
 a=Compander.ar(a,sigx,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 b=Compander.ar(b,sigy,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 cc=Compander.ar(cc,sigz,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 
-busarray1=[0,2,4,6,8,10,12,14];
-busarray2=[1,3,5,7,9,11,13,15];
-
 ///wavefield out
-//Out.ar(busarray1.[n],a.softclip(5)*env*senv);
-//Out.ar(busarray2.[n],b.softclip(5)*env*senv);
+//busarray1=[0,2,4,6,8,10,12,14];
+//busarray2=[1,3,5,7,9,11,13,15];
+//Out.ar(busarray1.[n],a.softclip(3)*env);
+//Out.ar(busarray2.[n],b.softclip(3)*env);
+
+//vbap out
+/*(
+Out.ar(0,a.softclip(3)*env*g1);
+Out.ar(1,a.softclip(3)*env*g2);
+Out.ar(2,a.softclip(3)*env*g3);
+Out.ar(3,a.softclip(3)*env*g4);
+Out.ar(0,b.softclip(3)*env*g1);
+Out.ar(1,b.softclip(3)*env*g2);
+Out.ar(2,b.softclip(3)*env*g3);
+Out.ar(3,b.softclip(3)*env*g4);
+Out.ar(0,cc.softclip(3)*env*g1);
+Out.ar(1,cc.softclip(3)*env*g2);
+Out.ar(2,cc.softclip(3)*env*g3);
+Out.ar(3,cc.softclip(3)*env*g4);
+)*/
 
 //pan stereo out
-Out.ar(busarray1.[0],Pan2.ar(a.softclip(5),(x.clip2(1))*immersion,env*senv));
-Out.ar(busarray1.[0],Pan2.ar(b.softclip(5),(y.clip2(1))*immersion,env*senv));
-Out.ar(busarray1.[0],Pan2.ar(cc.softclip(5),(z.clip2(1)),env*senv));
+//Out.ar(0,Pan2.ar(a.softclip(3),(x.clip2(1))*immersion,env));
+//Out.ar(0,Pan2.ar(b.softclip(3),(y.clip2(1))*immersion,env));
+//Out.ar(0,Pan2.ar(cc.softclip(3),(z.clip2(1)),env));
 
 //quad out
-//Out.ar(busarray1.[n],Pan4.ar(a.softclip(5),(x.wrap2(1))*immersion,(y.wrap2(1))*immersion,env*senv));
-//Out.ar(busarray1.[n],Pan4.ar(b.softclip(5),(x.wrap2(1))*immersion,(y.wrap2(1))*immersion,env*senv));
+//Out.ar(0,Pan4.ar(a.softclip(3),(x.wrap2(1))*immersion,(y.wrap2(1))*immersion,env));
+//Out.ar(0,Pan4.ar(b.softclip(3),(x.wrap2(1))*immersion,(y.wrap2(1))*immersion,env));
 
 //mono out
-//Out.ar(busarray1.[0],a.softclip(2)*env*senv);
-//Out.ar(busarray1.[0],b.softclip(2)*env*senv);
+//Out.ar(0,a.softclip(2)*env);
+//Out.ar(0,b.softclip(2)*env);
+Out.ar(0,a.softclip(2)*env);
+Out.ar(0,b.softclip(2)*env);
+Out.ar(0,cc.softclip(2)*env);
 
-//Out.ar(busarray1.[0],a.softclip(2)*env*senv);
-//Out.ar(busarray1.[0],b.softclip(2)*env*senv);
-//Out.ar(busarray1.[0],cc.softclip(2)*env*senv);
 n=n+1;
 };
 }).add;
@@ -503,7 +438,6 @@ n=n+1;
 ~scaleselect=0;
 ~curve=1.neg;
 ~dist=1;
-~lseq=[1];
 );
 
 ///melody
@@ -568,8 +502,8 @@ Pbind(\instrument, \synth,
 		   2,7,10,14,2,9,10,12],inf),
 //\key,Pfunc{~sn},
 \dist,Pfunc{~dist},
-\lsystem,Pseq(~lseq,inf),
 )));
+
 (~pattern2 = Pdef(\2,
 Pbind(\instrument, \synth,
 //Pmono( \synth,
@@ -611,7 +545,6 @@ Pbind(\instrument, \synth,
 			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
 			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg],inf),
 \dist,Pfunc{~dist},
-\lsystem,Pseq(~lseq,inf),
 )));
 ~pattern1.play;
 ~pattern2.play;
