@@ -80,7 +80,7 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 //~elevation=[0,0,0,0];
 );*/
 
-///////// pan on cube arrasy
+///////// pan on cube array
 /*(
 ~azc=[45.degrad,135.degrad,45.neg.degrad,135.neg.degrad,45.degrad,135.degrad,45.neg.degrad,135.neg.degrad];
 ~elc=[35.264390.neg.degrad,35.264390.neg.degrad,35.264390.neg.degrad,35.264390.neg.degrad,35.264390.degrad,35.264390.degrad,35.264390.degrad,35.264390.degrad];
@@ -92,7 +92,7 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 ~azr=1;~elr=1;
 ~temperament=16256;
 ~lagtime=1/256;
-~frames=1024.reciprocal;
+~frames=256.reciprocal;
 ~x=0;~y=0;~z=0;
 ~ffreq=32;
 ~window=110;
@@ -240,7 +240,7 @@ arg gain=0,fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,dist=1,lsystem=
 var level,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez,snt;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,thresholdk,note,senv;
-var n=0,polytope=8,busarray1,harmonic,fund,mix,a,b,cc,immersion,busarray,gate,threshold;
+var n=0,polytope=5,busarray1,harmonic,fund,mix,a,b,cc,immersion,busarray,gate,threshold;
 var az1=0,az2=0,az3=0,az4=0,el1=0,el2=0,el3=0,el4=0,az,el,xp,yp,zp,kx,ky,kz;
 var az5=0,az6=0,az7=0,az8=0,el5=0,el6=0,el7=0,el8=0;
 
@@ -626,220 +626,8 @@ s.record(numChannels:2);
 {Out.ar(0,PlayBuf.ar(1, ~c1.bufnum, BufRateScale.kr(~c1), loop: 0,doneAction:0))}.play;
 {Out.ar(1,PlayBuf.ar(1, ~c2.bufnum, BufRateScale.kr(~c2), loop: 0,doneAction:0))}.play;
 )*/
-
-////////////////////////gui
-(
-{
-var size=550,sk=(size/12),w,rol=0,sz=0.5,wd=3.5,shift=1;
-
-w = Window("tws", Rect(50, 50, size, size)).front;
-~vw1 = UserView(w, Rect(0,0,size,size)).background_(Color.black);
-~logView1 = ListView( ~vw1, Rect(0, 0, size/4, size)).background_(Color.black)
-.stringColor_(Color.white).font_(Font('Arial', 18)).items_([]);
-
-~logItems1 = List.new;
-~log1 = { |msg| {~logItems1.add(msg); if(~logItems1.size > 200) { ~logItems1.removeAt(0);  };
-~logView1.items_(~logItems1.asArray); ~logView1.value_(~logItems1.size - 1); }.defer;};
-
-(
-~sl1=Knob.new(~vw1, Rect.new(50,50,sk, sk)).background_(Color.black).action_({
-arg obj;
-var value;
-value=obj.value.linlin(0,1,pi.neg,pi).postln;
-//value=obj.value.linlin(0,1,1/4,4).round(1/16).postln;
-~azr=value;
-~elr=value/2;
-//~clock.tempo_(value);
-~log1.(value.asString);
-});
-~st1=StaticText(~vw1,Rect(50,50+sk,sk+20,sk)).string_("rot")
-.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
-);
-
-(
-~sl2=Knob.new(~vw1, Rect.new(150,50,sk, sk)).background_(Color.black).action_({
-arg obj;
-var value;
-value=obj.value.linlin(0,1,pi.neg,pi).postln;
-//value=obj.value.linlin(0,1,0,~note).round(1).postln;
-//~elr=value;
-//~nset=value;
-//~synth.set(\tone,value);
-~tone=value;
-~log1.(value.asString);
-});
-~st2=StaticText(~vw1,Rect(150,50+sk,sk+20,sk)).string_("tone")
-.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
-);
-
-(
-~sl3=Knob.new(~vw1, Rect.new(250,50,sk, sk)).background_(Color.black).action_({
-arg obj;
-var value;
-value=obj.value.linlin(0,1,(16256*4).neg,16256*2).round(1).postln;
-//~synth.set(\gain,value);
-~gain=value;
-~log1.(value.asString);
-});
-~st3=StaticText(~vw1,Rect(250,50+sk,sk+20,sk)).string_("gain")
-.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
-);
-
-(
-~sl4=Knob.new(~vw1, Rect.new(350,50,sk, sk)).background_(Color.black).action_({
-arg obj;
-var value;
-value=obj.value.linlin(0,1,16256*3.neg,16256*2).round(1).postln;
-//~synth.set(\fundamental,value);
-~fundamental=value;
-~log1.(value.asString);
-});
-~st4=StaticText(~vw1,Rect(350,50+sk,sk+20,sk)).string_("fund")
-.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
-);
-
-(
-~sl5=Knob.new(~vw1, Rect.new(450,50,sk, sk)).background_(Color.black).action_({
-arg obj;
-var value;
-value=obj.value.linlin(0,1,(16256*8).neg,16256*4).round(1).postln;
-//~synth.set(\resonanse,value);
-~resonanse=value;
-~log1.(value.asString);
-});
-
-~st5=StaticText(~vw1,Rect(450,50+sk,sk+20,sk)).string_("resonance")
-.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
-);
-
-(
-~sl6=Knob.new(~vw1, Rect.new(50,50+sk+50+25,sk, sk)).background_(Color.black).action_({
-arg obj;
-var value;
-value=obj.value.linlin(0,1,1,16).round(1).postln;
-//~synth.set(\harm,value);
-~harm=value;
-~log1.(value.asString);
-});
-~st6=StaticText(~vw1,Rect(50,(50+sk+50+25+sk),sk+20,sk)).string_("harmonic")
-.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
-);
-(
-
-~sl7=Knob.new(~vw1, Rect.new(150,50+sk+50+25,sk, sk)).background_(Color.black).action_({
-arg obj;
-var value;
-value=obj.value.linlin(0,1,0,~fuselim).round(1).postln;
-//~synth.set(\drive,value);
-~drive=value;
-~log1.(value.asString);
-});
-~st7=StaticText(~vw1,Rect(150,(50+sk+50+25+sk),sk+20,sk)).string_("drive")
-.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
-);
-
-(
-~sl8=Knob.new(~vw1, Rect.new(250,50+sk+50+25,sk, sk)).background_(Color.black).action_({
-arg obj;
-var value;
-value=obj.value.linlin(0,1,8.neg,64).postln;
-//~synth.set(\perspective,value);
-~curve=value;
-~log1.(value.asString);
-});
-~st8=StaticText(~vw1,Rect(250,(50+sk+50+25+sk),sk+20,sk)).string_("gate")
-.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
-);
-
-(
-~sl9=Knob.new(~vw1, Rect.new(350,50+sk+50+25,sk, sk)).background_(Color.black).action_({
-arg obj;
-var value;
-value=obj.value.linlin(0,1,(16256*12).neg,0).round(1).postln;
-//~synth.set(\room,value);
-~room=value;
-~log1.(value.asString);
-});
-~st9=StaticText(~vw1,Rect(350,(50+sk+50+25+sk),sk+20,sk)).string_("room")
-.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
-);
-
-(
-~sl10=Knob.new(~vw1, Rect.new(450,50+sk+50+25,sk, sk)).background_(Color.black).action_({
-arg obj;
-var value;
-value=obj.value.linlin(0,1,0,~temperament/2).round(1).postln;
-//~synth.set(\mag,value);
-~mag=value;
-~log1.(value.asString);
-});
-~st10=StaticText(~vw1,Rect(450,(50+sk+50+25+sk),sk+20,sk)).string_("magnitude")
-.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
-);
-(
-~sl11=Knob.new(~vw1, Rect.new(50,(50+sk+50+sk+25+25+50),sk, sk)).background_(Color.black).action_({
-arg obj;
-var sc;
-sc=obj.value.linlin(0,1,0,4).round(1);
-sc.postln;
-~scaleselect=sc;
-~log1.(sc.asString);
-});
-~st11=StaticText(~vw1,Rect(50,(50+sk+50+sk+25+25+sk+50),sk+20,sk)).string_("scale")
-.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
-);
-(
-~s12=Knob.new(~vw1, Rect.new(150,(50+sk+50+sk+25+25+50), sk)).background_(Color.black).action_({
-arg obj;
-var note;
-note=obj.value.linlin(0,1,0,24).round(1);
-note.postln;
-~sn1=note;
-~log1.(note.asString);
-});
-~st12=StaticText(~vw1,Rect(150,(50+sk+50+sk+25+25+sk+50),sk+20,sk)).string_("n1")
-.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
-);
-(
-~sl14=Knob.new(~vw1, Rect.new(350,(50+sk+50+sk+25+25+50),sk, sk)).background_(Color.black).action_({
-arg obj;
-var k;
-k=obj.value.linexp(0,1,0.000001,1);
-k.postln;
-~attack=k/~time;
-~log1.(k.asString);
-});
-~st14=StaticText(~vw1,Rect(350,(50+sk+50+sk+25+25+sk+50),sk+20,sk)).string_("attack")
-.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
-);
-(
-~sl15=Knob.new(~vw1, Rect.new(450,(50+sk+50+sk+25+25+50),sk, sk)).background_(Color.black).action_({
-arg obj;
-var tempo;
-	tempo=obj.value.linlin(0,1,1,128).round(1/8);
-tempo.postln;
-~time=tempo;
-~log1.(tempo.asString);
-});
-~st15=StaticText(~vw1,Rect(450,(50+sk+50+sk+25+25+sk+50),sk+20,sk)).string_("tempof")
-.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
-);
-(
-~sl16=Knob.new(~vw1, Rect.new(50,(50+sk+50+sk+25+25+sk+50+sk+50),sk, sk)).background_(Color.black).action_({
-arg obj;
-var dist;
-dist=obj.value.linlin(0,1,1,10);
-dist.postln;
-~dist=dist;
-~log1.(dist.asString);
-});
-~st16=StaticText(~vw1,Rect(50,(50+sk+50+sk+25+25+sk+50+sk+50+sk),sk+20,sk)).string_("distance")
-.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
-);
-}.defer
-);
-
-/////////midi
+		0.1.wait;
+		/////////midi
 (
 MIDIClient.init;
 MIDIIn.connectAll;
@@ -1039,9 +827,361 @@ note.postln;
 ~sn=note;
 },33);
 );
+		);
+////////////////////////gui
+	1.wait;
+(
+{
+var size=550,sk=(size/12),w,rol=0,sz=0.5,wd=3.5,shift=1;
+
+w = Window("tws", Rect(50, 50, size+800, size)).front;
+~vw1 = UserView(w, Rect(0,0,size+800,size)).background_(Color.black);
+~logView1 = ListView( ~vw1, Rect(0, 0, size/4, size)).background_(Color.black)
+.stringColor_(Color.white).font_(Font('Arial', 18)).items_([]);
+
+~logItems1 = List.new;
+~log1 = { |msg| {~logItems1.add(msg); if(~logItems1.size > 200) { ~logItems1.removeAt(0);  };
+~logView1.items_(~logItems1.asArray); ~logView1.value_(~logItems1.size - 1); }.defer;};
 
 
-)
+~vallogView1 = ListView( ~vw1, Rect(size, 0, 50, size)).background_(Color.black)
+.stringColor_(Color.white).font_(Font('Arial', 10)).items_([]);
+~vallogItems1 = List.new;
+~vallog1 = { |msg| {~vallogItems1.add(msg); if(~vallogItems1.size > 200) { ~vallogItems1.removeAt(0);  };
+~vallogView1.items_(~vallogItems1.asArray); ~vallogView1.value_(~vallogItems1.size - 1); }.defer;};
+
+~vallogView2 = ListView( ~vw1, Rect(size+50, 0, 50, size)).background_(Color.black)
+.stringColor_(Color.white).font_(Font('Arial', 10)).items_([]);
+~vallogItems2 = List.new;
+~vallog2 = { |msg| {~vallogItems2.add(msg); if(~vallogItems2.size > 200) { ~vallogItems2.removeAt(0);  };
+~vallogView2.items_(~vallogItems2.asArray); ~vallogView2.value_(~vallogItems2.size - 1); }.defer;};
+
+~vallogView3 = ListView( ~vw1, Rect(size+100, 0, 50, size)).background_(Color.black)
+.stringColor_(Color.white).font_(Font('Arial', 10)).items_([]);
+~vallogItems3 = List.new;
+~vallog3 = { |msg| {~vallogItems3.add(msg); if(~vallogItems3.size > 200) { ~vallogItems3.removeAt(0);  };
+~vallogView3.items_(~vallogItems3.asArray); ~vallogView3.value_(~vallogItems3.size - 1); }.defer;};
+
+~vallogView4 = ListView( ~vw1, Rect(size+150, 0, 50, size)).background_(Color.black)
+.stringColor_(Color.white).font_(Font('Arial', 10)).items_([]);
+~vallogItems4 = List.new;
+~vallog4 = { |msg| {~vallogItems4.add(msg); if(~vallogItems4.size > 200) { ~vallogItems4.removeAt(0);  };
+~vallogView4.items_(~vallogItems4.asArray); ~vallogView4.value_(~vallogItems4.size - 1); }.defer;};
+
+~vallogView5 = ListView( ~vw1, Rect(size+200, 0, 50, size)).background_(Color.black)
+.stringColor_(Color.white).font_(Font('Arial', 10)).items_([]);
+~vallogItems5 = List.new;
+~vallog5 = { |msg| {~vallogItems5.add(msg); if(~vallogItems5.size > 200) { ~vallogItems5.removeAt(0);  };
+~vallogView5.items_(~vallogItems5.asArray); ~vallogView5.value_(~vallogItems5.size - 1); }.defer;};
+
+~vallogView6 = ListView( ~vw1, Rect(size+250, 0, 50, size)).background_(Color.black)
+.stringColor_(Color.white).font_(Font('Arial', 10)).items_([]);
+~vallogItems6 = List.new;
+~vallog6 = { |msg| {~vallogItems6.add(msg); if(~vallogItems6.size > 200) { ~vallogItems6.removeAt(0);  };
+~vallogView6.items_(~vallogItems6.asArray); ~vallogView6.value_(~vallogItems6.size - 1); }.defer;};
+
+~vallogView7 = ListView( ~vw1, Rect(size+300, 0, 50, size)).background_(Color.black)
+.stringColor_(Color.white).font_(Font('Arial', 10)).items_([]);
+~vallogItems7 = List.new;
+~vallog7 = { |msg| {~vallogItems7.add(msg); if(~vallogItems7.size > 200) { ~vallogItems7.removeAt(0);  };
+~vallogView7.items_(~vallogItems7.asArray); ~vallogView7.value_(~vallogItems7.size - 1); }.defer;};
+
+~vallogView8 = ListView( ~vw1, Rect(size+350, 0, 50, size)).background_(Color.black)
+.stringColor_(Color.white).font_(Font('Arial', 10)).items_([]);
+~vallogItems8 = List.new;
+~vallog8 = { |msg| {~vallogItems8.add(msg); if(~vallogItems8.size > 200) { ~vallogItems8.removeAt(0);  };
+~vallogView8.items_(~vallogItems8.asArray); ~vallogView8.value_(~vallogItems8.size - 1); }.defer;};
+
+~vallogView9 = ListView( ~vw1, Rect(size+400, 0, 50, size)).background_(Color.black)
+.stringColor_(Color.white).font_(Font('Arial', 10)).items_([]);
+~vallogItems9 = List.new;
+~vallog9 = { |msg| {~vallogItems9.add(msg); if(~vallogItems9.size > 200) { ~vallogItems9.removeAt(0);  };
+~vallogView9.items_(~vallogItems9.asArray); ~vallogView9.value_(~vallogItems9.size - 1); }.defer;};
+
+~vallogView10 = ListView( ~vw1, Rect(size+450, 0, 50, size)).background_(Color.black)
+.stringColor_(Color.white).font_(Font('Arial', 10)).items_([]);
+~vallogItems10 = List.new;
+~vallog10 = { |msg| {~vallogItems10.add(msg); if(~vallogItems10.size > 200) { ~vallogItems10.removeAt(0);  };
+~vallogView10.items_(~vallogItems10.asArray); ~vallogView10.value_(~vallogItems10.size - 1); }.defer;};
+
+~vallogView11 = ListView( ~vw1, Rect(size+500, 0, 50, size)).background_(Color.black)
+.stringColor_(Color.white).font_(Font('Arial', 10)).items_([]);
+~vallogItems11 = List.new;
+~vallog11 = { |msg| {~vallogItems11.add(msg); if(~vallogItems11.size > 200) { ~vallogItems11.removeAt(0);  };
+~vallogView11.items_(~vallogItems11.asArray); ~vallogView11.value_(~vallogItems11.size - 1); }.defer;};
+
+~vallogView12 = ListView( ~vw1, Rect(size+550, 0, 50, size)).background_(Color.black)
+.stringColor_(Color.white).font_(Font('Arial', 10)).items_([]);
+~vallogItems12 = List.new;
+~vallog12 = { |msg| {~vallogItems12.add(msg); if(~vallogItems12.size > 200) { ~vallogItems12.removeAt(0);  };
+~vallogView12.items_(~vallogItems12.asArray); ~vallogView12.value_(~vallogItems12.size - 1); }.defer;};
+
+~vallogView13 = ListView( ~vw1, Rect(size+600, 0, 50, size)).background_(Color.black)
+.stringColor_(Color.white).font_(Font('Arial', 10)).items_([]);
+~vallogItems13 = List.new;
+~vallog13 = { |msg| {~vallogItems13.add(msg); if(~vallogItems13.size > 200) { ~vallogItems13.removeAt(0);  };
+~vallogView13.items_(~vallogItems13.asArray); ~vallogView13.value_(~vallogItems13.size - 1); }.defer;};
+
+~vallogView14 = ListView( ~vw1, Rect(size+650, 0, 50, size)).background_(Color.black)
+.stringColor_(Color.white).font_(Font('Arial', 10)).items_([]);
+~vallogItems14 = List.new;
+~vallog14 = { |msg| {~vallogItems14.add(msg); if(~vallogItems14.size > 200) { ~vallogItems14.removeAt(0);  };
+~vallogView14.items_(~vallogItems14.asArray); ~vallogView14.value_(~vallogItems14.size - 1); }.defer;};
+
+~vallogView15 = ListView( ~vw1, Rect(size+700, 0, 50, size)).background_(Color.black)
+.stringColor_(Color.white).font_(Font('Arial', 10)).items_([]);
+~vallogItems15 = List.new;
+~vallog15 = { |msg| {~vallogItems15.add(msg); if(~vallogItems15.size > 200) { ~vallogItems15.removeAt(0);  };
+~vallogView15.items_(~vallogItems15.asArray); ~vallogView15.value_(~vallogItems15.size - 1); }.defer;};
+
+~vallogView16 = ListView( ~vw1, Rect(size+750, 0, 50, size)).background_(Color.black)
+.stringColor_(Color.white).font_(Font('Arial', 10)).items_([]);
+~vallogItems16 = List.new;
+~vallog16 = { |msg| {~vallogItems16.add(msg); if(~vallogItems16.size > 200) { ~vallogItems16.removeAt(0);  };
+~vallogView16.items_(~vallogItems16.asArray); ~vallogView16.value_(~vallogItems16.size - 1); }.defer;};
+
+~nam2=StaticText(~vw1,Rect(size,0,50,50)).string_("az1")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',10));
+~nam3=StaticText(~vw1,Rect(size+50,0,50,50)).string_("el1")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',10));
+~nam4=StaticText(~vw1,Rect(size+100,0,50,50)).string_("az2")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',10));
+~nam5=StaticText(~vw1,Rect(size+150,0,50,50)).string_("el2")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',10));
+~nam6=StaticText(~vw1,Rect(size+200,0,50,50)).string_("az3")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',10));
+~nam7=StaticText(~vw1,Rect(size+250,0,50,50)).string_("el3")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',10));
+~nam8=StaticText(~vw1,Rect(size+300,0,50,50)).string_("az4")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',10));
+~nam9=StaticText(~vw1,Rect(size+350,0,50,50)).string_("el4")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',10));
+~nam10=StaticText(~vw1,Rect(size+400,0,50,50)).string_("az5")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',10));
+~nam11=StaticText(~vw1,Rect(size+450,0,50,50)).string_("el5")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',10));
+~nam12=StaticText(~vw1,Rect(size+500,0,50,50)).string_("az6")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',10));
+~nam13=StaticText(~vw1,Rect(size+550,0,50,50)).string_("el6")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',10));
+~nam14=StaticText(~vw1,Rect(size+600,0,50,50)).string_("az7")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',10));
+~nam15=StaticText(~vw1,Rect(size+650,0,50,50)).string_("el7")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',10));
+~nam16=StaticText(~vw1,Rect(size+700,0,50,50)).string_("az8")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',10));
+~nam17=StaticText(~vw1,Rect(size+750,0,50,50)).string_("el8")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',10));
+
+({Routine({loop{
+~vallog1.(~az.[0].asString);
+~vallog2.(~el.[0].asString);
+~vallog3.(~az.[1].asString);
+~vallog4.(~el.[1].asString);
+~vallog5.(~az.[2].asString);
+~vallog6.(~el.[2].asString);
+~vallog7.(~az.[3].asString);
+~vallog8.(~el.[3].asString);
+~vallog9.(~az.[4].asString);
+~vallog10.(~el.[4].asString);
+~vallog11.(~az.[5].asString);
+~vallog12.(~el.[5].asString);
+~vallog13.(~az.[6].asString);
+~vallog14.(~el.[6].asString);
+~vallog15.(~az.[7].asString);
+~vallog16.(~el.[7].asString);
+(0.25).wait}}).play;
+}.defer);
+
+
+~nam1=StaticText(~vw1,Rect(0,0,100,50)).string_("control inputs")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
+
+(
+~sl1=Knob.new(~vw1, Rect.new(50,50,sk, sk)).background_(Color.black).action_({
+arg obj;
+var value;
+value=obj.value.linlin(0,1,pi.neg,pi).postln;
+//value=obj.value.linlin(0,1,1/4,4).round(1/16).postln;
+~azr=value;
+~elr=value/2;
+//~clock.tempo_(value);
+~log1.(value.asString);
+});
+~st1=StaticText(~vw1,Rect(50,50+sk,sk+20,sk)).string_("rot")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
+);
+
+(
+~sl2=Knob.new(~vw1, Rect.new(150,50,sk, sk)).background_(Color.black).action_({
+arg obj;
+var value;
+value=obj.value.linlin(0,1,pi.neg,pi).postln;
+//value=obj.value.linlin(0,1,0,~note).round(1).postln;
+//~elr=value;
+//~nset=value;
+//~synth.set(\tone,value);
+~tone=value;
+~log1.(value.asString);
+});
+~st2=StaticText(~vw1,Rect(150,50+sk,sk+20,sk)).string_("tone")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
+);
+
+(
+~sl3=Knob.new(~vw1, Rect.new(250,50,sk, sk)).background_(Color.black).action_({
+arg obj;
+var value;
+value=obj.value.linlin(0,1,(16256*4).neg,16256*2).round(1).postln;
+//~synth.set(\gain,value);
+~gain=value;
+~log1.(value.asString);
+});
+~st3=StaticText(~vw1,Rect(250,50+sk,sk+20,sk)).string_("gain")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
+);
+
+(
+~sl4=Knob.new(~vw1, Rect.new(350,50,sk, sk)).background_(Color.black).action_({
+arg obj;
+var value;
+value=obj.value.linlin(0,1,16256*3.neg,16256*2).round(1).postln;
+//~synth.set(\fundamental,value);
+~fundamental=value;
+~log1.(value.asString);
+});
+~st4=StaticText(~vw1,Rect(350,50+sk,sk+20,sk)).string_("fund")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
+);
+
+(
+~sl5=Knob.new(~vw1, Rect.new(450,50,sk, sk)).background_(Color.black).action_({
+arg obj;
+var value;
+value=obj.value.linlin(0,1,(16256*8).neg,16256*4).round(1).postln;
+//~synth.set(\resonanse,value);
+~resonanse=value;
+~log1.(value.asString);
+});
+
+~st5=StaticText(~vw1,Rect(450,50+sk,sk+20,sk)).string_("resonance")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
+);
+
+(
+~sl6=Knob.new(~vw1, Rect.new(50,50+sk+50+25,sk, sk)).background_(Color.black).action_({
+arg obj;
+var value;
+value=obj.value.linlin(0,1,1,16).round(1).postln;
+//~synth.set(\harm,value);
+~harm=value;
+~log1.(value.asString);
+});
+~st6=StaticText(~vw1,Rect(50,(50+sk+50+25+sk),sk+20,sk)).string_("harmonic")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
+);
+(
+
+~sl7=Knob.new(~vw1, Rect.new(150,50+sk+50+25,sk, sk)).background_(Color.black).action_({
+arg obj;
+var value;
+value=obj.value.linlin(0,1,0,~fuselim).round(1).postln;
+//~synth.set(\drive,value);
+~drive=value;
+~log1.(value.asString);
+});
+~st7=StaticText(~vw1,Rect(150,(50+sk+50+25+sk),sk+20,sk)).string_("drive")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
+);
+
+(
+~sl8=Knob.new(~vw1, Rect.new(250,50+sk+50+25,sk, sk)).background_(Color.black).action_({
+arg obj;
+var value;
+value=obj.value.linlin(0,1,8.neg,64).postln;
+//~synth.set(\perspective,value);
+~curve=value;
+~log1.(value.asString);
+});
+~st8=StaticText(~vw1,Rect(250,(50+sk+50+25+sk),sk+20,sk)).string_("gate")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
+);
+
+(
+~sl9=Knob.new(~vw1, Rect.new(350,50+sk+50+25,sk, sk)).background_(Color.black).action_({
+arg obj;
+var value;
+value=obj.value.linlin(0,1,(16256*12).neg,0).round(1).postln;
+//~synth.set(\room,value);
+~room=value;
+~log1.(value.asString);
+});
+~st9=StaticText(~vw1,Rect(350,(50+sk+50+25+sk),sk+20,sk)).string_("room")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
+);
+
+(
+~sl10=Knob.new(~vw1, Rect.new(450,50+sk+50+25,sk, sk)).background_(Color.black).action_({
+arg obj;
+var value;
+value=obj.value.linlin(0,1,0,~temperament/2).round(1).postln;
+//~synth.set(\mag,value);
+~mag=value;
+~log1.(value.asString);
+});
+~st10=StaticText(~vw1,Rect(450,(50+sk+50+25+sk),sk+20,sk)).string_("magnitude")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
+);
+(
+~sl11=Knob.new(~vw1, Rect.new(50,(50+sk+50+sk+25+25+50),sk, sk)).background_(Color.black).action_({
+arg obj;
+var sc;
+sc=obj.value.linlin(0,1,0,4).round(1);
+sc.postln;
+~scaleselect=sc;
+~log1.(sc.asString);
+});
+~st11=StaticText(~vw1,Rect(50,(50+sk+50+sk+25+25+sk+50),sk+20,sk)).string_("scale")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
+);
+(
+~sl14=Knob.new(~vw1, Rect.new(350,(50+sk+50+sk+25+25+50),sk, sk)).background_(Color.black).action_({
+arg obj;
+var k;
+k=obj.value.linexp(0,1,0.000001,1);
+k.postln;
+~attack=k/~time;
+~log1.(k.asString);
+});
+~st14=StaticText(~vw1,Rect(350,(50+sk+50+sk+25+25+sk+50),sk+20,sk)).string_("attack")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
+);
+(
+~sl15=Knob.new(~vw1, Rect.new(450,(50+sk+50+sk+25+25+50),sk, sk)).background_(Color.black).action_({
+arg obj;
+var tempo;
+	tempo=obj.value.linlin(0,1,1,128).round(1/8);
+tempo.postln;
+~time=tempo;
+~log1.(tempo.asString);
+});
+~st15=StaticText(~vw1,Rect(450,(50+sk+50+sk+25+25+sk+50),sk+20,sk)).string_("tempof")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
+);
+(
+~sl16=Knob.new(~vw1, Rect.new(50,(50+sk+50+sk+25+25+sk+50+sk+50),sk, sk)).background_(Color.black).action_({
+arg obj;
+var dist;
+dist=obj.value.linlin(0,1,1,10);
+dist.postln;
+~dist=dist;
+~log1.(dist.asString);
+});
+~st16=StaticText(~vw1,Rect(50,(50+sk+50+sk+25+25+sk+50+sk+50+sk),sk+20,sk)).string_("distance")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
+);
+}.defer
+);
 }); Tdef(\drone).play;
 }
 )
