@@ -26,7 +26,7 @@ Tdef(\drone, {
 ///for this array instead of simple comment out simple (tetrahedron) set frames less than 1/64 and set 32^2 iteration on rotation routine
 ///also on synthdef larger polytope number and more ouput channels on bus array, also more control buses matrix on synthdef
 ///here utilized as reverb array
-/*(
+(
 {
 var az1=0,el1=0,az2=0,el2=0,angle=0;
 var silver_r=(1+2.sqrt), g=((1+5.sqrt)/2), azimuth, elevation;
@@ -46,7 +46,7 @@ var silver_r=(1+2.sqrt), g=((1+5.sqrt)/2), azimuth, elevation;
         (el2 + angle).wrap((pi/2).neg,(pi/2))
     };
 
-    angle = (angle + (2pi-(2pi/silver_r))).wrap(pi.neg,pi);
+    angle = (angle + (2pi-(2pi/g))).wrap(pi.neg,pi);
 
     ~azimuthr = ~azimuthr ++ azimuth;
     ~elevationr = ~elevationr ++ elevation;
@@ -55,7 +55,7 @@ var silver_r=(1+2.sqrt), g=((1+5.sqrt)/2), azimuth, elevation;
     az2=0; el2=0;
 };
 }.value;
-)*///;		//0.1.wait;
+);		0.1.wait;
 /////l system boolean
 ({
 var dict = IdentityDictionary[\A -> "AB", \B -> "A"];
@@ -81,10 +81,10 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 );
 
 ///////// pan on cube arrasy
-(
+/*(
 ~azc=[45.degrad,135.degrad,45.neg.degrad,135.neg.degrad,45.degrad,135.degrad,45.neg.degrad,135.neg.degrad];
 ~elc=[35.264390.neg.degrad,35.264390.neg.degrad,35.264390.neg.degrad,35.264390.neg.degrad,35.264390.degrad,35.264390.degrad,35.264390.degrad,35.264390.degrad];
-);
+)*/
 0.1.wait;
 
 ///////////inputs
@@ -104,12 +104,12 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 
 //////////rotation
 (
-{var sph,az,el,n,bamk=2.pow(2);
+{var sph,az,el,bamk=2.pow(2),sl;n=~azimuthr.size.rand;
 Routine({loop{
 n=0;~az=[];~el=[];
 bamk.do{
-az=~azimuth.[n];
-el=~elevation.[n];
+az=~azimuthr.[n];
+el=~elevationr.[n];
 n=n+1;
 sph=Spherical(1,az,el);
 //sph=sph.rotateXY(~z.lag2(~lagtime)).asSpherical;///static z interferance
@@ -243,7 +243,7 @@ arg gain=0,fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,dist=1,lsystem=
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez,snt;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,thresholdk,note,senv,gate1;
-var n=0,polytope=1,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
+var n=0,polytope=4,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
 var az1=0,az2=0,az3=0,az4=0,el1=0,el2=0,el3=0,el4=0,az,el,xp,yp,zp,kx,ky,kz;
 var az5=0,az6=0,az7=0,az8=0,el5=0,el6=0,el7=0,el8=0,rbank=2,raz,rel,rx,ry,rz,r=0;
 
@@ -375,9 +375,9 @@ c2=c2.lag2(~signalSize.reciprocal)*
 //(LPF.ar(Saw.ar(tune,(ampz)),tune*64*overdrive).fold2(mix*0.05)+((ampz)));
 
 ///rev
-sigx=FreeVerb.ar((c1).fold2(overdrive*~comp),xp.wrap2(1).abs,revroom);
-sigy=FreeVerb.ar((c2).fold2(overdrive*~comp),yp.wrap2(1).abs,revroom);
-sigz=FreeVerb.ar((c3).fold2(~comp),zp.wrap2(1).abs,revroom);
+sigx=FreeVerb.ar((c1).fold2(overdrive*~comp),xp.fold2(0.7).abs,revroom);
+sigy=FreeVerb.ar((c2).fold2(overdrive*~comp),yp.fold2(0.7).abs,revroom);
+sigz=FreeVerb.ar((c3).fold2(~comp),zp.fold2(0.7).abs,revroom);
 //sigz=c3;
 //vbap panner
 /*(
@@ -458,12 +458,12 @@ pan1=[g1,g3,g5,g7];
 pan2=[g2,g4,g6,g8];*/
 
 ///sig
-a=HPF.ar((LeakDC.ar((sigx)*((sigz).fold2(overdrive*~distortion)+(ampz)))),32);
-b=HPF.ar((LeakDC.ar((sigy)*((sigz).fold2(overdrive*~distortion)+(ampz)))),32);
+a=HPF.ar((LeakDC.ar((sigx)*((sigz).fold2(overdrive*~distortion)+(ampz)))),64);
+b=HPF.ar((LeakDC.ar((sigy)*((sigz).fold2(overdrive*~distortion)+(ampz)))),64);
 //a=(a*pan1[n]).softclip(3.dbamp);
 //b=(b*pan2[n]).softclip(3.dbamp);
 
-threshold=(((343/0.3)/tune).reciprocal.ampdb/2.sqrt).dbamp;
+threshold=(((343/0.15)/tune).reciprocal.ampdb/2.sqrt).dbamp;
 a=Compander.ar(a,sigx,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 b=Compander.ar(b,sigy,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 
@@ -484,8 +484,8 @@ busarray2=[1,3,5,7,9,11,13,15];
 //Out.ar(busarray1.[n],Pan4.ar(b.softclip(5),(x.wrap2(1))*immersion,(y.wrap2(1))*immersion,env*senv));
 
 //mono out
-Out.ar(busarray1.[n],a.softclip(5)*env*senv);
-Out.ar(busarray1.[n],b.softclip(5)*env*senv);
+Out.ar(busarray1.[0],a.softclip(2)*env*senv);
+Out.ar(busarray1.[0],b.softclip(2)*env*senv);
 
 
 //formants
@@ -557,6 +557,8 @@ Out.ar(busarray2.[0],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 //~sn=Pseq([0,5,7,12,17,19,24],inf).asStream;
 //~sn=Pseq([7,19,22,10,19,22,14,26],inf).asStream;
 //~sn=Pseq([2,7,4,9],inf).asStream;
+
+//feed
 ~snt=Synth.new(\run).register;
 (
 {
@@ -674,8 +676,8 @@ Pbind(\instrument, \synth,
 \dist,Pfunc{~dist},
 \lsystem,Pseq([1],inf),
 )));
-//~pattern1.play;
-~pattern2.play;
+~pattern1.play;
+//~pattern2.play;
 /*(
 ~pattern1.stop;
 ~pattern2.stop;
@@ -687,6 +689,7 @@ s.record(numChannels:2);
 {Out.ar(0,PlayBuf.ar(1, ~c1.bufnum, BufRateScale.kr(~c1), loop: 0,doneAction:0))}.play;
 {Out.ar(1,PlayBuf.ar(1, ~c2.bufnum, BufRateScale.kr(~c2), loop: 0,doneAction:0))}.play;
 )*/
+
 ////////////////////////gui
 (
 {
@@ -959,7 +962,7 @@ note.postln;
 }.defer
 );
 
-////midi
+/////////midi
 (
 MIDIClient.init;
 MIDIIn.connectAll;

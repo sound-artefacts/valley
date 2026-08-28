@@ -18,8 +18,8 @@ s.scope;
 );
 s.waitForBoot{
 Tdef(\drone, {
-~c1 = Buffer.readChannel(s,,channels:0 );
-~c2 = Buffer.readChannel(s,,channels:1 );
+~c1 = Buffer.readChannel(s,"/Users/rohifes/Music/SuperCollider Recordings/SC_260828_173126.wav",channels:0 );
+~c2 = Buffer.readChannel(s,"/Users/rohifes/Music/SuperCollider Recordings/SC_260828_173126.wav",channels:1 );
 (
 {
 var az1=0,el1=0,az2=0,el2=0,angle=0;
@@ -71,10 +71,10 @@ rz=(((harmonic)*sin(rel))+(sin((harmonic)*(rel))))/harmonic;
 immersion = (level/dist) / ((level/dist) + rz + ((level/dist)/2));
 
 ///sig
-sig1=level*FreeVerb.ar(PlayBuf.ar(1, ~c1.bufnum, BufRateScale.kr(~c1), loop: 0,doneAction:0)*rz.fold2(1),rx.wrap2(1).abs,room);
-sig2=level*FreeVerb.ar(PlayBuf.ar(1, ~c2.bufnum, BufRateScale.kr(~c2), loop: 0,doneAction:0)*rz.fold2(1),ry.wrap2(1).abs,room);
-Out.ar(0,sig1/(rbank));
-Out.ar(1,sig2/(rbank));
+sig1=level*FreeVerb.ar(PlayBuf.ar(1, ~c1.bufnum, BufRateScale.kr(~c1), loop: 0,doneAction:0)*rz.fold2(1),rx.fold2(1).abs,room);
+sig2=level*FreeVerb.ar(PlayBuf.ar(1, ~c2.bufnum, BufRateScale.kr(~c2), loop: 0,doneAction:0)*rz.fold2(1),ry.fold2(1).abs,room);
+Out.ar(0,sig1/(rbank)*immersion);
+Out.ar(1,sig2/(rbank)*immersion);
 r=r+1;
 };
 }).add;
@@ -84,7 +84,7 @@ r=r+1;
 
 ~snt=Synth.new(\re).register;
 
-~snt.set(\level,0.1,\room,1,\harmonic,31,\dist,2);
+~snt.set(\level,56,\room,1,\harmonic,56,\dist,10);
 
 /*(
 s.record(numChannels:2);
