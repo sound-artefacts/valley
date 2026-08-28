@@ -298,9 +298,9 @@ eln=el.[n].lag2(~lagtime);
 
 ///spat
 //verb
-xp = ((harmonic*cos(eln)*cos(azn))+(cos(harmonic*(eln))*cos(harmonic*(azn))))/harmonic/(2.sqrt);
-yp = ((harmonic*cos(eln)*sin(azn))+(cos(harmonic*(eln))*sin(harmonic*(azn))))/harmonic/(2.sqrt);
-zp = ((harmonic*sin(eln))+(sin(harmonic*(eln))))/harmonic/(2.sqrt);
+xp = ((harmonic*cos(eln)*cos(azn))+(cos(harmonic*(eln))*cos(harmonic*(azn))))/harmonic.sqrt;
+yp = ((harmonic*cos(eln)*sin(azn))+(cos(harmonic*(eln))*sin(harmonic*(azn))))/harmonic.sqrt;
+zp = ((harmonic*sin(eln))+(sin(harmonic*(eln))))/harmonic.sqrt;
 ///tone
 kx=((Complex(cos(azn*harmonic),cos(azn*harmonic)).rho/(2.sqrt))*(Complex(cos(eln),cos(eln)).rho/(2.sqrt)));
 ky=((Complex(sin(azn*harmonic),sin(azn*harmonic)).rho/(2.sqrt))*(Complex(cos(eln),cos(eln)).rho/(2.sqrt)));
@@ -358,9 +358,9 @@ c2=c2.lag2(~signalSize.reciprocal)*
 //(LPF.ar(Saw.ar(tune,(ampz)),tune*64*mix).fold2(mix*~distortion)+((ampz)));
 
 ///rev
-sigx=FreeVerb.ar((c1).fold2(overdrive*~comp),xp.lag2(0.1).wrap2(1).abs,revroom);
-sigy=FreeVerb.ar((c2).fold2(overdrive*~comp),yp.lag2(0.1).wrap2(1).abs,revroom);
-sigz=FreeVerb.ar((c3).fold2(overdrive*~comp),zp.lag2(0.1).wrap2(1).abs,revroom);
+sigx=FreeVerb.ar((c1).fold2(overdrive*~comp),xp.lag2(0.1).fold2(1).abs,revroom);
+sigy=FreeVerb.ar((c2).fold2(overdrive*~comp),yp.lag2(0.1).fold2(1).abs,revroom);
+sigz=FreeVerb.ar((c3).fold2(overdrive*~comp),zp.lag2(0.1).fold2(1).abs,revroom);
 
 //vbap panner
 /*(
@@ -461,9 +461,9 @@ busarray2=[1,3,5,7,9,11,13,15];
 //Out.ar(busarray2.[n],b.softclip(5)*env*senv);
 
 //pan stereo out
-Out.ar(busarray1.[0],Pan2.ar(a.softclip(5),(x.wrap2(1))*immersion,env*senv));
-Out.ar(busarray1.[0],Pan2.ar(b.softclip(5),(y.wrap2(1))*immersion,env*senv));
-Out.ar(busarray1.[0],Pan2.ar(cc.softclip(5),(y.wrap2(1)),env*senv));
+Out.ar(busarray1.[0],Pan2.ar(a.softclip(5),(x.clip2(1))*immersion,env*senv));
+Out.ar(busarray1.[0],Pan2.ar(b.softclip(5),(y.clip2(1))*immersion,env*senv));
+Out.ar(busarray1.[0],Pan2.ar(cc.softclip(5),(z.clip2(1)),env*senv));
 
 //quad out
 //Out.ar(busarray1.[n],Pan4.ar(a.softclip(5),(x.wrap2(1))*immersion,(y.wrap2(1))*immersion,env*senv));
