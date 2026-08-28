@@ -314,14 +314,15 @@ azn=az.[n].lag2(~lagtime);
 eln=el.[n].lag2(~lagtime);
 
 ///spat
+//verb
 xp = ((harmonic*cos(eln)*cos(azn))+(cos(harmonic*(eln))*cos(harmonic*(azn))))/harmonic;
 yp = ((harmonic*cos(eln)*sin(azn))+(cos(harmonic*(eln))*sin(harmonic*(azn))))/harmonic;
 zp = ((harmonic*sin(eln))+(sin(harmonic*(eln))))/harmonic;
-
+///tone
 kx=((Complex(cos(azn*harmonic),cos(azn*harmonic)).rho/(2.sqrt))*(Complex(cos(eln),cos(eln)).rho/(2.sqrt)));
 ky=((Complex(sin(azn*harmonic),sin(azn*harmonic)).rho/(2.sqrt))*(Complex(cos(eln),cos(eln)).rho/(2.sqrt)));
 kz=(Complex(sin(eln*harmonic),sin(eln*harmonic))).rho/(2.sqrt);
-
+//pan
 x = (cos(eln)*cos(azn));
 y = (cos(eln)*sin(azn));
 z = (sin(eln));
