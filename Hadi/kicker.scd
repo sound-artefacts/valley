@@ -105,11 +105,12 @@ word.do({|i| ~lseq = ~lseq ++ dictnotes[i.asSymbol];});
 //////////rotation
 (
 {var sph,az,el,bamk=2.pow(2),sl;n=~azimuthr.size.rand;
+				n=0;
 Routine({loop{
 n=0;~az=[];~el=[];
 bamk.do{
-az=~azimuthr.[n];
-el=~elevationr.[n];
+az=~azimuth.[n];
+el=~elevation.[n];
 n=n+1;
 sph=Spherical(1,az,el);
 //sph=sph.rotateXY(~z.lag2(~lagtime)).asSpherical;///static z interferance
@@ -187,7 +188,7 @@ nn=1.neg;
 ////seq
 ~fuselim=(16256*9).neg;
 ~comp=3;
-~distortion=0.1;
+~distortion=0.25;
 ~noise=0.0001;
 ~complevel=1024;
 ~controlBus_1=Bus.control(s,1);
@@ -243,7 +244,7 @@ arg gain=0,fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,dist=1,lsystem=
 var level,c,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,pan1,pan2,env,pitchx,pitchy,pitch;
 var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez,snt;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,g5,g6,g7,g8,thresholdk,note,senv,gate1;
-var n=0,polytope=4,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
+var n=0,polytope=2,busarray1,harmonic,fund,mix,a,b,immersion,busarray,gate,threshold,kenv,kpitch,kfm;
 var az1=0,az2=0,az3=0,az4=0,el1=0,el2=0,el3=0,el4=0,az,el,xp,yp,zp,kx,ky,kz;
 var az5=0,az6=0,az7=0,az8=0,el5=0,el6=0,el7=0,el8=0,rbank=2,raz,rel,rx,ry,rz,r=0;
 
@@ -312,7 +313,6 @@ env=EnvGen.ar(Env.perc(attack,rate*curve.abs),doneAction:2);
 senv=1;
 azn=az.[n].lag2(~lagtime);
 eln=el.[n].lag2(~lagtime);
-
 ///spat
 //verb
 xp = ((harmonic*cos(eln)*cos(azn))+(cos(harmonic*(eln))*cos(harmonic*(azn))))/harmonic;
@@ -323,13 +323,12 @@ kx=((Complex(cos(azn*harmonic),cos(azn*harmonic)).rho/(2.sqrt))*(Complex(cos(eln
 ky=((Complex(sin(azn*harmonic),sin(azn*harmonic)).rho/(2.sqrt))*(Complex(cos(eln),cos(eln)).rho/(2.sqrt)));
 kz=(Complex(sin(eln*harmonic),sin(eln*harmonic))).rho/(2.sqrt);
 //pan
-x = (cos(eln)*cos(azn));
-y = (cos(eln)*sin(azn));
-z = (sin(eln));
-
+x =kx* (cos(eln)*cos(azn));
+y =ky* (cos(eln)*sin(azn));
+z =kz* (sin(eln));
+xp.poll;
 //////perspective
 immersion = (level/dist) / ((level/dist) + kz + ((level/dist)/2));
-
 ////temperament
 tx = (trange*kx);
 ty = (trange*ky);
@@ -372,12 +371,12 @@ c1=c1.lag2(~signalSize.reciprocal)*
 c2=c2.lag2(~signalSize.reciprocal)*
 (LPF.ar(Saw.ar(tune,(ampy)),tune*64*mix).fold2(mix*~distortion)+((ampy)));
 //c3=c3.lag2(~signalSize.reciprocal)*
-//(LPF.ar(Saw.ar(tune,(ampz)),tune*64*overdrive).fold2(mix*0.05)+((ampz)));
+//(LPF.ar(Saw.ar(tune,(ampz)),tune*64*mix).fold2(mix*~distortion)+((ampz)));
 
 ///rev
-sigx=FreeVerb.ar((c1).fold2(overdrive*~comp),xp.fold2(0.7).abs,revroom);
-sigy=FreeVerb.ar((c2).fold2(overdrive*~comp),yp.fold2(0.7).abs,revroom);
-sigz=FreeVerb.ar((c3).fold2(~comp),zp.fold2(0.7).abs,revroom);
+sigx=FreeVerb.ar((c1).fold2(overdrive*~comp),xp.fold2(1).abs,revroom);
+sigy=FreeVerb.ar((c2).fold2(overdrive*~comp),yp.fold2(1).abs,revroom);
+sigz=FreeVerb.ar((c3).fold2(~comp),zp.fold2(1).abs,revroom);
 //sigz=c3;
 //vbap panner
 /*(

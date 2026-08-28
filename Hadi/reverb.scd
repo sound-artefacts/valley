@@ -84,7 +84,7 @@ r=r+1;
 
 ~snt=Synth.new(\re).register;
 
-~snt.set(\level,56,\room,1,\harmonic,56,\dist,10);
+~snt.set(\level,200,\room,1,\harmonic,910,\dist,2);
 
 /*(
 s.record(numChannels:2);
