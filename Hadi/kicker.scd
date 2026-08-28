@@ -26,7 +26,7 @@ Tdef(\drone, {
 ///for this array instead of simple comment out simple (tetrahedron) set frames less than 1/64 and set 32^2 iteration on rotation routine
 ///also on synthdef larger polytope number and more ouput channels on bus array, also more control buses matrix on synthdef
 ///here utilized as reverb array
-(
+/*(
 {
 var az1=0,el1=0,az2=0,el2=0,angle=0;
 var silver_r=(1+2.sqrt), g=((1+5.sqrt)/2), azimuth, elevation;
@@ -55,7 +55,7 @@ var silver_r=(1+2.sqrt), g=((1+5.sqrt)/2), azimuth, elevation;
     az2=0; el2=0;
 };
 }.value;
-);		0.1.wait;
+)*///;		//0.1.wait;
 /////l system boolean
 ({
 var dict = IdentityDictionary[\A -> "AB", \B -> "A"];
@@ -127,9 +127,9 @@ sph=sph.rotateYZ(~x.lag2(~lagtime)).rotateXZ(~y.lag2(~lagtime)).rotateXY(~z.lag2
 {var rot;
 Routine({loop{
 //rot=Spherical(~dur,~azr,~elr);
-~x=(~x+(~azr*((2pi-(2pi/~g))*(~frames/4)))).wrap(0,2pi);
-~y=(~y+(~azr*((2pi-(2pi/~g))*(~frames/4)))).wrap(0,2pi);
-~z=(~z+(~azr*((2pi-(2pi/~g))*(~frames/4)))).wrap(0,2pi);
+~x=(~x+(~azr*((2pi-(2pi/~g))*(~frames/8)))).wrap(0,2pi);
+~y=(~y+(~azr*((2pi-(2pi/~g))*(~frames/8)))).wrap(0,2pi);
+~z=(~z+(~azr*((2pi-(2pi/~g))*(~frames/8)))).wrap(0,2pi);
 (~frames).wait;
 };
 }).play;
@@ -233,7 +233,7 @@ Out.kr(~controlBus_9.index,Amplitude.kr((SinOsc.kr(~ffreq).fold(~noise)+el4),mul
 ///////////////////feed
 0.1.wait;
 
-///synth
+///synth //use polytope for wavefield and interferancies
 //az=#[0,0,0,0],el=#[0,0,0,0]
 (
 SynthDef.new(\synth,{
@@ -248,7 +248,7 @@ var az1=0,az2=0,az3=0,az4=0,el1=0,el2=0,el3=0,el4=0,az,el,xp,yp,zp,kx,ky,kz;
 var az5=0,az6=0,az7=0,az8=0,el5=0,el6=0,el7=0,el8=0,rbank=2,raz,rel,rx,ry,rz,r=0;
 
 ///inputs
-level=2.pow(gain.lag2(~lagtime)/16256)/(5);
+level=2.pow(gain.lag2(~lagtime)/16256);
 c=2.pow(fundamental.lag2(~lagtime)/16256);
 res=2.pow(resonanse.lag2(~lagtime)/16256);
 revroom=2.pow(room.lag2(~lagtime)/16256);
@@ -292,15 +292,15 @@ pitch=exp(Complex(0,1)*tone);
 pitchx=2.pow(Select.kr((pitch.real*~note).abs,Select.kr(scselect,~scale))/12);
 pitchy=2.pow(Select.kr((pitch.imag*~note).abs,Select.kr(scselect,~scale))/12);
 
-rbank.do{
+//rbank.do{
 n=0;
-r=~azimuthr.size.rand;
+//r=~azimuthr.size.rand;
 ///reverb
-raz=~azimuthr.[r];
-rel=~elevationr.[r];
-rx=(((harmonic)*cos(rel)*cos(raz))+(cos((harmonic)*(rel))*cos((harmonic)*(raz))))/harmonic;
-ry=(((harmonic)*cos(rel)*sin(raz))+(cos((harmonic)*(rel))*sin((harmonic)*(raz))))/harmonic;
-rz=(((harmonic)*sin(rel))+(sin((harmonic)*(rel))))/harmonic;
+//raz=~azimuthr.[r];
+//rel=~elevationr.[r];
+//rx=(((harmonic)*cos(rel)*cos(raz))+(cos((harmonic)*(rel))*cos((harmonic)*(raz))))/harmonic;
+//ry=(((harmonic)*cos(rel)*sin(raz))+(cos((harmonic)*(rel))*sin((harmonic)*(raz))))/harmonic;
+//rz=(((harmonic)*sin(rel))+(sin((harmonic)*(rel))))/harmonic;
 
 polytope.do{
 
@@ -374,10 +374,10 @@ c2=c2.lag2(~signalSize.reciprocal)*
 //(LPF.ar(Saw.ar(tune,(ampz)),tune*64*overdrive).fold2(mix*0.05)+((ampz)));
 
 ///rev
-sigx=FreeVerb.ar((c1).fold2(overdrive*~comp),rx.abs,revroom);
-sigy=FreeVerb.ar((c2).fold2(overdrive*~comp),ry.abs,revroom);
-sigz=FreeVerb.ar((c3).fold2(~comp),rz.abs,revroom);
-
+sigx=FreeVerb.ar((c1).fold2(overdrive*~comp),xp.wrap2(1).abs,revroom);
+sigy=FreeVerb.ar((c2).fold2(overdrive*~comp),yp.wrap2(1).abs,revroom);
+sigz=FreeVerb.ar((c3).fold2(~comp),zp.wrap2(1).abs,revroom);
+//sigz=c3;
 //vbap panner
 /*(
 g1=((cos(eln)*cos(azn*harmonic)*
@@ -475,12 +475,17 @@ busarray2=[1,3,5,7,9,11,13,15];
 //Out.ar(busarray2.[n],b.softclip(5)*env*senv);
 
 //pan stereo out
-Out.ar(busarray1.[n],Pan2.ar(a.softclip(5),(x)*immersion,env*senv));
-Out.ar(busarray1.[n],Pan2.ar(b.softclip(5),(y)*immersion,env*senv));
+//Out.ar(busarray1.[n],Pan2.ar(a.softclip(5),(x.wrap2(1))*immersion,env*senv));
+//Out.ar(busarray1.[n],Pan2.ar(b.softclip(5),(y.wrap2(1))*immersion,env*senv));
 
 //quad out
-//Out.ar(busarray1.[n],Pan4.ar(a.softclip(5),(x)*immersion,(y)*immersion,env*senv));
-//Out.ar(busarray1.[n],Pan4.ar(b.softclip(5),(x)*immersion,(y)*immersion,env*senv));
+//Out.ar(busarray1.[n],Pan4.ar(a.softclip(5),(x.wrap2(1))*immersion,(y.wrap2(1))*immersion,env*senv));
+//Out.ar(busarray1.[n],Pan4.ar(b.softclip(5),(x.wrap2(1))*immersion,(y.wrap2(1))*immersion,env*senv));
+
+//mono out
+Out.ar(busarray1.[n],a.softclip(5)*env*senv);
+Out.ar(busarray1.[n],b.softclip(5)*env*senv);
+
 
 //formants
 /*(
@@ -495,7 +500,7 @@ Out.ar(busarray2.[n],BPF.ar(b.softclip(5),2440,0.01,0.neg.dbamp)*env*senv);
 n=n+1;
 };
 ///kick////
-kenv=EnvGen.kr(Env.perc(attack, rate+(attack*2),curve:4.neg),1,levelScale:level*klevel*2);
+/*kenv=EnvGen.kr(Env.perc(attack, rate+(attack*2),curve:4.neg),1,levelScale:level*klevel*2);
 kpitch=EnvGen.kr(Env([tune, tune/2], [rate+(attack*2)/10],[-16]));
 kfm=EnvGen.kr(Env([tune*8, 2], [rate+(attack*2)/10], [-16]));
 
@@ -512,8 +517,8 @@ Out.ar(busarray2.[0],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 //Out.ar(busarray2.[1],LeakDC.ar(gate1.softclip(2.dbamp)*kenv));
 //quad out
 ///Out.ar(0,Pan4.ar(gate.softclip(2.dbamp),rx,rz,kenv));
-//Out.ar(0,Pan4.ar(gate1.softclip(2.dbamp),rz,ry,kenv));
-};
+//Out.ar(0,Pan4.ar(gate1.softclip(2.dbamp),rz,ry,kenv));*/
+//};
 
 }).add;
 );

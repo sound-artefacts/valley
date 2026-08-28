@@ -71,8 +71,8 @@ rz=(((harmonic)*sin(rel))+(sin((harmonic)*(rel))))/harmonic;
 immersion = (level/dist) / ((level/dist) + rz + ((level/dist)/2));
 
 ///sig
-sig1=level*FreeVerb.ar(PlayBuf.ar(1, ~c1.bufnum, BufRateScale.kr(~c1), loop: 0,doneAction:0)*rz,rx.abs,room);
-sig2=level*FreeVerb.ar(PlayBuf.ar(1, ~c2.bufnum, BufRateScale.kr(~c2), loop: 0,doneAction:0)*rz,ry.abs,room);
+sig1=level*FreeVerb.ar(PlayBuf.ar(1, ~c1.bufnum, BufRateScale.kr(~c1), loop: 0,doneAction:0)*rz.fold2(1),rx.wrap2(1).abs,room);
+sig2=level*FreeVerb.ar(PlayBuf.ar(1, ~c2.bufnum, BufRateScale.kr(~c2), loop: 0,doneAction:0)*rz.fold2(1),ry.wrap2(1).abs,room);
 Out.ar(0,sig1/(rbank));
 Out.ar(1,sig2/(rbank));
 r=r+1;
