@@ -273,10 +273,10 @@ polytope.do{
 //env=EnvGen.ar(Env.new([0,1,0,1,0,1,0],
 //[attack,(rate/3),attack,(rate/3),attack,(rate/3)],[curve]),doneAction:2);
 ///double tap
-//env=EnvGen.ar(Env.new([0,1.neg,0,1,0],
-//[attack,(rate/2),attack,(rate/2)],[curve]),doneAction:2);
+env=EnvGen.ar(Env.new([0,1.neg,0,1,0],
+[attack,(rate/2),attack,(rate/2)],[curve]),doneAction:2);
 //tone
-env=EnvGen.ar(Env.perc(attack,rate*curve.abs),doneAction:2);
+//env=EnvGen.ar(Env.perc(attack,rate*curve.abs),doneAction:2);
 
 azn=az.[n].lag2(~lagtime);
 eln=el.[n].lag2(~lagtime);
@@ -311,7 +311,7 @@ freqy=(fund*pitchy)*toney*note;
 freqz=fund*tonez*note;
 ampx=c.reciprocal*tonex.reciprocal*level*immersion;
 ampy=c.reciprocal*toney.reciprocal*level*immersion;
-ampz=c.reciprocal*tonez.reciprocal*level;
+ampz=c.reciprocal*tonez.reciprocal*level*note.reciprocal;
 //phase set
 //phasex=(Complex(1,x).theta*2);
 //phasey=(Complex(1,y).theta*2);
@@ -380,8 +380,8 @@ b=HPF.ar((LeakDC.ar((sigy)*((sigz).fold2(overdrive*~distortion)+(ampz)))),64);
 cc=HPF.ar((LeakDC.ar((sigz)*((sigz).fold2(overdrive*~distortion)+(ampz)))),64);
 
 threshold=(((343/0.15)/tune).reciprocal.ampdb/2.sqrt).dbamp;
-a=Compander.ar(a,sigx,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
-b=Compander.ar(b,sigy,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
+//a=Compander.ar(a,sigx,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
+//b=Compander.ar(b,sigy,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 cc=Compander.ar(cc,sigz,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
 
 //formants
@@ -449,7 +449,7 @@ n=n+1;
 
 ///data
 (
-~time=1;
+~time=4;
 ~clock=TempoClock.default.tempo_(2);
 ~attack=0.000001/~time;
 );
@@ -493,7 +493,7 @@ Routine({loop{
 (~pattern1 = Pdef(\1,
 Pbind(\instrument, \synth,
 //Pmono( \synth,
-\dur,Pfunc{(1/~time)-(1/512).rand2},
+\dur,Pfunc{(1/~time)-(1/256).rand2},
 //\dur,Pseq([(1/~time),Rest((1/~time)/2)],inf),
 \gain,Pfunc{~gain},
 \fundamental,Pfunc{~fundamental},
@@ -509,7 +509,7 @@ Pbind(\instrument, \synth,
 \rate,Pfunc{(1/~time)},
 \attack,Pfunc{~attack},
 \curve,Pfunc{~curve},
-\key,Pseq([2,7,9,10,2,7,9,12,
+/*\key,Pseq([2,7,9,10,2,7,9,12,
 		   2,7,9,10,2,7,9,12,
 		   2,7,9,10,2,7,9,12,
 		   2,7,9,10,2,7,9,12,
@@ -532,8 +532,8 @@ Pbind(\instrument, \synth,
 		   2,7,10,14,2,9,10,12,
 		   2,7,10,14,2,9,10,12,
 		   2,7,10,14,2,9,10,12,
-		   2,7,10,14,2,9,10,12],inf),
-//\key,Pfunc{~sn},
+		   2,7,10,14,2,9,10,12],inf),*/
+\key,Pfunc{~sn},
 \dist,Pfunc{~dist},
 \voice,Pfunc{~voice},
 \v,Pseq([0,2,1,3,4],inf),
@@ -543,7 +543,8 @@ Pbind(\instrument, \synth,
 (~pattern2 = Pdef(\2,
 Pbind(\instrument, \synth,
 //Pmono( \synth,
-\dur,Pfunc{(1/~time)-(1/512).rand2},
+//\dur,Pfunc{(1/~time)},
+\dur,Pseq([(1/~time),Rest((1/~time)/3)],inf),
 \gain,Pfunc{~gain},
 \fundamental,Pfunc{~fundamental},
 \tone,Pfunc{~tone},
@@ -558,7 +559,7 @@ Pbind(\instrument, \synth,
 \rate,Pfunc{(1/~time)},
 \attack,Pfunc{~attack},
 \curve,Pfunc{~curve},
-\key,Pseq([17.neg,14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
+/* \key,Pseq([17.neg,14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
 			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
 			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
 			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
@@ -579,8 +580,8 @@ Pbind(\instrument, \synth,
 			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
 			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
 			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
-			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg],inf),
-//\key,Pfunc{~sn},
+			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg],inf),*/
+\key,Pfunc{~sn},
 \dist,Pfunc{~dist},
 \v,Pseq([0,2,1,3,4],inf),
 //\v,Pseq([0],inf),
@@ -589,7 +590,7 @@ Pbind(\instrument, \synth,
 );
 (
 ~pattern1.play;
-~pattern2.play;
+//~pattern2.play;
 );
 /*(
 ~pattern1.stop;
