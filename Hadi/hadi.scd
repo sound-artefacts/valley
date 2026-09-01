@@ -366,7 +366,7 @@ g4=((cos(eln)*cos(azn)*cos(~elevation.[3])*cos(~azimuth.[3]))
 ///sig
 a=HPF.ar((LeakDC.ar((sigx)*((sigz).fold2(overdrive*~distortion)+(ampz)))),64);
 b=HPF.ar((LeakDC.ar((sigy)*((sigz).fold2(overdrive*~distortion)+(ampz)))),64);
-cc=HPF.ar((LeakDC.ar((sigy)*((sigz).fold2(overdrive*~distortion)+(ampz)))),64);
+cc=HPF.ar((LeakDC.ar((sigz)*((sigz).fold2(overdrive*~distortion)+(ampz)))),64);
 
 threshold=(((343/0.15)/tune).reciprocal.ampdb/2.sqrt).dbamp;
 a=Compander.ar(a,sigx,threshold,1.2,1/3,0.03,0.15)+BrownNoise.ar(0.000001);
