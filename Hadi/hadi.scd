@@ -77,6 +77,7 @@ var silver_r=(1+2.sqrt), g=((1+5.sqrt)/2), azimuth, elevation;
 ~ffreq=16;
 ~window=110;
 ~dur=~frames*~window;
+~spinbind=0.5pi;
 
 //angle compensatiom
 ~s=(1+2.sqrt);
@@ -97,8 +98,8 @@ sph=Spherical(1,az,el);
 sph=sph.rotateYZ(~x.lag2(~lagtime)).rotateXZ(~y.lag2(~lagtime)).rotateXY(~z.lag2(~lagtime));//orchestral
 ~az=~az++[sph.theta];
 ~el=~el++[sph.phi];
-~az=~az.wrap2(0.5pi);
-~el=~el.wrap2(0.25pi);
+~az=~az.wrap2(~spinbind);
+~el=~el.wrap2(~spinbind/2);
 };
 (~frames).wait;
 };
@@ -110,9 +111,9 @@ sph=sph.rotateYZ(~x.lag2(~lagtime)).rotateXZ(~y.lag2(~lagtime)).rotateXY(~z.lag2
 {var rot;
 Routine({loop{
 //rot=Spherical(~dur,~azr,~elr);
-~x=(~x+(~azr*((2pi-(2pi/~g))*(~frames/32)))).wrap(0,2pi);
-~y=(~y+(~azr*((2pi-(2pi/~g))*(~frames/32)))).wrap(0,2pi);
-~z=(~z+(~azr*((2pi-(2pi/~g))*(~frames/32)))).wrap(0,2pi);
+~x=(~x+(~azr*((2pi-(2pi/~g))*(~frames/16)))).wrap(0,2pi);
+~y=(~y+(~azr*((2pi-(2pi/~g))*(~frames/16)))).wrap(0,2pi);
+~z=(~z+(~azr*((2pi-(2pi/~g))*(~frames/16)))).wrap(0,2pi);
 (~frames).wait;
 };
 }).play;
@@ -745,9 +746,9 @@ tempo.postln;
 (
 MIDIdef.cc(\midi_slider1,{ |val, num, chan, src|
 var note;
-note=val.linlin(0,127,0,0).round(0);
+note=val.linlin(0,127,0.01pi,pi);
 note.postln;
-~sn=note;
+~spinbind=note;
 },25);
 );
 (
@@ -1167,6 +1168,17 @@ dist.postln;
 ~st16=StaticText(~vw1,Rect(50,(50+sk+50+sk+25+25+sk+50+sk+50+sk),sk+20,sk)).string_("distance")
 .stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
 );
+(
+~s117=Knob.new(~vw1, Rect.new(150,(50+sk+50+sk+25+25+sk+50+sk+50), sk)).background_(Color.black).action_({
+arg obj;
+var value;
+value=obj.value.linexp(0,1,0.01pi,pi).postln;
+~spinbind=value;
+~log1.(value.asString);
+});
+~s117=StaticText(~vw1,Rect(150,(50+sk+50+sk+25+25+sk+50+sk+50+sk),sk+20,sk)).string_("spinbind")
+.stringColor_(Color.white).background_(Color.black).font_(Font('Arial',16));
+)
 }.defer
 );
 }); Tdef(\drone).play;
