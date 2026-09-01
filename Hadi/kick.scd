@@ -97,6 +97,8 @@ sph=Spherical(1,az,el);
 sph=sph.rotateYZ(~x.lag2(~lagtime)).rotateXZ(~y.lag2(~lagtime)).rotateXY(~z.lag2(~lagtime));//orchestral
 ~az=~az++[sph.theta];
 ~el=~el++[sph.phi];
+						~az=~az.wrap2(0.1pi);
+						~el=~el.wrap2(0.05pi);
 };
 (~frames).wait;
 };
@@ -108,9 +110,9 @@ sph=sph.rotateYZ(~x.lag2(~lagtime)).rotateXZ(~y.lag2(~lagtime)).rotateXY(~z.lag2
 {var rot;
 Routine({loop{
 //rot=Spherical(~dur,~azr,~elr);
-~x=(~x+(~azr*((2pi-(2pi/~g))*(~frames/64)))).wrap(0,2pi);
-~y=(~y+(~azr*((2pi-(2pi/~g))*(~frames/64)))).wrap(0,2pi);
-~z=(~z+(~azr*((2pi-(2pi/~g))*(~frames/64)))).wrap(0,2pi);
+~x=(~x+(~azr*((2pi-(2pi/~g))*(~frames/32)))).wrap(0,2pi);
+~y=(~y+(~azr*((2pi-(2pi/~g))*(~frames/32)))).wrap(0,2pi);
+~z=(~z+(~azr*((2pi-(2pi/~g))*(~frames/32)))).wrap(0,2pi);
 (~frames).wait;
 };
 }).play;
