@@ -221,7 +221,7 @@ SynthDef.new(\synth,{
 arg gain=0,fundamental=0,resonanse=0,harm=1,room=0,drive=0,mag=0,dist=1,lsystem=1,voice=0.1,
 	tone=1,scselect=0,rate=1,attack=0.01,curve=4.neg,key=0,v=1;
 var level,res,revroom,overdrive,x,y,z,tx,ty,tz,trange,busarray2,env,pitchx,pitchy,pitch;
-var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq,phasex,phasey,phasez,snt;
+var freqx,freqy,freqz,ampx,ampy,ampz,tonex,toney,tonez,tune=~ffreq*2*(9/8),phasex,phasey,phasez,snt;
 var c1,c2,c3,sigx,sigy,sigz,azn,eln,cx,cy,cz,g1,g2,g3,g4,thresholdk,note;
 var n=0,polytope=3,busarray1,harmonic,fund,mix,a,b,cc,immersion,busarray,gate,threshold;
 var az1=0,az2=0,az3=0,az4=0,el1=0,el2=0,el3=0,el4=0,az,el,xp,yp,zp,kx,ky,kz;
@@ -290,9 +290,9 @@ xp = ((harmonic*cos(eln)*cos(azn))+(cos(harmonic*(eln))*cos(harmonic*(azn))))/ha
 yp = ((harmonic*cos(eln)*sin(azn))+(cos(harmonic*(eln))*sin(harmonic*(azn))))/harmonic.sqrt;
 zp = ((harmonic*sin(eln))+(sin(harmonic*(eln))))/harmonic.sqrt;
 ///tone
-kx=((Complex(cos(azn*harmonic),cos(azn*harmonic)).rho/(2.sqrt))*(Complex(cos(eln),cos(eln)).rho/(2.sqrt)));
-ky=((Complex(sin(azn*harmonic),sin(azn*harmonic)).rho/(2.sqrt))*(Complex(cos(eln),cos(eln)).rho/(2.sqrt)));
-kz=(Complex(sin(eln*harmonic),sin(eln*harmonic))).rho/(2.sqrt);
+kx=((Complex(cos(azn*harmonic),cos(azn*harmonic)).rho/(1.sqrt))*(Complex(cos(eln),cos(eln)).rho/(1.sqrt)));
+ky=((Complex(sin(azn*harmonic),sin(azn*harmonic)).rho/(1.sqrt))*(Complex(cos(eln),cos(eln)).rho/(1.sqrt)));
+kz=(Complex(sin(eln*harmonic),sin(eln*harmonic))).rho/(1.sqrt);
 //pan
 x =(cos(eln)*cos(azn));
 y =(cos(eln)*sin(azn));
@@ -314,7 +314,7 @@ freqy=(fund*pitchy)*toney*note;
 freqz=fund*tonez*note;
 ampx=c.reciprocal*tonex.reciprocal*level*immersion;
 ampy=c.reciprocal*toney.reciprocal*level*immersion;
-ampz=c.reciprocal*tonez.reciprocal*level;
+ampz=c.reciprocal*tonez.reciprocal*level*note.reciprocal;
 //phase set
 //phasex=(Complex(1,x).theta*2);
 //phasey=(Complex(1,y).theta*2);
@@ -405,12 +405,13 @@ a=vx;
 b=vy;
 cc=vz;*/
 
-///wavefield out
-//busarray1=[0,2,4,6,8,10,12,14];
-//busarray2=[1,3,5,7,9,11,13,15];
-//Out.ar(busarray1.[0],a.softclip(3)*env);
-//Out.ar(busarray2.[0],b.softclip(3)*env);
-
+///wavefield out wavefield presenst in record, audio format headphones or mono
+busarray1=[0,2,4,6,8,10,12,14];
+busarray2=[1,3,5,7,9,11,13,15];
+Out.ar(busarray1.[0],a.softclip(3)*env);
+Out.ar(busarray2.[0],b.softclip(3)*env);
+Out.ar(busarray1.[0],cc.softclip(3)*env);
+Out.ar(busarray2.[0],cc.softclip(3)*env);
 //vbap out
 /*(
 Out.ar(0,a.softclip(3)*env*g1);
@@ -427,10 +428,10 @@ Out.ar(2,cc.softclip(3)*env*g3);
 Out.ar(3,cc.softclip(3)*env*g4);
 )*/
 
-//pan stereo out
-Out.ar(0,Pan2.ar(a.softclip(3),(x.clip2(1))*immersion,env));
-Out.ar(0,Pan2.ar(b.softclip(3),(y.clip2(1))*immersion,env));
-Out.ar(0,Pan2.ar(cc.softclip(3),(z.clip2(1)),env/2));
+//pan stereo out, wavefield mixed, if recorded on stereo stereo ouput acoustics present, if mono out record, audio format stereo speakers
+//Out.ar(0,Pan2.ar(a.softclip(3),(x.clip2(1))*immersion,env));
+//Out.ar(0,Pan2.ar(b.softclip(3),(y.clip2(1))*immersion,env));
+//Out.ar(0,Pan2.ar(cc.softclip(3),(z.clip2(1)),env/2));
 
 //quad out
 //Out.ar(0,Pan4.ar(a.softclip(3),(x.wrap2(1))*immersion,(y.wrap2(1))*immersion,env));
@@ -490,13 +491,12 @@ Routine({loop{
 }.defer
 );
 
-
 ///patterns
 (
 (~pattern1 = Pdef(\1,
 Pbind(\instrument, \synth,
 //Pmono( \synth,
-\dur,Pfunc{(1/~time)-(1/512).rand2},
+\dur,Pfunc{(1/~time)-(1/1024).rand2},
 //\dur,Pseq([(1/~time),Rest((1/~time)/2)],inf),
 \gain,Pfunc{~gain},
 \fundamental,Pfunc{~fundamental},
@@ -512,41 +512,18 @@ Pbind(\instrument, \synth,
 \rate,Pfunc{(1/~time)},
 \attack,Pfunc{~attack},
 \curve,Pfunc{~curve},
-\key,Pseq([2,7,9,10,2,7,9,12,
-		   2,7,9,10,2,7,9,12,
-		   2,7,9,10,2,7,9,12,
-		   2,7,9,10,2,7,9,12,
-
-		   2,7,9,10,2,7,9,12,
-		   2,7,9,10,2,7,9,12,
-		   2,7,10,12,2,9,10,14,
-		   2,7,10,12,2,9,10,14,
-
-		   2,7,10,12,2,9,10,14,
-		   2,7,10,12,2,9,10,14,
-		   2,7,10,12,2,9,10,14,
-		   2,7,10,12,2,9,10,14,
-
-		   2,7,10,12,2,9,10,14,
-		   2,7,10,12,2,9,10,14,
-		   2,7,10,14,2,9,10,12,
-		   2,7,10,14,2,9,10,12,
-
-		   2,7,10,14,2,9,10,12,
-		   2,7,10,14,2,9,10,12,
-		   2,7,10,14,2,9,10,12,
-		   2,7,10,14,2,9,10,12],inf),
+\key,Prand([0, 4, 9, 2, 7],inf),
 //\key,Pfunc{~sn},
 \dist,Pfunc{~dist},
 \voice,Pfunc{~voice},
-\v,Pseq([0,2,1,3,4],inf),
+\v,Pseq([0,1,2,3,4],inf),
 //\v,Pseq([0],inf),
 )));
 
 (~pattern2 = Pdef(\2,
 Pbind(\instrument, \synth,
 //Pmono( \synth,
-\dur,Pfunc{(1/~time)-(1/512).rand2},
+\dur,Pfunc{(1/~time)-(1/1024).rand2*2},
 \gain,Pfunc{~gain},
 \fundamental,Pfunc{~fundamental},
 \tone,Pfunc{~tone},
@@ -561,31 +538,10 @@ Pbind(\instrument, \synth,
 \rate,Pfunc{(1/~time)},
 \attack,Pfunc{~attack},
 \curve,Pfunc{~curve},
-\key,Pseq([17.neg,14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
-			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
-			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
-			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
-			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
-			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
-			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
-			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
-
-			12.neg,10.neg,5.neg,10.neg,12.neg,17.neg,
-			12.neg,10.neg,5.neg,10.neg,12.neg,17.neg,
-			12.neg,10.neg,5.neg,10.neg,12.neg,17.neg,
-			12.neg,10.neg,5.neg,10.neg,12.neg,17.neg,
-
-			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
-			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
-			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
-			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
-			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
-			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
-			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg,
-			14.neg,10.neg,5.neg,10.neg,14.neg,17.neg],inf),
+\key,Prand([7, 0, 3, 10, 7],inf),
 //\key,Pfunc{~sn},
 \dist,Pfunc{~dist},
-\v,Pseq([0,2,1,3,4],inf),
+\v,Pseq([0,1,2,3,4],inf),
 //\v,Pseq([0],inf),
 \voice,Pfunc{~voice},
 )));
